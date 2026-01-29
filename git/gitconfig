@@ -1,0 +1,12 @@
+[user]
+    name = Ivan Kalinichenko
+
+[includeIf "gitdir:~/Dev/Work/"]
+    path = ~/.config/git/gitconfig-work
+
+[includeIf "gitdir:~/Dev/Personal/"]
+    path = ~/.config/git/gitconfig-personal
+
+[include]
+    path = ~/.config/git/gitconfig-local
+

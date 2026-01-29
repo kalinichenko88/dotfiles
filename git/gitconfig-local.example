@@ -1,0 +1,8 @@
+# Local git config overrides (not committed)
+# Add any machine-specific settings here
+
+# Example: GPG signing
+# [user]
+#     signingkey = YOUR_GPG_KEY_ID
+# [commit]
+#     gpgsign = true
