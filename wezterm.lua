@@ -51,11 +51,17 @@ config.keys = {
     {
         key = "|",
         mods = "CMD|SHIFT",
-        action = act.SplitPane({
-            direction = "Right",
-            size = { Percent = 70 },
+        action = act.Multiple({
+            act.SplitPane({
+                direction = "Right",
+                size = { Percent = 70 },
+            }),
+            act.SplitPane({
+                direction = "Down",
+                size = { Percent = 15 },
+            }),
         }),
-    }
+    },
 }
 
 -- Dynamic color scheme switching
