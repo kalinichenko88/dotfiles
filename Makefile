@@ -1,7 +1,7 @@
 GIT_CONFIG_DIR := $(HOME)/.config/git
 DOTFILES_GIT_DIR := $(PWD)/git
 
-.PHONY: git git-install git-local git-check wezterm-config-install
+.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -43,3 +43,9 @@ wezterm-config-install:
 	@echo "→ Installing wezterm config"
 	ln -sf $(PWD)/wezterm.lua $(HOME)/.wezterm.lua
 	@echo "✓ wezterm config installed"
+
+docker-config-install:
+	@echo "→ Installing docker config"
+	mkdir -p $(HOME)/.docker
+	cp $(PWD)/docker/config.json $(HOME)/.docker/config.json
+	@echo "✓ docker config installed"
