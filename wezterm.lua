@@ -49,15 +49,15 @@ config.native_macos_fullscreen_mode = true
 -- Keybindings
 config.keys = {
     {
-        key = "|",
-        mods = "CMD|SHIFT",
+        key = '|',
+        mods = 'CMD|SHIFT',
         action = act.Multiple({
             act.SplitPane({
-                direction = "Right",
+                direction = 'Right',
                 size = { Percent = 70 },
             }),
             act.SplitPane({
-                direction = "Down",
+                direction = 'Down',
                 size = { Percent = 15 },
             }),
         }),
