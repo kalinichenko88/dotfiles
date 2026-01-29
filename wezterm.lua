@@ -9,6 +9,7 @@ local function scheme_for_appearance(appearance)
 end
 
 local config = wezterm.config_builder()
+local act = wezterm.action
 
 -- Rendering
 config.front_end = 'WebGpu'
@@ -44,6 +45,18 @@ config.scrollback_lines = 10000
 
 -- macOS
 config.native_macos_fullscreen_mode = true
+
+-- Keybindings
+config.keys = {
+    {
+        key = "|",
+        mods = "CMD|SHIFT",
+        action = act.SplitPane({
+            direction = "Right",
+            size = { Percent = 70 },
+        }),
+    }
+}
 
 -- Dynamic color scheme switching
 wezterm.on('window-config-reloaded', function(window)
