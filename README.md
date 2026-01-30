@@ -136,10 +136,10 @@ Leader key: `Space`
 - `<leader>hd` - Show diff for file
 
 **Copilot (Insert mode)**
-- `<C-y>` - Accept suggestion
-- `<C-j>` - Next suggestion
-- `<C-k>` - Previous suggestion
-- `<C-\>` - Dismiss suggestion
+- `Ctrl+y` - Accept suggestion
+- `Ctrl+j` - Next suggestion
+- `Ctrl+k` - Previous suggestion
+- `Ctrl+\` - Dismiss suggestion
 
 **Completion (Insert mode)**
 - `<Tab>` - Next completion item / Expand snippet
