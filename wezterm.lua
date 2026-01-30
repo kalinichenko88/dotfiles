@@ -8,8 +8,10 @@ local function scheme_for_appearance(appearance)
     end
 end
 
+
 local config = wezterm.config_builder()
 local act = wezterm.action
+
 
 -- Rendering
 config.front_end = 'WebGpu'
@@ -17,15 +19,17 @@ config.max_fps = 120
 
 -- Font
 config.font = wezterm.font_with_fallback {
-    { family = 'JetBrains Mono NL', weight = 'Medium' },
+    { family = 'JetBrains Mono NL', weight = 'DemiBold' },
     'Menlo',
 }
 config.font_size = 15.0
 config.line_height = 1.1
 config.freetype_load_flags = 'NO_HINTING'
 
+
 -- Colors
 config.color_scheme = scheme_for_appearance(wezterm.gui.get_appearance())
+
 
 -- UI
 config.hide_tab_bar_if_only_one_tab = true
@@ -36,15 +40,19 @@ config.window_frame = {
     font_size = 16.0,
 }
 
+
 -- Cursor
 config.default_cursor_style = 'BlinkingBar'
 config.cursor_blink_rate = 600
 
+
 -- Behavior
 config.scrollback_lines = 10000
 
+
 -- macOS
 config.native_macos_fullscreen_mode = true
+
 
 -- Keybindings
 config.keys = {
@@ -64,6 +72,7 @@ config.keys = {
     },
 }
 
+
 -- Dynamic color scheme switching
 wezterm.on('window-config-reloaded', function(window)
     local overrides = window:get_config_overrides() or {}
@@ -74,5 +83,6 @@ wezterm.on('window-config-reloaded', function(window)
         window:set_config_overrides(overrides)
     end
 end)
+
 
 return config
