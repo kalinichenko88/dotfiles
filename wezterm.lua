@@ -54,6 +54,16 @@ config.scrollback_lines = 10000
 config.native_macos_fullscreen_mode = true
 
 
+-- Window
+config.window_background_opacity = 1.0
+config.macos_window_background_blur = 0
+config.inactive_pane_hsb = {
+    saturation = 0.9,
+    brightness = 0.9,
+}
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+
+
 -- Keybindings
 config.keys = {
     {
