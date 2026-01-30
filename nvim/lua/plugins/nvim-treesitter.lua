@@ -3,19 +3,6 @@ return {
   lazy = false,
   build = ':TSUpdate',
   config = function()
-    -- Install parsers (runs asynchronously)
-    require('nvim-treesitter').install({
-      'javascript',
-      'typescript',
-      'tsx',
-      'html',
-      'css',
-      'json',
-      'lua',
-      'bash',
-      'php',
-    })
-
     -- Enable highlighting for all filetypes
     vim.api.nvim_create_autocmd('FileType', {
       pattern = '*',

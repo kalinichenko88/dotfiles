@@ -65,6 +65,31 @@ Symlinks `nvim/` directory to `~/.config/nvim`.
 
 Uses [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager. Plugins will be installed automatically on first launch.
 
+#### First Launch Setup
+
+1. **Start Neovim** - Plugins and LSP servers install automatically
+   ```bash
+   nvim
+   ```
+
+2. **Install TreeSitter parsers**
+   ```vim
+   :TSInstall javascript typescript tsx html css json lua bash php
+   ```
+
+3. **Set up Copilot** (optional, if using GitHub Copilot)
+   ```vim
+   :Copilot setup
+   ```
+
+4. **Verify installations**
+   ```vim
+   :Mason          " Check LSP servers & formatters
+   :checkhealth    " Run health check
+   ```
+
+5. **Restart Neovim** - Everything should work without installation messages
+
 #### Neovim Keybindings
 
 Leader key: `Space`
