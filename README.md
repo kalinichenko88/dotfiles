@@ -65,6 +65,72 @@ Symlinks `nvim/` directory to `~/.config/nvim`.
 
 Uses [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager. Plugins will be installed automatically on first launch.
 
+#### Neovim Keybindings
+
+Leader key: `Space`
+
+**File Explorer**
+- `<leader>e` - Toggle Neo-tree file explorer
+
+**Telescope (Fuzzy Finder)**
+- `<leader>ff` - Find files
+- `<leader>fg` - Live grep (search in files)
+- `<leader>fb` - Open buffers
+- `<leader>fh` - Help tags
+- `<leader>fc` - Commands palette
+- `<leader>fk` - Show keymaps
+- `<leader>gs` - Git status
+
+**LSP (Language Server)**
+- `K` - Hover documentation
+- `gd` - Go to definition
+- `gD` - Go to declaration
+- `gi` - Go to implementation
+- `gr` - List references
+- `<leader>D` - Go to type definition
+- `<leader>rn` - Rename symbol
+- `<leader>ca` - Code actions
+- `<leader>f` - Format buffer
+
+**Diagnostics**
+- `<leader>d` - Show line diagnostics
+- `<leader>q` - Open diagnostics list
+- `[d` - Previous diagnostic
+- `]d` - Next diagnostic
+
+**Git (Gitsigns)**
+- `]c` - Next hunk
+- `[c` - Previous hunk
+- `<leader>hs` - Stage hunk (works in visual mode)
+- `<leader>hr` - Reset hunk (works in visual mode)
+- `<leader>hS` - Stage buffer
+- `<leader>hR` - Reset buffer
+- `<leader>hu` - Undo stage hunk
+- `<leader>hp` - Preview hunk
+- `<leader>hb` - Show blame for line
+- `<leader>hd` - Show diff for file
+
+**Copilot (Insert mode)**
+- `<C-y>` - Accept suggestion
+- `<C-j>` - Next suggestion
+- `<C-k>` - Previous suggestion
+- `<C-\>` - Dismiss suggestion
+
+**Completion (Insert mode)**
+- `<Tab>` - Next completion item / Expand snippet
+- `<S-Tab>` - Previous completion item / Jump back in snippet
+- `<CR>` - Confirm completion
+- `<C-Space>` - Trigger completion
+- `<C-e>` - Abort completion
+- `<C-b>` - Scroll docs up
+- `<C-f>` - Scroll docs down
+
+**Commenting**
+- `gcc` - Toggle line comment
+- `gbc` - Toggle block comment
+- `gc` - Toggle comment (visual mode)
+- `gb` - Toggle block comment (visual mode)
+
 ### Docker
 
 ```bash
