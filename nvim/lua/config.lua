@@ -26,5 +26,4 @@ vim.opt.undofile = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
-
 vim.diagnostic.config({ severity_sort = true })

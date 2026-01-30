@@ -1,16 +1,16 @@
 return {
-  "nvim-telescope/telescope.nvim",
+  'nvim-telescope/telescope.nvim',
   dependencies = {
-    "nvim-lua/plenary.nvim",
-    "nvim-telescope/telescope-fzf-native.nvim",
+    'nvim-lua/plenary.nvim',
+    'nvim-telescope/telescope-fzf-native.nvim',
   },
   config = function()
-    require("telescope").setup({
+    require('telescope').setup({
       defaults = {
-        file_ignore_patterns = { "node_modules/", ".git/" },
+        file_ignore_patterns = { 'node_modules/', '.git/' },
       },
     })
-    pcall(require("telescope").load_extension, "fzf")
-    pcall(require("telescope").load_extension, "egrepify")
+    pcall(require('telescope').load_extension, 'fzf')
+    pcall(require('telescope').load_extension, 'egrepify')
   end,
 }
