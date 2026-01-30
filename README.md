@@ -145,10 +145,10 @@ Leader key: `Space`
 - `<Tab>` - Next completion item / Expand snippet
 - `<S-Tab>` - Previous completion item / Jump back in snippet
 - `<CR>` - Confirm completion
-- `<C-Space>` - Trigger completion
-- `<C-e>` - Abort completion
-- `<C-b>` - Scroll docs up
-- `<C-f>` - Scroll docs down
+- `Ctrl+Space` - Trigger completion
+- `Ctrl+e` - Abort completion
+- `Ctrl+b` - Scroll docs up
+- `Ctrl+f` - Scroll docs down
 
 **Commenting**
 - `gcc` - Toggle line comment
