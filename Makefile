@@ -1,7 +1,8 @@
 GIT_CONFIG_DIR := $(HOME)/.config/git
 DOTFILES_GIT_DIR := $(PWD)/git
+NVIM_CONFIG_DIR := $(HOME)/.config/nvim
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install
+.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -49,3 +50,9 @@ docker-config-install:
 	mkdir -p $(HOME)/.docker
 	cp $(PWD)/docker/config.json $(HOME)/.docker/config.json
 	@echo "✓ docker config installed"
+
+nvim-config-install:
+	@echo "→ Installing nvim config"
+	mkdir -p $(HOME)/.config
+	ln -sf $(PWD)/nvim $(NVIM_CONFIG_DIR)
+	@echo "✓ nvim config installed"
