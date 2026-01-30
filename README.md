@@ -7,6 +7,7 @@ My personal configuration files for macOS.
 - **git/** - Git configuration with separate profiles for personal and work
 - **docker/** - Docker CLI configuration for Colima
 - **wezterm.lua** - WezTerm terminal emulator configuration
+- **nvim/** - Neovim configuration with lazy.nvim plugin manager
 - **.editorconfig** - Editor configuration for consistent coding style
 
 ## Installation
@@ -53,6 +54,16 @@ Symlinks `wezterm.lua` to `~/.wezterm.lua`.
 - Automatic dark/light theme switching (OneDark/One Light)
 - Native macOS fullscreen and integrated window buttons
 - Blinking bar cursor
+
+### Neovim
+
+```bash
+make nvim-config-install
+```
+
+Symlinks `nvim/` directory to `~/.config/nvim`.
+
+Uses [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager. Plugins will be installed automatically on first launch.
 
 ### Docker
 
