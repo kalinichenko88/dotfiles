@@ -23,7 +23,7 @@ config.font = wezterm.font_with_fallback {
     'Menlo',
 }
 config.font_size = 15.0
-config.line_height = 1.1
+config.line_height = 1.2
 config.freetype_load_flags = 'NO_HINTING'
 
 
