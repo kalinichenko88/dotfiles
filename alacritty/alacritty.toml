@@ -1,0 +1,19 @@
+[general]
+live_config_reload = true
+import = [
+   "~/.config/alacritty/themes/one_light.toml"
+]
+
+[font]
+size = 14.0
+normal = { family = "Maple Mono NF", style = "Regular" }
+bold   = { family = "Maple Mono NF", style = "Bold" }
+italic = { family = "Maple Mono NF", style = "Italic" }
+
+[window]
+padding.x = 10
+padding.y = 5
+
+decorations = "Full"
+
+option_as_alt = "Both"
