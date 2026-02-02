@@ -146,6 +146,25 @@ Leader key: `Space`
 - `<leader>gH` - Full branch history
 - `<leader>gc` - Close diffview
 
+**Git Commit (Copilot-powered)**
+
+Stage files and generate commit messages with AI:
+
+1. `<leader>gs` - Open git status picker
+2. `<Tab>` - Toggle stage/unstage selected file
+3. `<leader>cm` - Generate commit message with Copilot
+
+In the commit confirmation window:
+- `<CR>` - Commit with generated message
+- `e` - Edit message before committing
+- `q` / `<Esc>` - Cancel
+
+In the edit window:
+- `<C-s>` - Save and commit
+- `<Esc>` - Cancel
+
+**Project-specific commit rules**: Create `.commit-rules` in your project root to customize the commit message format. Falls back to conventional commits if not present.
+
 **Copilot (Insert mode)**
 - `Ctrl+y` - Accept suggestion
 - `Ctrl+j` - Next suggestion
