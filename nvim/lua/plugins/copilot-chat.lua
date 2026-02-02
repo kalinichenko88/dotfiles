@@ -81,17 +81,18 @@ local function show_commit_window(staged_files, message)
       row = math.floor((vim.o.lines - 5) / 2),
       style = 'minimal',
       border = 'rounded',
-      title = ' Edit Commit Message (Enter to commit, Esc to cancel) ',
+      title = ' Edit Commit Message (<C-s> commit, Esc cancel) ',
       title_pos = 'center',
     })
 
     vim.cmd('startinsert!')
 
-    vim.keymap.set('n', '<Esc>', function()
+    vim.keymap.set({ 'n', 'i' }, '<Esc>', function()
+      vim.cmd('stopinsert')
       vim.api.nvim_win_close(edit_win, true)
     end, { buffer = edit_buf })
 
-    vim.keymap.set({ 'n', 'i' }, '<CR>', function()
+    vim.keymap.set({ 'n', 'i' }, '<C-s>', function()
       local new_lines = vim.api.nvim_buf_get_lines(edit_buf, 0, -1, false)
       local new_message = table.concat(new_lines, '\n'):gsub('^%s+', ''):gsub('%s+$', '')
       vim.api.nvim_win_close(edit_win, true)
@@ -159,7 +160,12 @@ return {
           if type(response) == 'table' then
             msg = response.content or response.message or tostring(response)
           end
-          msg = msg:gsub('^```.-\n', ''):gsub('\n```$', ''):gsub('^%s+', ''):gsub('%s+$', '')
+          -- Strip markdown code blocks (```lang\n...\n``` or ```\n...\n```)
+          msg = msg:gsub('^%s*```[%w]*%s*\n', ''):gsub('\n%s*```%s*$', '')
+          -- Strip inline code backticks
+          msg = msg:gsub('^`', ''):gsub('`$', '')
+          -- Trim whitespace
+          msg = msg:gsub('^%s+', ''):gsub('%s+$', '')
           vim.schedule(function()
             show_commit_window(staged_files, msg)
           end)
