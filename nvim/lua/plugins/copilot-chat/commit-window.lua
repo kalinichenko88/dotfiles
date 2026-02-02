@@ -1,27 +1,6 @@
-local function get_commit_rules()
-  local file = io.open(vim.fn.getcwd() .. '/.commit-rules', 'r')
-  if file then
-    local content = file:read('*all')
-    file:close()
-    return content
-  end
-  return [[
-- Use conventional commits: type(scope): description
-- Types: feat, fix, docs, style, refactor, test, chore
-- Keep subject under 72 characters
-- Use imperative mood
-]]
-end
+local M = {}
 
-local function get_branch_name()
-  local branch = vim.fn.system('git rev-parse --abbrev-ref HEAD'):gsub('%s+$', '')
-  if vim.v.shell_error ~= 0 then
-    return nil
-  end
-  return branch
-end
-
-local function show_commit_window(staged_files, message)
+function M.show(staged_files, message)
   local lines = { '  Staged Files:' }
   for file in staged_files:gmatch('[^\n]+') do
     table.insert(lines, '    ' .. file)
@@ -125,68 +104,4 @@ local function show_commit_window(staged_files, message)
   vim.keymap.set('n', '<Esc>', close_window, { buffer = buf })
 end
 
-return {
-  'CopilotC-Nvim/CopilotChat.nvim',
-  dependencies = {
-    'github/copilot.vim',
-    'nvim-lua/plenary.nvim',
-  },
-  build = 'make tiktoken',
-  cmd = {
-    'CopilotChat',
-    'CopilotChatCommit',
-    'CopilotChatCommitStaged',
-    'GitCommit',
-  },
-  opts = {},
-  config = function(_, opts)
-    require('CopilotChat').setup(opts)
-
-    vim.api.nvim_create_user_command('GitCommit', function()
-      local staged_diff = vim.fn.system('git diff --cached')
-      if staged_diff == '' or staged_diff:match('^%s*$') then
-        vim.notify('No staged changes', vim.log.levels.WARN)
-        return
-      end
-
-      local staged_files = vim.fn.system('git diff --cached --name-only')
-      local rules = get_commit_rules()
-      local branch = get_branch_name()
-      local prompt = 'Write a concise commit message for the following staged changes. '
-        .. 'Return ONLY the commit message, no explanation or markdown formatting.\n\n'
-        .. 'Current branch: '
-        .. (branch or 'unknown')
-        .. '\n\nRules:\n'
-        .. rules
-        .. '\n\nDiff:\n```diff\n'
-        .. staged_diff
-        .. '\n```'
-
-      vim.notify('Generating commit message...', vim.log.levels.INFO)
-
-      require('CopilotChat').ask(prompt, {
-        headless = true,
-        callback = function(response)
-          local msg = response
-          if type(response) == 'table' then
-            msg = response.content or response.message or tostring(response)
-          end
-          -- Strip markdown code blocks (```lang\n...\n``` or ```\n...\n```)
-          msg = msg:gsub('^%s*```[%w]*%s*\n', ''):gsub('\n%s*```%s*$', '')
-          -- Strip inline code backticks
-          msg = msg:gsub('^`', ''):gsub('`$', '')
-          -- Trim whitespace
-          msg = msg:gsub('^%s+', ''):gsub('%s+$', '')
-          vim.schedule(function()
-            show_commit_window(staged_files, msg)
-          end)
-        end,
-      })
-    end, {})
-  end,
-  keys = {
-    { '<leader>cc', '<cmd>CopilotChat<cr>', desc = 'Copilot Chat' },
-    { '<leader>cm', '<cmd>GitCommit<cr>', desc = 'Generate commit message' },
-    { '<leader>ca', '<cmd>CopilotChatActions<cr>', mode = { 'n', 'v' }, desc = 'Copilot actions' },
-  },
-}
+return M
