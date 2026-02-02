@@ -6,10 +6,10 @@ return {
     require('conform').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
-        javascript = { 'prettier' },
-        javascriptreact = { 'prettier' },
-        typescript = { 'prettier' },
-        typescriptreact = { 'prettier' },
+        javascript = { 'eslint_d', 'prettier' },
+        javascriptreact = { 'eslint_d', 'prettier' },
+        typescript = { 'eslint_d', 'prettier' },
+        typescriptreact = { 'eslint_d', 'prettier' },
         json = { 'prettier' },
         css = { 'prettier' },
         scss = { 'prettier' },

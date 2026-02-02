@@ -77,18 +77,23 @@ Uses [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager. Plugins wil
    :TSInstall javascript typescript tsx html css json lua bash php
    ```
 
-3. **Set up Copilot** (optional, if using GitHub Copilot)
+3. **Install formatters via Mason**
+   ```vim
+   :MasonInstall stylua prettier eslint_d
+   ```
+
+4. **Set up Copilot** (optional, if using GitHub Copilot)
    ```vim
    :Copilot setup
    ```
 
-4. **Verify installations**
+5. **Verify installations**
    ```vim
    :Mason          " Check LSP servers & formatters
    :checkhealth    " Run health check
    ```
 
-5. **Restart Neovim** - Everything should work without installation messages
+6. **Restart Neovim** - Everything should work without installation messages
 
 #### Neovim Keybindings
 
@@ -134,6 +139,12 @@ Leader key: `Space`
 - `<leader>hp` - Preview hunk
 - `<leader>hb` - Show blame for line
 - `<leader>hd` - Show diff for file
+
+**Git (Diffview)**
+- `<leader>gd` - Open diffview
+- `<leader>gh` - Current file history
+- `<leader>gH` - Full branch history
+- `<leader>gc` - Close diffview
 
 **Copilot (Insert mode)**
 - `Ctrl+y` - Accept suggestion
