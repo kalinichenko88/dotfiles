@@ -14,6 +14,21 @@ return {
         },
         file_ignore_patterns = { 'node_modules/', '.git/' },
       },
+      pickers = {
+        git_status = {
+          git_icons = {
+            added = '[added]',
+            changed = '[modifed]',
+            copied = '>',
+            deleted = 'D',
+            renamed = 'R',
+            staged = '✓',
+            unstaged = '✗',
+            unmerged = '‡',
+            untracked = '?',
+          },
+        },
+      },
     })
 
     local ok, err = pcall(require('telescope').load_extension, 'fzf')
