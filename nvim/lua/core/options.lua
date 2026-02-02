@@ -24,6 +24,9 @@ vim.opt.updatetime = 250
 vim.opt.timeoutlen = 400
 vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
 vim.opt.undofile = true
+vim.opt.hidden = true
+vim.opt.swapfile = false
+vim.opt.fileencoding = 'utf-8'
 
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
