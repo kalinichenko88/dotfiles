@@ -13,6 +13,14 @@ local function get_commit_rules()
 ]]
 end
 
+local function get_branch_name()
+  local branch = vim.fn.system('git rev-parse --abbrev-ref HEAD'):gsub('%s+$', '')
+  if vim.v.shell_error ~= 0 then
+    return nil
+  end
+  return branch
+end
+
 local function show_commit_window(staged_files, message)
   local lines = { '  Staged Files:' }
   for file in staged_files:gmatch('[^\n]+') do
@@ -143,9 +151,12 @@ return {
 
       local staged_files = vim.fn.system('git diff --cached --name-only')
       local rules = get_commit_rules()
+      local branch = get_branch_name()
       local prompt = 'Write a concise commit message for the following staged changes. '
         .. 'Return ONLY the commit message, no explanation or markdown formatting.\n\n'
-        .. 'Rules:\n'
+        .. 'Current branch: '
+        .. (branch or 'unknown')
+        .. '\n\nRules:\n'
         .. rules
         .. '\n\nDiff:\n```diff\n'
         .. staged_diff
