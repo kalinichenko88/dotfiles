@@ -1,6 +1,4 @@
 {
   "currentContext": "colima",
-  "cliPluginsExtraDirs": [
-    "/opt/homebrew/lib/docker/cli-plugins"
-  ]
+  "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"]
 }
