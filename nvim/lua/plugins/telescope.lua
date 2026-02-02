@@ -17,16 +17,20 @@ return {
       pickers = {
         git_status = {
           git_icons = {
-            added = '[added]',
-            changed = '[modifed]',
-            copied = '>',
-            deleted = 'D',
-            renamed = 'R',
+            added = '✚',
+            changed = '✹',
+            copied = '⧉',
+            deleted = '✖',
+            renamed = '➜',
             staged = '✓',
             unstaged = '✗',
-            unmerged = '‡',
-            untracked = '?',
+            unmerged = '═',
+            untracked = '◌',
           },
+        },
+        search_history = {
+          theme = 'dropdown',
+          previewer = false,
         },
       },
     })
