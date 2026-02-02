@@ -2,6 +2,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 vim.opt.number = true
+vim.opt.numberwidth = 3
 vim.opt.relativenumber = false
 
 vim.opt.signcolumn = 'yes'
@@ -9,6 +10,7 @@ vim.opt.termguicolors = true
 vim.opt.cursorline = true
 vim.opt.mouse = 'a'
 vim.opt.expandtab = true
+vim.opt.smarttab = true
 vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
