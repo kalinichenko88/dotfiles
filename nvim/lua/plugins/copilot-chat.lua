@@ -58,8 +58,7 @@ local function show_commit_window(staged_files, message)
 
   local function do_commit()
     close_window()
-    local escaped_message = message:gsub("'", "'\\''")
-    local result = vim.fn.system("git commit -m '" .. escaped_message .. "'")
+    local result = vim.fn.system({ 'git', 'commit', '-m', message })
     if vim.v.shell_error == 0 then
       vim.notify('Committed: ' .. message, vim.log.levels.INFO)
     else
@@ -102,8 +101,7 @@ local function show_commit_window(staged_files, message)
         return
       end
 
-      local escaped = new_message:gsub("'", "'\\''")
-      local result = vim.fn.system("git commit -m '" .. escaped .. "'")
+      local result = vim.fn.system({ 'git', 'commit', '-m', new_message })
       if vim.v.shell_error == 0 then
         vim.notify('Committed: ' .. new_message:match('^[^\n]+'), vim.log.levels.INFO)
       else
