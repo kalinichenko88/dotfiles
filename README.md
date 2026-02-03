@@ -4,6 +4,7 @@ My personal configuration files for macOS.
 
 ## Contents
 
+- **Brewfile** - Homebrew packages and casks
 - **git/** - Git configuration with separate profiles for personal and work
 - **docker/** - Docker CLI configuration for Colima
 - **wezterm.lua** - WezTerm terminal emulator configuration
@@ -11,6 +12,20 @@ My personal configuration files for macOS.
 - **.editorconfig** - Editor configuration for consistent coding style
 
 ## Installation
+
+### Homebrew
+
+```bash
+make brew-install
+```
+
+Installs all packages and casks from `Brewfile`.
+
+To update the Brewfile with currently installed packages:
+
+```bash
+make brew-dump
+```
 
 ### Git
 
