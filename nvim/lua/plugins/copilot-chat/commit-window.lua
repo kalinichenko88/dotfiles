@@ -45,6 +45,7 @@ function M.show(staged_files, message)
 
   local function do_commit()
     close_window()
+    vim.notify('Committing...', vim.log.levels.INFO)
     local result = vim.fn.system({ 'git', 'commit', '-m', message })
     if vim.v.shell_error == 0 then
       vim.notify('Committed: ' .. message, vim.log.levels.INFO)
@@ -89,6 +90,7 @@ function M.show(staged_files, message)
         return
       end
 
+      vim.notify('Committing...', vim.log.levels.INFO)
       local result = vim.fn.system({ 'git', 'commit', '-m', new_message })
       if vim.v.shell_error == 0 then
         vim.notify('Committed: ' .. new_message:match('^[^\n]+'), vim.log.levels.INFO)
