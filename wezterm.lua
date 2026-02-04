@@ -71,6 +71,21 @@ config.keys = {
       }),
     }),
   },
+  {
+    key = 'RightArrow',
+    mods = 'CMD|SHIFT',
+    action = act.SplitPane({ direction = 'Right' }),
+  },
+  {
+    key = 'DownArrow',
+    mods = 'CMD|SHIFT',
+    action = act.SplitPane({ direction = 'Down' }),
+  },
+  {
+    key = 'x',
+    mods = 'CMD|SHIFT',
+    action = act.CloseCurrentPane({ confirm = true }),
+  },
 }
 
 -- Dynamic color scheme switching
