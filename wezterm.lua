@@ -54,6 +54,18 @@ config.inactive_pane_hsb = {
   brightness = 0.9,
 }
 config.hyperlink_rules = wezterm.default_hyperlink_rules()
+config.mouse_bindings = {
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.CompleteSelection('ClipboardAndPrimarySelection'),
+  },
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CMD',
+    action = act.OpenLinkAtMouseCursor,
+  },
+}
 
 -- Keybindings
 config.keys = {
@@ -85,6 +97,11 @@ config.keys = {
     key = 'x',
     mods = 'CMD|SHIFT',
     action = act.CloseCurrentPane({ confirm = true }),
+  },
+  {
+    key = 'p',
+    mods = 'CMD',
+    action = act.ActivateCommandPalette,
   },
 }
 
