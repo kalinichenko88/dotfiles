@@ -1,5 +1,21 @@
 local wezterm = require('wezterm')
 
+local function mode_for_appearance(appearance)
+  if appearance:find('Dark') then
+    return 'dark'
+  else
+    return 'light'
+  end
+end
+
+local function delta_theme_for_mode(mode)
+  if mode == 'dark' then
+    return 'OneHalfDark'
+  else
+    return 'OneHalfLight'
+  end
+end
+
 local function scheme_for_appearance(appearance)
   if appearance:find('Dark') then
     return 'OneDark (base16)'
@@ -25,7 +41,13 @@ config.line_height = 1.2
 config.freetype_load_flags = 'NO_HINTING'
 
 -- Colors
-config.color_scheme = scheme_for_appearance(wezterm.gui.get_appearance())
+local appearance = (wezterm.gui and wezterm.gui.get_appearance()) or 'Dark'
+local mode = mode_for_appearance(appearance)
+config.color_scheme = scheme_for_appearance(appearance)
+config.set_environment_variables = {
+  BAT_THEME = delta_theme_for_mode(mode),
+  DELTA_THEME_MODE = mode,
+}
 
 -- UI
 config.hide_tab_bar_if_only_one_tab = true

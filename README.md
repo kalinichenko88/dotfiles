@@ -54,6 +54,20 @@ Verify your configuration:
 make git-check
 ```
 
+#### Delta Theme Switching
+
+`delta` theme switches automatically between:
+- `OneHalfLight` for light mode
+- `OneHalfDark` for dark mode
+
+Priority:
+1. `DELTA_THEME_MODE` environment variable (`light` / `dark`)
+2. macOS appearance (`defaults read -g AppleInterfaceStyle`)
+
+This applies to both:
+- normal git pager output (`core.pager`)
+- interactive hunk mode (`interactive.diffFilter`)
+
 ### WezTerm
 
 ```bash
@@ -65,8 +79,9 @@ Symlinks `wezterm.lua` to `~/.wezterm.lua`.
 #### WezTerm Features
 
 - WebGpu rendering at 120 FPS
-- JetBrains Mono NL font with Menlo fallback
+- Monaco font with Menlo fallback
 - Automatic dark/light theme switching (OneDark/One Light)
+- Exports `BAT_THEME` and `DELTA_THEME_MODE` so `delta` follows terminal theme
 - Native macOS fullscreen and integrated window buttons
 - Blinking bar cursor
 
