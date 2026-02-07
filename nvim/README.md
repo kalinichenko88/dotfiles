@@ -47,14 +47,15 @@ Plugins will be installed automatically on first launch.
 ```
 nvim/
 ├── init.lua              # Entry point
-├── stylua.toml           # Lua formatter config
+├── lazy-lock.json        # Plugin lockfile (pinned versions)
+├── README.md             # This file
 └── lua/
-    ├── config.lua        # Editor settings (leader key, options)
-    ├── plugin.lua        # Lazy.nvim bootstrap
-    ├── mapping.lua       # Global keybindings
     ├── command.lua       # Custom commands
+    ├── plugin.lua        # Lazy.nvim bootstrap
     ├── core/
-    │   └── keymaps.lua   # Core keymaps
+    │   ├── filetypes.lua # Filetype overrides
+    │   ├── options.lua   # Editor settings (leader, options)
+    │   └── keymaps.lua   # Global keybindings
     ├── plugins/          # One file per plugin (auto-loaded)
     │   ├── lsp.lua       # LSP with Mason auto-install
     │   ├── conform.lua   # Format-on-save
