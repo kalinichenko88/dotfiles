@@ -3,6 +3,26 @@ local commit_window = require('plugins.copilot-chat.commit-window')
 
 local M = {}
 
+local function extract_message(response)
+  if type(response) == 'string' then
+    return response
+  end
+
+  if type(response) == 'table' then
+    if type(response.content) == 'string' then
+      return response.content
+    end
+    if type(response.message) == 'string' then
+      return response.message
+    end
+    if type(response.text) == 'string' then
+      return response.text
+    end
+  end
+
+  return nil
+end
+
 function M.setup()
   vim.api.nvim_create_user_command('GitCommit', function()
     local staged_diff = vim.fn.system('git diff --cached')
@@ -29,9 +49,12 @@ function M.setup()
     require('CopilotChat').ask(prompt, {
       headless = true,
       callback = function(response)
-        local msg = response
-        if type(response) == 'table' then
-          msg = response.content or response.message or tostring(response)
+        local msg = extract_message(response)
+        if not msg then
+          vim.schedule(function()
+            vim.notify('Failed to generate commit message: empty response', vim.log.levels.ERROR)
+          end)
+          return
         end
         -- Strip markdown code blocks (```lang\n...\n``` or ```\n...\n```)
         msg = msg:gsub('^%s*```[%w]*%s*\n', ''):gsub('\n%s*```%s*$', '')
@@ -39,6 +62,12 @@ function M.setup()
         msg = msg:gsub('^`', ''):gsub('`$', '')
         -- Trim whitespace
         msg = msg:gsub('^%s+', ''):gsub('%s+$', '')
+        if msg == '' then
+          vim.schedule(function()
+            vim.notify('Generated commit message is empty', vim.log.levels.WARN)
+          end)
+          return
+        end
         vim.schedule(function()
           commit_window.show(staged_files, msg)
         end)
