@@ -7,7 +7,6 @@ return {
   },
   config = function()
     local actions = require('telescope.actions')
-    local action_state = require('telescope.actions.state')
 
     require('telescope').setup({
       defaults = {
@@ -32,20 +31,7 @@ return {
           },
           attach_mappings = function(prompt_bufnr, map)
             local function toggle_stage_with_bufnr()
-              local selection = action_state.get_selected_entry()
-              if not selection then
-                return
-              end
-
-              local file = selection.value
-              local status = vim.fn.system('git status --porcelain -- ' .. vim.fn.shellescape(file))
-              local is_staged = status:sub(1, 1) ~= ' ' and status:sub(1, 1) ~= '?'
-
-              if is_staged then
-                vim.fn.system('git reset HEAD -- ' .. vim.fn.shellescape(file))
-              else
-                vim.fn.system('git add -- ' .. vim.fn.shellescape(file))
-              end
+              actions.git_staging_toggle(prompt_bufnr)
 
               actions.close(prompt_bufnr)
               vim.schedule(function()
