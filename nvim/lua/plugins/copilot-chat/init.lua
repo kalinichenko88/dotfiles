@@ -19,6 +19,5 @@ return {
   keys = {
     { '<leader>cc', '<cmd>CopilotChat<cr>', desc = 'Copilot Chat' },
     { '<leader>cm', '<cmd>GitCommit<cr>', desc = 'Generate commit message' },
-    { '<leader>ca', '<cmd>CopilotChatActions<cr>', mode = { 'n', 'v' }, desc = 'Copilot actions' },
   },
 }
