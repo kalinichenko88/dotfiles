@@ -6,8 +6,6 @@ return {
     'nvim-tree/nvim-web-devicons',
   },
   config = function()
-    local actions = require('telescope.actions')
-
     require('telescope').setup({
       defaults = {
         layout_config = {
@@ -29,20 +27,6 @@ return {
             unmerged = '═',
             untracked = '◌',
           },
-          attach_mappings = function(prompt_bufnr, map)
-            local function toggle_stage_with_bufnr()
-              actions.git_staging_toggle(prompt_bufnr)
-
-              actions.close(prompt_bufnr)
-              vim.schedule(function()
-                vim.cmd('Telescope git_status')
-              end)
-            end
-
-            map('i', '<Tab>', toggle_stage_with_bufnr)
-            map('n', '<Tab>', toggle_stage_with_bufnr)
-            return true
-          end,
         },
         search_history = {
           theme = 'dropdown',
