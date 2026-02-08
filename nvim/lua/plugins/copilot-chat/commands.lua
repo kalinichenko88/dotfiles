@@ -34,15 +34,28 @@ function M.setup()
     local staged_files = vim.fn.system('git diff --cached --name-only')
     local rules = utils.get_commit_rules()
     local branch = utils.get_branch_name()
+
+    local max_diff_len = 15000
+    local diff_section
+    if #staged_diff > max_diff_len then
+      local stat = vim.fn.system('git diff --cached --stat')
+      diff_section = 'Diff stat (full diff too large):\n```\n'
+        .. stat
+        .. '```\n\nTruncated diff:\n```diff\n'
+        .. staged_diff:sub(1, max_diff_len)
+        .. '\n... (truncated)\n```'
+    else
+      diff_section = 'Diff:\n```diff\n' .. staged_diff .. '\n```'
+    end
+
     local prompt = 'Write a concise commit message for the following staged changes. '
       .. 'Return ONLY the commit message, no explanation or markdown formatting.\n\n'
       .. 'Current branch: '
       .. (branch or 'unknown')
       .. '\n\nRules:\n'
       .. rules
-      .. '\n\nDiff:\n```diff\n'
-      .. staged_diff
-      .. '\n```'
+      .. '\n\n'
+      .. diff_section
 
     vim.notify('Generating commit message...', vim.log.levels.INFO)
 
