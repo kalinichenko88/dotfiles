@@ -12,6 +12,16 @@ return {
           width = 0.9,
           height = 0.8,
         },
+        vimgrep_arguments = {
+          'rg',
+          '--color=never',
+          '--no-heading',
+          '--with-filename',
+          '--line-number',
+          '--column',
+          '--smart-case',
+          '--hidden',
+        },
         file_ignore_patterns = { 'node_modules/', '.git/' },
       },
       pickers = {
