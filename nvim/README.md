@@ -62,6 +62,7 @@ nvim/
     │   ├── cmp.lua       # Completion
     │   ├── telescope.lua # Fuzzy finder
     │   ├── gitsigns.lua  # Git integration
+    │   ├── lualine.lua   # Statusline with breadcrumbs
     │   ├── copilot-chat/ # Copilot + commit workflow
     │   │   ├── init.lua        # Plugin spec
     │   │   ├── commands.lua    # GitCommit command
