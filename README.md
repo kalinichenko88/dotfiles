@@ -9,6 +9,7 @@ My personal configuration files for macOS.
 - **docker/** - Docker CLI configuration for Colima
 - **wezterm.lua** - WezTerm terminal emulator configuration
 - **nvim/** - Neovim configuration with lazy.nvim plugin manager
+- **gh/** - GitHub CLI configuration
 - **.editorconfig** - Editor configuration for consistent coding style
 
 ## Installation
@@ -94,6 +95,16 @@ make nvim-config-install
 Symlinks `nvim/` directory to `~/.config/nvim`.
 
 See [nvim/README.md](nvim/README.md) for full documentation, keybindings, and setup instructions.
+
+### GitHub CLI
+
+```bash
+make gh-config-install
+```
+
+Symlinks `gh/config.yml` to `~/.config/gh/config.yml`. Configured with SSH protocol, Neovim as editor, and delta as pager.
+
+After installation, authenticate with `gh auth login`.
 
 ### Docker
 

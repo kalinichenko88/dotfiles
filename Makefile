@@ -1,8 +1,9 @@
 GIT_CONFIG_DIR := $(HOME)/.config/git
 DOTFILES_GIT_DIR := $(PWD)/git
 NVIM_CONFIG_DIR := $(HOME)/.config/nvim
+GH_CONFIG_DIR := $(HOME)/.config/gh
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install brew-install brew-dump
+.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install brew-install brew-dump
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -56,6 +57,12 @@ nvim-config-install:
 	mkdir -p $(HOME)/.config
 	ln -sf $(PWD)/nvim $(NVIM_CONFIG_DIR)
 	@echo "✓ nvim config installed"
+
+gh-config-install:
+	@echo "→ Installing gh config"
+	mkdir -p $(GH_CONFIG_DIR)
+	ln -sf $(PWD)/gh/config.yml $(GH_CONFIG_DIR)/config.yml
+	@echo "✓ gh config installed"
 
 brew-install:
 	@echo "→ Installing packages from Brewfile"
