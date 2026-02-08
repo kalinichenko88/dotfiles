@@ -130,8 +130,7 @@ config.keys = {
 -- Dynamic color scheme switching
 wezterm.on('window-config-reloaded', function(window)
   local overrides = window:get_config_overrides() or {}
-  local appearance = window:get_appearance()
-  local scheme = scheme_for_appearance(appearance)
+  local scheme = scheme_for_appearance(window:get_appearance())
   if overrides.color_scheme ~= scheme then
     overrides.color_scheme = scheme
     window:set_config_overrides(overrides)
