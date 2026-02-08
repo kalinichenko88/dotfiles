@@ -26,6 +26,7 @@ return {
         'bash',
         'php',
         'svelte',
+        'pug',
       },
       callback = function()
         vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"

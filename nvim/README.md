@@ -25,7 +25,7 @@ Plugins will be installed automatically on first launch.
 
 2. **Install TreeSitter parsers**
    ```vim
-   :TSInstall javascript typescript tsx html css json lua bash php svelte
+   :TSInstall javascript typescript tsx html css json lua bash php svelte pug
    ```
 
 3. **Install formatters via Mason**
@@ -57,7 +57,7 @@ nvim/
     ├── command.lua       # Custom commands
     ├── plugin.lua        # Lazy.nvim bootstrap
     ├── core/
-    │   ├── filetypes.lua # Filetype overrides
+    │   ├── filetypes.lua # Filetype overrides (.jade → pug)
     │   ├── options.lua   # Editor settings (leader, options)
     │   └── keymaps.lua   # Global keybindings
     ├── plugins/          # One file per plugin (auto-loaded)
@@ -223,7 +223,7 @@ Stage files and generate commit messages with AI:
 
 **Formatting not working:**
 - Lua: Ensure `stylua` installed via Mason
-- JS/TS: Ensure `prettier` installed via Mason
+- JS/TS/Svelte/Pug: Ensure `prettier` installed via Mason (Svelte and Pug need `prettier-plugin-svelte` / `@prettier/plugin-pug` in the project)
 - Check `:ConformInfo`
 
 **TreeSitter parsers not compiling:**

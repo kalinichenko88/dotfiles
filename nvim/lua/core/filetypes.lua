@@ -7,6 +7,9 @@ vim.filetype.add({
     ['TAG_EDITMSG'] = 'gitcommit',
     ['SQUASH_MSG'] = 'gitcommit',
   },
+  extension = {
+    jade = 'pug',
+  },
   pattern = {
     ['gitconfig.*'] = 'gitconfig',
   },
