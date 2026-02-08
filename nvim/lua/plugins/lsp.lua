@@ -10,7 +10,7 @@ return {
   config = function()
     require('mason').setup()
 
-    local servers = { 'ts_ls', 'eslint', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls' }
+    local servers = { 'ts_ls', 'eslint', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls', 'svelte' }
     local ensure = { 'prettier', 'stylua' }
     vim.list_extend(ensure, servers)
 

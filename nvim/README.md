@@ -2,6 +2,10 @@
 
 Modern Neovim 0.11+ configuration using [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager.
 
+## Prerequisites
+
+- `tree-sitter` CLI - required for compiling TreeSitter parsers (included in Brewfile)
+
 ## Installation
 
 ```bash
@@ -21,7 +25,7 @@ Plugins will be installed automatically on first launch.
 
 2. **Install TreeSitter parsers**
    ```vim
-   :TSInstall javascript typescript tsx html css json lua bash php
+   :TSInstall javascript typescript tsx html css json lua bash php svelte
    ```
 
 3. **Install formatters via Mason**
@@ -222,6 +226,7 @@ Stage files and generate commit messages with AI:
 - JS/TS: Ensure `prettier` installed via Mason
 - Check `:ConformInfo`
 
-**TreeSitter errors:**
+**TreeSitter parsers not compiling:**
+- Ensure `tree-sitter` CLI is installed: `brew install tree-sitter`
 - Run `:TSUpdate` to update parsers
 - Check `:checkhealth nvim-treesitter`

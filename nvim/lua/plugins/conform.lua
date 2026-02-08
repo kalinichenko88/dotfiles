@@ -14,6 +14,7 @@ return {
         css = { 'prettier' },
         scss = { 'prettier' },
         html = { 'prettier' },
+        svelte = { 'prettier' },
       },
       format_on_save = {
         timeout_ms = 500,
