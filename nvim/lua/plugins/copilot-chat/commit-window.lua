@@ -41,6 +41,7 @@ function M.show(staged_files, message)
     if vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_close(win, true)
     end
+    vim.cmd('echo ""')
   end
 
   local function do_commit()
@@ -78,6 +79,7 @@ function M.show(staged_files, message)
     vim.keymap.set({ 'n', 'i' }, '<Esc>', function()
       vim.cmd('stopinsert')
       vim.api.nvim_win_close(edit_win, true)
+      vim.cmd('echo ""')
     end, { buffer = edit_buf })
 
     vim.keymap.set({ 'n', 'i' }, '<C-s>', function()
