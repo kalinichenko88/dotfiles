@@ -12,6 +12,7 @@ return {
     local luasnip = require('luasnip')
 
     cmp.setup({
+      window = {},
       snippet = {
         expand = function(args)
           luasnip.lsp_expand(args.body)
