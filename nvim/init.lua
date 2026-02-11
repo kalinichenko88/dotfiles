@@ -4,3 +4,4 @@ require('core.keymaps')
 
 require('plugin')
 require('command')
+require('autocommands')
