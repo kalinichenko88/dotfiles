@@ -20,6 +20,6 @@ require('lazy').setup({
     enabled = false,
   },
   install = {
-    colorscheme = { 'onedark' },
+    colorscheme = { 'everforest' },
   },
 })

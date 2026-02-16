@@ -11,7 +11,7 @@ return {
     require('mason').setup()
 
     local servers = { 'ts_ls', 'eslint', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls', 'svelte', 'astro' }
-    local ensure = { 'prettier', 'stylua', 'pug-lsp' }
+    local ensure = { 'prettier', 'eslint_d', 'stylua', 'pug-lsp' }
     vim.list_extend(ensure, servers)
 
     require('mason-tool-installer').setup({

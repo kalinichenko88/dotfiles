@@ -28,23 +28,18 @@ Plugins will be installed automatically on first launch.
    :TSInstall javascript typescript tsx html css json lua bash php svelte pug
    ```
 
-3. **Install formatters via Mason**
-   ```vim
-   :MasonInstall stylua prettier eslint_d
-   ```
-
-4. **Set up Copilot** (optional, if using GitHub Copilot)
+3. **Set up Copilot** (optional, if using GitHub Copilot)
    ```vim
    :Copilot setup
    ```
 
-5. **Verify installations**
+4. **Verify installations**
    ```vim
    :Mason          " Check LSP servers & formatters
    :checkhealth    " Run health check
    ```
 
-6. **Restart Neovim** - Everything should work without installation messages
+5. **Restart Neovim** - Everything should work without installation messages
 
 ## Structure
 
