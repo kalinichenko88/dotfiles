@@ -42,6 +42,11 @@ return {
           if ok then
             lualine.setup({ options = { theme = 'auto' } })
           end
+
+          local ibl_ok, ibl = pcall(require, 'ibl')
+          if ibl_ok then
+            ibl.update()
+          end
         end
       end
 
