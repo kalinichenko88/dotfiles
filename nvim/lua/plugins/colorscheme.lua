@@ -47,6 +47,11 @@ return {
           if ibl_ok then
             ibl.update()
           end
+
+          local gs_ok, gitsigns = pcall(require, 'gitsigns')
+          if gs_ok then
+            gitsigns.refresh()
+          end
         end
       end
 
