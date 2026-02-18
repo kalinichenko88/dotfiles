@@ -62,6 +62,7 @@ nvim/
     │   ├── telescope.lua # Fuzzy finder
     │   ├── gitsigns.lua  # Git integration
     │   ├── lualine.lua   # Statusline with breadcrumbs
+    │   ├── yanky.lua     # Clipboard history with yank ring
     │   ├── copilot-chat/ # Copilot + commit workflow
     │   │   ├── init.lua        # Plugin spec
     │   │   ├── commands.lua    # GitCommit command
@@ -169,10 +170,10 @@ Stage files and generate commit messages with AI:
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+y` | Accept suggestion |
-| `Ctrl+j` | Next suggestion |
-| `Ctrl+k` | Previous suggestion |
-| `Ctrl+\` | Dismiss suggestion |
+| `<C-y>` | Accept suggestion |
+| `<C-j>` | Next suggestion |
+| `<C-k>` | Previous suggestion |
+| `<C-\>` | Dismiss suggestion |
 
 ### Completion (Insert mode)
 
@@ -181,10 +182,10 @@ Stage files and generate commit messages with AI:
 | `<Tab>` | Next completion item / Expand snippet |
 | `<S-Tab>` | Previous completion item / Jump back in snippet |
 | `<CR>` | Confirm completion |
-| `Ctrl+Space` | Trigger completion |
-| `Ctrl+e` | Abort completion |
-| `Ctrl+b` | Scroll docs up |
-| `Ctrl+f` | Scroll docs down |
+| `<C-Space>` | Trigger completion |
+| `<C-e>` | Abort completion |
+| `<C-b>` | Scroll docs up |
+| `<C-f>` | Scroll docs down |
 
 ### Commenting
 
@@ -210,8 +211,8 @@ Stage files and generate commit messages with AI:
 
 | Key | Action |
 |-----|--------|
-| `Alt+j` | Move line/selection down |
-| `Alt+k` | Move line/selection up |
+| `<A-j>` | Move line/selection down |
+| `<A-k>` | Move line/selection up |
 
 ### Buffer Navigation
 
