@@ -195,6 +195,17 @@ Stage files and generate commit messages with AI:
 | `gc` | Toggle comment (visual mode) |
 | `gb` | Toggle block comment (visual mode) |
 
+### Clipboard History (Yanky)
+
+| Key | Action |
+|-----|--------|
+| `y` | Yank (tracked in history) |
+| `p` | Put after |
+| `P` | Put before |
+| `]p` | Cycle to older yank after pasting |
+| `[p` | Cycle to newer yank after pasting |
+| `<leader>fy` | Browse full yank history in Telescope |
+
 ### Buffer Navigation
 
 | Key | Action |
