@@ -91,6 +91,13 @@ return {
       },
     })
 
+    vim.lsp.config('cssls', {
+      settings = {
+        css = { lint = { unknownAtRules = 'ignore' } },
+        scss = { lint = { unknownAtRules = 'ignore' } },
+      },
+    })
+
     vim.lsp.config('emmet_ls', {
       filetypes = {
         'html',
