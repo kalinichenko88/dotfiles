@@ -206,6 +206,13 @@ Stage files and generate commit messages with AI:
 | `[p` | Cycle to newer yank after pasting |
 | `<leader>fy` | Browse full yank history in Telescope |
 
+### Line Movement
+
+| Key | Action |
+|-----|--------|
+| `Alt+j` | Move line/selection down |
+| `Alt+k` | Move line/selection up |
+
 ### Buffer Navigation
 
 | Key | Action |
