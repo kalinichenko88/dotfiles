@@ -127,6 +127,17 @@ config.keys = {
   },
 }
 
+-- Tab title: always show current directory name
+wezterm.on('format-tab-title', function(tab)
+  local pane = tab.active_pane
+  local cwd = pane.current_working_dir
+  if cwd then
+    local path = cwd.file_path or tostring(cwd)
+    local dir = path:match('([^/]+)/?$') or path
+    return ' ' .. dir .. ' '
+  end
+end)
+
 -- Dynamic color scheme switching
 wezterm.on('window-config-reloaded', function(window)
   local overrides = window:get_config_overrides() or {}
