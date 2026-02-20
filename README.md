@@ -10,6 +10,7 @@ My personal configuration files for macOS.
 - **wezterm.lua** - WezTerm terminal emulator configuration
 - **nvim/** - Neovim configuration with lazy.nvim plugin manager
 - **gh/** - GitHub CLI configuration
+- **starship/** - Starship prompt configuration
 - **.editorconfig** - Editor configuration for consistent coding style
 
 ## Installation
@@ -105,6 +106,14 @@ make gh-config-install
 Symlinks `gh/config.yml` to `~/.config/gh/config.yml`. Configured with SSH protocol, Neovim as editor, and delta as pager.
 
 After installation, authenticate with `gh auth login`.
+
+### Starship
+
+```bash
+make starship-config-install
+```
+
+Symlinks `starship/starship.toml` to `~/.config/starship.toml`. Configured with increased command timeout (1000ms) to prevent slow plugin warnings.
 
 ### Docker
 
