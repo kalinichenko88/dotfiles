@@ -1,0 +1,10 @@
+# Resolve dotfiles path from this symlink
+DOTFILES_ZSH="$(dirname "$(readlink -f "$HOME/.zshrc")")"
+
+# Load all .zsh files from dotfiles
+for file in "$DOTFILES_ZSH"/*.zsh; do
+  source "$file"
+done
+
+# Local overrides (gitignored)
+[[ -f "$DOTFILES_ZSH/local.zsh" ]] && source "$DOTFILES_ZSH/local.zsh"

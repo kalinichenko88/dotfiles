@@ -5,6 +5,7 @@ My personal configuration files for macOS.
 ## Contents
 
 - **Brewfile** - Homebrew packages and casks
+- **zsh/** - Zsh configuration with modular structure
 - **git/** - Git configuration with separate profiles for personal and work
 - **docker/** - Docker CLI configuration for Colima
 - **wezterm.lua** - WezTerm terminal emulator configuration
@@ -106,6 +107,25 @@ make gh-config-install
 Symlinks `gh/config.yml` to `~/.config/gh/config.yml`. Configured with SSH protocol, Neovim as editor, and delta as pager.
 
 After installation, authenticate with `gh auth login`.
+
+### Zsh
+
+```bash
+make zsh-install
+```
+
+Symlinks `zsh/zshrc` to `~/.zshrc`.
+
+#### Zsh Configuration Structure
+
+| File | Purpose |
+|------|---------|
+| `zshrc` | Entry point — sources all `.zsh` files from the directory |
+| `options.zsh` | Oh My Zsh setup, theme, plugins, editor |
+| `path.zsh` | PATH entries for Homebrew, nvm, bun, Python, etc. |
+| `aliases.zsh` | Custom aliases |
+| `starship.zsh` | Starship prompt init |
+| `local.zsh` | Machine-specific overrides (gitignored, create from `local.zsh.example`) |
 
 ### Starship
 

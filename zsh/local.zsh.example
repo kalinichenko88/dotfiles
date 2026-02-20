@@ -1,0 +1,10 @@
+# Machine-specific overrides (this file is gitignored as local.zsh)
+# Copy to local.zsh and edit as needed:
+#   cp local.zsh.example local.zsh
+
+# Example: custom PATH entries
+# export PATH="$HOME/my-tools/bin:$PATH"
+
+# Example: work-specific environment variables
+# export API_KEY="..."
+# export DATABASE_URL="..."

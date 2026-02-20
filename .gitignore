@@ -3,5 +3,7 @@
 git/gitconfig-work
 git/gitconfig-local
 
+zsh/local.zsh
+
 .claude/
 CLAUDE.md

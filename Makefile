@@ -4,7 +4,7 @@ STARSHIP_CONFIG_DIR := $(HOME)/.config
 NVIM_CONFIG_DIR := $(HOME)/.config/nvim
 GH_CONFIG_DIR := $(HOME)/.config/gh
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install brew-install brew-dump
+.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -70,6 +70,11 @@ starship-config-install:
 	mkdir -p $(STARSHIP_CONFIG_DIR)
 	ln -sf $(PWD)/starship/starship.toml $(STARSHIP_CONFIG_DIR)/starship.toml
 	@echo "✓ starship config installed"
+
+zsh-install:
+	@echo "→ Installing zsh config"
+	ln -sf $(PWD)/zsh/zshrc $(HOME)/.zshrc
+	@echo "✓ zsh config installed"
 
 brew-install:
 	@echo "→ Installing packages from Brewfile"
