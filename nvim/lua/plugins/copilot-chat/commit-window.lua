@@ -61,7 +61,7 @@ function M.show(staged_files, message)
     close_window()
 
     local edit_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(edit_buf, 0, -1, false, { message })
+    vim.api.nvim_buf_set_lines(edit_buf, 0, -1, false, vim.split(message, '\n', { plain = true }))
     vim.bo[edit_buf].bufhidden = 'wipe'
 
     local edit_win = vim.api.nvim_open_win(edit_buf, true, {
