@@ -7,7 +7,9 @@ function M.show(staged_files, message)
   end
   table.insert(lines, '')
   table.insert(lines, '  Commit Message:')
-  table.insert(lines, '    ' .. message)
+  for msg_line in message:gmatch('[^\n]+') do
+    table.insert(lines, '    ' .. msg_line)
+  end
   table.insert(lines, '')
   table.insert(lines, '  ─────────────────────────────────────')
   table.insert(lines, '  <CR> Commit    <e> Edit    <q> Cancel')
@@ -49,7 +51,7 @@ function M.show(staged_files, message)
     vim.notify('Committing...', vim.log.levels.INFO)
     local result = vim.fn.system({ 'git', 'commit', '-m', message })
     if vim.v.shell_error == 0 then
-      vim.notify('Committed: ' .. message, vim.log.levels.INFO)
+      vim.notify('Committed: ' .. message:match('^[^\n]+'), vim.log.levels.INFO)
     else
       vim.notify('Commit failed: ' .. result, vim.log.levels.ERROR)
     end

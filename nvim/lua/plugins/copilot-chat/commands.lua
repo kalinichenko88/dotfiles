@@ -59,7 +59,7 @@ function M.setup()
 
     vim.notify('Generating commit message...', vim.log.levels.INFO)
 
-    require('CopilotChat').ask(prompt, {
+    local ok, err = pcall(require('CopilotChat').ask, prompt, {
       headless = true,
       callback = function(response)
         local msg = extract_message(response)
@@ -86,6 +86,9 @@ function M.setup()
         end)
       end,
     })
+    if not ok then
+      vim.notify('Copilot error: ' .. tostring(err), vim.log.levels.ERROR)
+    end
   end, {})
 end
 
