@@ -35,6 +35,12 @@ config.max_fps = 120
 config.font = wezterm.font_with_fallback({
   { family = 'Monaco', weight = 'DemiBold' },
   'Menlo',
+  -- Icon/private-use glyph fallback (Starship/eza/devicons, etc.)
+  'JetBrainsMono Nerd Font Mono',
+  'JetBrainsMono Nerd Font',
+  'Symbols Nerd Font Mono',
+  'Apple Color Emoji',
+  'PingFang SC',
 })
 config.font_size = 13.0
 config.line_height = 1.2
