@@ -9,6 +9,7 @@ alias gco='git checkout'
 alias gcb='git checkout -b'
 alias gp='git push'
 alias gpf='git push --force-with-lease'
+alias gpl='git pull'
 
 # Neovim
 alias v='nvim'
