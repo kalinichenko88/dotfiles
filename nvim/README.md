@@ -111,6 +111,13 @@ Leader key: `Space`
 | `<leader>ca` | Code actions |
 | `<leader>f` | Format buffer |
 
+### LSP Document Highlight
+
+| Key | Action |
+|-----|--------|
+| `]]` | Next reference |
+| `[[` | Previous reference |
+
 ### Diagnostics
 
 | Key | Action |
