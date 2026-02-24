@@ -18,9 +18,9 @@ end
 
 local function scheme_for_appearance(appearance)
   if appearance:find('Dark') then
-    return 'OneDark (base16)'
+    return 'Ocean (dark) (terminal.sexy)'
   else
-    return 'One Light (base16)'
+    return 'Ocean (light) (terminal.sexy)'
   end
 end
 
