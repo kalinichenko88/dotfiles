@@ -16,5 +16,8 @@ alias v='nvim'
 alias vi='nvim'
 alias vim='nvim'
 
+# Claude
+alias cc='claude'
+
 # Shell
 alias reload='source ~/.zshrc'
