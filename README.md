@@ -9,6 +9,7 @@ My personal configuration files for macOS.
 - **git/** - Git configuration with separate profiles for personal and work
 - **docker/** - Docker CLI configuration for Colima
 - **wezterm.lua** - WezTerm terminal emulator configuration
+- **alacritty/** - Alacritty terminal emulator configuration with theme variants
 - **nvim/** - Neovim configuration with lazy.nvim plugin manager
 - **gh/** - GitHub CLI configuration
 - **starship/** - Starship prompt configuration
@@ -82,7 +83,7 @@ Symlinks `wezterm.lua` to `~/.wezterm.lua`.
 #### WezTerm Features
 
 - WebGpu rendering at 120 FPS
-- Monaco font with Menlo fallback
+- Monaco font with Menlo and Nerd Font fallbacks
 - Automatic dark/light theme switching (OneDark/One Light)
 - Exports `BAT_THEME` and `DELTA_THEME_MODE` so `delta` follows terminal theme
 - Native macOS fullscreen and integrated window buttons

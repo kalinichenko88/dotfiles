@@ -49,6 +49,7 @@ nvim/
 ├── lazy-lock.json        # Plugin lockfile (pinned versions)
 ├── README.md             # This file
 └── lua/
+    ├── autocommands.lua  # Custom autocommands
     ├── command.lua       # Custom commands
     ├── plugin.lua        # Lazy.nvim bootstrap
     ├── core/
@@ -69,7 +70,7 @@ nvim/
     │   │   ├── commit-window.lua # Commit preview UI
     │   │   └── utils.lua       # Git helpers
     │   └── ...
-    └── themes/           # Custom themes
+    └── autocommands.lua  # Custom autocommands
 ```
 
 ## Keybindings
@@ -93,6 +94,8 @@ Leader key: `Space`
 | `<leader>fc` | Commands palette |
 | `<leader>fk` | Show keymaps |
 | `<leader>gs` | Git status |
+| `<C-n>` | Next search history (in Telescope prompt) |
+| `<C-p>` | Previous search history (in Telescope prompt) |
 
 ### LSP (Language Server)
 

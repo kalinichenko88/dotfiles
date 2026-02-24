@@ -8,6 +8,12 @@ return {
   config = function()
     require('telescope').setup({
       defaults = {
+        mappings = {
+          i = {
+            ['<C-n>'] = require('telescope.actions').cycle_history_next,
+            ['<C-p>'] = require('telescope.actions').cycle_history_prev,
+          },
+        },
         layout_config = {
           width = 0.9,
           height = 0.8,
