@@ -10,6 +10,8 @@ return {
     'CopilotChatCommit',
     'CopilotChatCommitStaged',
     'GitCommit',
+    'Translate',
+    'TranslateBuffer',
   },
   opts = {},
   config = function(_, opts)
@@ -19,5 +21,8 @@ return {
   keys = {
     { '<leader>cc', '<cmd>CopilotChat<cr>', desc = 'Copilot Chat' },
     { '<leader>cm', '<cmd>GitCommit<cr>', desc = 'Generate commit message' },
+    { '<leader>ct', '<cmd>Translate<cr>', desc = 'Translate line/range' },
+    { '<leader>cT', '<cmd>TranslateBuffer<cr>', desc = 'Translate buffer' },
+    { '<leader>ct', ":'<,'>Translate<cr>", mode = 'x', desc = 'Translate selection' },
   },
 }

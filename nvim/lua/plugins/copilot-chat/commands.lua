@@ -1,5 +1,6 @@
 local utils = require('plugins.copilot-chat.utils')
 local commit_window = require('plugins.copilot-chat.commit-window')
+local translator = require('plugins.copilot-chat.translate')
 
 local M = {}
 
@@ -90,6 +91,21 @@ function M.setup()
       vim.notify('Copilot error: ' .. tostring(err), vim.log.levels.ERROR)
     end
   end, {})
+
+  vim.api.nvim_create_user_command('Translate', function(args)
+    translator.translate_line_range(args.line1, args.line2, args.args)
+  end, {
+    desc = 'Translate selected lines (or current line)',
+    nargs = '*',
+    range = true,
+  })
+
+  vim.api.nvim_create_user_command('TranslateBuffer', function(args)
+    translator.translate_buffer(args.args)
+  end, {
+    desc = 'Translate current buffer',
+    nargs = '*',
+  })
 end
 
 return M

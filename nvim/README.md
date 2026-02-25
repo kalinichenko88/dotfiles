@@ -64,10 +64,11 @@ nvim/
     │   ├── gitsigns.lua  # Git integration
     │   ├── lualine.lua   # Statusline with breadcrumbs
     │   ├── yanky.lua     # Clipboard history with yank ring
-    │   ├── copilot-chat/ # Copilot + commit workflow
+    │   ├── copilot-chat/ # Copilot commit + translation workflow
     │   │   ├── init.lua        # Plugin spec
-    │   │   ├── commands.lua    # GitCommit command
+    │   │   ├── commands.lua    # GitCommit + translation commands
     │   │   ├── commit-window.lua # Commit preview UI
+    │   │   ├── translate.lua   # Translation helper
     │   │   └── utils.lua       # Git helpers
     │   └── ...
     └── autocommands.lua  # Custom autocommands
@@ -175,6 +176,22 @@ Stage files and generate commit messages with AI:
 | `<Esc>` | Cancel |
 
 **Project-specific commit rules**: Create `.commit-rules` in your project root to customize the commit message format. Falls back to conventional commits if not present.
+
+### Translation (Copilot-powered)
+
+Translate Markdown or any text directly in buffer:
+
+| Key | Action |
+|-----|--------|
+| `<leader>ct` | Translate current line / visual selection (default: Russian) |
+| `<leader>cT` | Translate entire buffer (default: Russian) |
+
+Commands:
+
+1. `:Translate` - Translate current line
+2. `:'<,'>Translate` - Translate selected lines
+3. `:%Translate Ukrainian` - Translate whole document to Ukrainian
+4. `:TranslateBuffer English` - Translate whole buffer to English
 
 ### Copilot (Insert mode)
 
