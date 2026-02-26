@@ -250,6 +250,12 @@ Commands:
 | `<Esc>` | Clear search highlight |
 | `<leader>w` | Save file |
 
+## Editor Behavior
+
+- **Word wrap** is enabled for markdown and text files (wraps at word boundaries)
+- **Format-on-save** via conform.nvim (Prettier for JS/TS/CSS, stylua for Lua)
+- **Theme auto-switches** based on macOS system appearance
+
 ## Adding Plugins
 
 1. Create `nvim/lua/plugins/<plugin-name>.lua`
