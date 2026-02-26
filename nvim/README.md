@@ -84,6 +84,26 @@ Leader key: `Space`
 |-----|--------|
 | `<leader>e` | Toggle Neo-tree file explorer |
 
+### Workspaces
+
+Manage and switch between project directories. When switching, Neo-tree updates to the new root and Telescope opens for file search.
+
+| Key | Action |
+|-----|--------|
+| `<leader>fw` | Switch workspace (Telescope picker) |
+
+Commands:
+
+| Command | Action |
+|---------|--------|
+| `:WorkspacesAdd [name] [path]` | Add current directory (or given path) as a workspace |
+| `:WorkspacesAddDir [path]` | Register a parent directory containing multiple projects |
+| `:WorkspacesSyncDirs` | Sync workspaces from registered parent directories |
+| `:WorkspacesRemove [name]` | Remove a workspace |
+| `:WorkspacesList` | List all workspaces |
+
+**Bulk registration:** Use `:WorkspacesAddDir ~/Dev/Personal` to register a parent directory. Then `:WorkspacesSyncDirs` will automatically add every subdirectory as a workspace. When new projects appear in that directory, run `:WorkspacesSyncDirs` again to pick them up.
+
 ### Telescope (Fuzzy Finder)
 
 | Key | Action |
