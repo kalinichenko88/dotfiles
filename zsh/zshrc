@@ -8,3 +8,6 @@ done
 
 # Local overrides (gitignored)
 [[ -f "$DOTFILES_ZSH/local.zsh" ]] && source "$DOTFILES_ZSH/local.zsh"
+
+# bun completions
+[ -s "/Users/ivan_kalinichenko/.bun/_bun" ] && source "/Users/ivan_kalinichenko/.bun/_bun"
