@@ -9,6 +9,7 @@ vim.filetype.add({
   },
   extension = {
     jade = 'pug',
+    mdx = 'mdx',
   },
   pattern = {
     ['gitconfig.*'] = 'gitconfig',

@@ -10,7 +10,7 @@ return {
   config = function()
     require('mason').setup()
 
-    local servers = { 'ts_ls', 'eslint', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls', 'svelte', 'astro' }
+    local servers = { 'ts_ls', 'eslint', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls', 'svelte', 'astro', 'mdx_analyzer' }
     local ensure = { 'prettier', 'eslint_d', 'stylua', 'pug-lsp' }
     vim.list_extend(ensure, servers)
 
@@ -85,6 +85,7 @@ return {
         'svelte',
         'astro',
         'html',
+        'mdx',
       },
       settings = {
         workingDirectories = { mode = 'auto' },

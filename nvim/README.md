@@ -53,7 +53,7 @@ nvim/
     ├── command.lua       # Custom commands
     ├── plugin.lua        # Lazy.nvim bootstrap
     ├── core/
-    │   ├── filetypes.lua # Filetype overrides (.jade → pug)
+    │   ├── filetypes.lua # Filetype overrides (.jade → pug, .mdx → mdx)
     │   ├── options.lua   # Editor settings (leader, options)
     │   └── keymaps.lua   # Global keybindings
     ├── plugins/          # One file per plugin (auto-loaded)
@@ -64,6 +64,7 @@ nvim/
     │   ├── gitsigns.lua  # Git integration
     │   ├── lualine.lua   # Statusline with breadcrumbs
     │   ├── yanky.lua     # Clipboard history with yank ring
+    │   ├── mdx.lua       # MDX syntax highlighting (via mdx.nvim)
     │   ├── copilot-chat/ # Copilot commit + translation workflow
     │   │   ├── init.lua        # Plugin spec
     │   │   ├── commands.lua    # GitCommit + translation commands
@@ -273,7 +274,7 @@ Commands:
 ## Editor Behavior
 
 - **Word wrap** is enabled for markdown and text files (wraps at word boundaries)
-- **Format-on-save** via conform.nvim (Prettier for JS/TS/CSS, stylua for Lua)
+- **Format-on-save** via conform.nvim (Prettier for JS/TS/CSS/MDX, stylua for Lua)
 - **Theme auto-switches** based on macOS system appearance
 
 ## Adding Plugins
@@ -290,7 +291,7 @@ Commands:
 
 **Formatting not working:**
 - Lua: Ensure `stylua` installed via Mason
-- JS/TS/Svelte/Pug: Ensure `prettier` installed via Mason (Svelte and Pug need `prettier-plugin-svelte` / `@prettier/plugin-pug` in the project)
+- JS/TS/Svelte/Pug/MDX: Ensure `prettier` installed via Mason (Svelte and Pug need `prettier-plugin-svelte` / `@prettier/plugin-pug` in the project)
 - Check `:ConformInfo`
 
 **TreeSitter parsers not compiling:**
