@@ -114,6 +114,12 @@ return {
       },
     })
 
+    vim.lsp.config('mdx_analyzer', {
+      init_options = {
+        typescript = {},
+      },
+    })
+
     vim.lsp.enable(servers)
     vim.lsp.enable('pug')
   end,
