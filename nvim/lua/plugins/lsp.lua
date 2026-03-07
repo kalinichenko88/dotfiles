@@ -48,8 +48,12 @@ return {
         require('conform').format({ async = true, lsp_format = 'fallback' })
       end, 'Format buffer')
 
-      nmap('[d', vim.diagnostic.goto_prev, 'Previous diagnostic')
-      nmap(']d', vim.diagnostic.goto_next, 'Next diagnostic')
+      nmap('[d', function()
+        vim.diagnostic.jump({ count = -1, float = true })
+      end, 'Previous diagnostic')
+      nmap(']d', function()
+        vim.diagnostic.jump({ count = 1, float = true })
+      end, 'Next diagnostic')
     end
 
     vim.lsp.config('*', {
