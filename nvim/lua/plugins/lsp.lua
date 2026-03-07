@@ -73,6 +73,14 @@ return {
       },
     })
 
+    vim.lsp.config('ts_ls', {
+      settings = {
+        implicitProjectConfiguration = {
+          checkJs = true,
+        },
+      },
+    })
+
     vim.lsp.config('eslint', {
       filetypes = {
         'javascript',
