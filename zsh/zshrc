@@ -1,3 +1,4 @@
+[[ "$TERM_PROGRAM" == "vscode" ]] && eval "$(~/.local/bin/agent shell-integration zsh)"
 # Resolve dotfiles path from this symlink
 DOTFILES_ZSH="$(dirname "$(readlink -f "$HOME/.zshrc")")"
 
