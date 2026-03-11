@@ -273,7 +273,7 @@ Commands:
 
 ## Editor Behavior
 
-- **Word wrap** is enabled for markdown and text files (wraps at word boundaries)
+- **Word wrap** is enabled for markdown and text files (wraps at word boundaries); toggle manually with `:set wrap!`, or use `:set wrap` / `:set nowrap` explicitly
 - **Format-on-save** via conform.nvim (Prettier for JS/TS/CSS/MDX, stylua for Lua)
 - **Theme auto-switches** based on macOS system appearance
 
