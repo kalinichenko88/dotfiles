@@ -4,8 +4,10 @@ STARSHIP_CONFIG_DIR := $(HOME)/.config
 NVIM_CONFIG_DIR := $(HOME)/.config/nvim
 GH_CONFIG_DIR := $(HOME)/.config/gh
 CLAUDE_SKILLS_DIR := $(HOME)/.claude/skills
+CLAUDE_HOOKS_DIR := $(HOME)/.claude/hooks
+CLAUDE_SETTINGS := $(HOME)/.claude/settings.json
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump claude-skills-install
+.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump claude-skills-install claude-hooks-install
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -96,3 +98,17 @@ claude-skills-install:
 		echo "  ✓ $$skill_name"; \
 	done
 	@echo "✓ Claude Code skills installed"
+
+claude-hooks-install:
+	@echo "→ Installing Claude Code hooks"
+	mkdir -p $(CLAUDE_HOOKS_DIR)
+	@for hook in $(PWD)/claude/hooks/*.sh; do \
+		[ -f "$$hook" ] || continue; \
+		hook_name=$$(basename "$$hook"); \
+		ln -sf "$$hook" "$(CLAUDE_HOOKS_DIR)/$$hook_name"; \
+		echo "  ✓ $$hook_name"; \
+	done
+	@test -f $(CLAUDE_SETTINGS) || echo '{}' > $(CLAUDE_SETTINGS)
+	@jq --slurpfile hooks $(PWD)/claude/hooks-config.json '.hooks = $$hooks[0]' $(CLAUDE_SETTINGS) > $(CLAUDE_SETTINGS).tmp && \
+		mv $(CLAUDE_SETTINGS).tmp $(CLAUDE_SETTINGS)
+	@echo "✓ Claude Code hooks installed"
