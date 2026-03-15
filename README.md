@@ -13,6 +13,7 @@ My personal configuration files for macOS.
 - **nvim/** - Neovim configuration with lazy.nvim plugin manager
 - **gh/** - GitHub CLI configuration
 - **starship/** - Starship prompt configuration
+- **claude/** - Claude Code skills (create-post)
 - **.editorconfig** - Editor configuration for consistent coding style
 
 ## Installation
@@ -143,6 +144,17 @@ make docker-config-install
 ```
 
 Copies `docker/config.json` to `~/.docker/config.json`. Configured for [Colima](https://github.com/abiosoft/colima) with Homebrew CLI plugins.
+
+### Claude Code Skills
+
+```bash
+make claude-skills-install
+```
+
+Symlinks skill directories from `claude/skills/` to `~/.claude/skills/`.
+
+Available skills:
+- **create-post** - Creates English blog posts from rough Russian technical drafts for kalinichenko.dev
 
 ## License
 
