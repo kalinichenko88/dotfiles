@@ -13,7 +13,7 @@ My personal configuration files for macOS.
 - **nvim/** - Neovim configuration with lazy.nvim plugin manager
 - **gh/** - GitHub CLI configuration
 - **starship/** - Starship prompt configuration
-- **claude/** - Claude Code skills (create-post)
+- **claude/** - Claude Code skills (create-post) and hooks (check-docs-before-commit)
 - **.editorconfig** - Editor configuration for consistent coding style
 
 ## Installation
@@ -155,6 +155,17 @@ Symlinks skill directories from `claude/skills/` to `~/.claude/skills/`.
 
 Available skills:
 - **create-post** - Creates English blog posts from rough Russian technical drafts for kalinichenko.dev
+
+### Claude Code Hooks
+
+```bash
+make claude-hooks-install
+```
+
+Symlinks hook scripts from `claude/hooks/` to `~/.claude/hooks/` and merges hook configuration into `~/.claude/settings.json`.
+
+Available hooks:
+- **check-docs-before-commit** - Blocks commits until Claude reviews documentation files (CLAUDE.md, README.md) for accuracy
 
 ## License
 
