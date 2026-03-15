@@ -3,8 +3,9 @@ DOTFILES_GIT_DIR := $(PWD)/git
 STARSHIP_CONFIG_DIR := $(HOME)/.config
 NVIM_CONFIG_DIR := $(HOME)/.config/nvim
 GH_CONFIG_DIR := $(HOME)/.config/gh
+CLAUDE_SKILLS_DIR := $(HOME)/.claude/skills
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump
+.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump claude-skills-install
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -85,3 +86,13 @@ brew-dump:
 	@echo "→ Dumping installed packages to Brewfile"
 	brew bundle dump --file=$(PWD)/Brewfile --force
 	@echo "✓ Brewfile updated"
+
+claude-skills-install:
+	@echo "→ Installing Claude Code skills"
+	mkdir -p $(CLAUDE_SKILLS_DIR)
+	@for skill in $(PWD)/claude/skills/*/; do \
+		skill_name=$$(basename "$$skill"); \
+		ln -sfn "$$skill" "$(CLAUDE_SKILLS_DIR)/$$skill_name"; \
+		echo "  ✓ $$skill_name"; \
+	done
+	@echo "✓ Claude Code skills installed"

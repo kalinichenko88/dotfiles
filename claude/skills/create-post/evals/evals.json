@@ -1,0 +1,76 @@
+[
+  {
+    "prompt": "Переведи этот черновик технической статьи на английский:\n\nПривет! Сегодня я хочу рассказать про интересную проблему с которой я столкнулся при работе с React хуками.\n\nВ общем дело было так - я делал компонент для формы, использовал useEffect чтобы подгружать данные с сервера. И тут началось - компонент ререндерился бесконечно. Я сначала вообще не понял в чем дело.\n\nКод выглядел примерно так:\n\n```tsx\nconst MyForm = () => {\n  const [data, setData] = useState([]);\n  \n  useEffect(() => {\n    fetchData().then(setData);\n  }, [data]); // проблема тут!\n  \n  return <div>{data.map(...)}</div>;\n};\n```\n\nВидишь проблему? Я указал `data` в массиве зависимостей. А useEffect при каждом изменении data вызывает fetchData, который меняет data, и так по кругу.\n\nРешение простое - убрать data из зависимостей:\n\n```tsx\nuseEffect(() => {\n  fetchData().then(setData);\n}, []); // теперь запускается только при монтировании\n```\n\nВ общем, будьте внимательны с массивом зависимостей!",
+    "expectations": [
+      "Translation maintains conversational tone",
+      "Code blocks are preserved exactly",
+      "Technical terms (useEffect, hooks, dependencies) are accurate",
+      "Author's personal experience ('я столкнулся', 'я сначала не понял') is preserved in first person",
+      "No robotic phrases like 'it is important to note' or 'in today's world'",
+      "Comments in code are translated to English",
+      "No rule-of-three rhetorical constructions",
+      "No dramatic single-sentence conclusions",
+      "Vocabulary is simple (B1-B2 level for non-technical prose)",
+      "Title is descriptive, not clickbaity",
+      "Output includes frontmatter with title, description, pubDate, tags"
+    ]
+  },
+  {
+    "prompt": "Переведи на английский этот обзор библиотеки:\n\nНедавно попробовал новую библиотеку для работы с формами - React Hook Form. До этого использовал Formik и честно скажу - разница ощутимая.\n\nЧто понравилось:\n- Производительность реально лучше, меньше ререндеров\n- API проще и интуитивнее\n- Валидация встроена и работает отлично\n- Размер бандла намного меньше\n\nЧто не очень:\n- Документация местами неполная\n- Некоторые edge cases приходится гуглить\n\nПример использования:\n\n```tsx\nimport { useForm } from 'react-hook-form';\n\nfunction MyForm() {\n  const { register, handleSubmit } = useForm();\n  \n  return (\n    <form onSubmit={handleSubmit(data => console.log(data))}>\n      <input {...register('email', { required: true })} />\n    </form>\n  );\n}\n```\n\nВ целом рекомендую попробовать, особенно если у вас большие формы.",
+    "expectations": [
+      "Preserves list structure and formatting",
+      "Maintains author's opinion and comparison",
+      "Code example unchanged",
+      "Conversational tone maintained ('честно скажу', 'в целом рекомендую')",
+      "Technical accuracy in library name and concepts",
+      "Balanced pros/cons preserved",
+      "No rule-of-three rhetorical constructions",
+      "No dramatic single-sentence conclusions",
+      "Vocabulary is simple (B1-B2 level for non-technical prose)",
+      "Title is descriptive, not clickbaity",
+      "Output includes frontmatter with title, description, pubDate, tags"
+    ]
+  },
+  {
+    "prompt": "Переведи этот tutorial:\n\nСейчас покажу как настроить TypeScript с React с нуля.\n\nШаг 1: Инициализируем проект\n\n```bash\nnpx create-react-app my-app --template typescript\n```\n\nШаг 2: Настраиваем tsconfig.json\n\nВажно! Обязательно включите strict mode. Да, будет больше ошибок вначале, но потом спасибо скажете себе.\n\n```json\n{\n  \"compilerOptions\": {\n    \"strict\": true,\n    \"jsx\": \"react-jsx\"\n  }\n}\n```\n\nШаг 3: Пишем первый типизированный компонент\n\n```tsx\ninterface Props {\n  name: string;\n  age: number;\n}\n\nconst User: React.FC<Props> = ({ name, age }) => {\n  return <div>{name} is {age} years old</div>;\n};\n```\n\nВот и все! Теперь у вас есть type-safe React приложение.",
+    "expectations": [
+      "Step-by-step structure preserved",
+      "Command examples unchanged",
+      "Author's advice and warnings kept ('Важно!', 'спасибо скажете себе')",
+      "Code blocks intact with proper syntax highlighting hints",
+      "Conversational instructional tone",
+      "Technical terms accurate (type-safe, strict mode)",
+      "No rule-of-three rhetorical constructions",
+      "No dramatic single-sentence conclusions",
+      "Vocabulary is simple (B1-B2 level for non-technical prose)",
+      "Title is descriptive, not clickbaity",
+      "Output includes frontmatter with title, description, pubDate, tags"
+    ]
+  },
+  {
+    "prompt": "Сделай пост из этих заметок:\n\n- попробовал Bun вместо Node для своего сайд-проекта\n- скорость установки пакетов — небо и земля\n- тесты тоже быстрее запускаются\n- но некоторые npm пакеты не работают, пришлось заменять\n- для сайд-проектов норм, для прода пока рано",
+    "expectations": [
+      "Bullet points expanded into a real post with paragraphs",
+      "Post is short — not padded with filler",
+      "Author's opinions preserved without softening ('для прода пока рано')",
+      "Direct tone — no hedging like 'it might not be ideal for production yet'",
+      "No AI-writing patterns",
+      "Vocabulary is simple (B1-B2 level for non-technical prose)",
+      "Output includes frontmatter with title, description, pubDate, tags",
+      "Title is descriptive, not clickbaity"
+    ]
+  },
+  {
+    "prompt": "Переведи этот черновик:\n\nЯ в шоке от того, насколько плохо сделан новый API в библиотеке X. Серьёзно, кто это проектировал?\n\nРаньше было:\n```ts\nconst result = lib.doThing({ input: data });\n```\n\nТеперь надо писать вот это:\n```ts\nconst builder = lib.createThingBuilder();\nbuilder.setInput(data);\nbuilder.configure({ mode: 'default' });\nconst result = await builder.build().execute();\n```\n\n4 строки вместо одной. И mode: 'default' обязательный, хотя он дефолтный. Гениально.\n\nМиграция заняла 2 дня на то, что раньше работало из коробки. Если вы ещё на старой версии — не обновляйтесь, пока не посмотрите changelog.",
+    "expectations": [
+      "Frustration and sarcasm preserved ('кто это проектировал', 'Гениально')",
+      "Strong opinions not softened or hedged",
+      "Code examples preserved exactly",
+      "Direct warning to readers kept",
+      "No AI patterns that soften the tone",
+      "Vocabulary is simple (B1-B2 level for non-technical prose)",
+      "Output includes frontmatter with title, description, pubDate, tags",
+      "Title is descriptive, not clickbaity"
+    ]
+  }
+]
