@@ -8,6 +8,7 @@ vim.filetype.add({
     ['SQUASH_MSG'] = 'gitcommit',
   },
   extension = {
+    base = 'yaml',
     jade = 'pug',
     mdx = 'mdx',
   },
