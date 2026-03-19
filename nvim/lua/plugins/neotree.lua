@@ -26,6 +26,11 @@ return {
       window = {
         position = 'right',
         width = 48,
+        mappings = {
+          ['<cr>'] = 'open',
+          ['<2-LeftMouse>'] = 'open',
+          ['<LeftRelease>'] = 'open',
+        },
       },
     })
   end,
