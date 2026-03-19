@@ -14,6 +14,7 @@ return {
           enabled = true,
           leave_dirs_open = false,
         },
+        use_libuv_file_watcher = true,
         enable_git_status = true,
         hijack_netrw_behavior = 'open_current',
         filtered_items = {
