@@ -274,7 +274,7 @@ Commands:
 ## Editor Behavior
 
 - **Word wrap** is enabled for markdown and text files (wraps at word boundaries); toggle manually with `:set wrap!`, or use `:set wrap` / `:set nowrap` explicitly
-- **Format-on-save** via conform.nvim (Prettier for JS/TS/CSS/MDX, stylua for Lua)
+- **Format-on-save** via conform.nvim (Biome if project has `biome.json`, otherwise eslint_d + Prettier for JS/TS/JSON; Prettier for CSS/MDX/Svelte/Astro; stylua for Lua)
 - **Theme auto-switches** based on macOS system appearance
 
 ## Adding Plugins
@@ -291,7 +291,8 @@ Commands:
 
 **Formatting not working:**
 - Lua: Ensure `stylua` installed via Mason
-- JS/TS/Svelte/Pug/MDX: Ensure `prettier` installed via Mason (Svelte and Pug need `prettier-plugin-svelte` / `@prettier/plugin-pug` in the project)
+- JS/TS/JSON with Biome: Ensure `biome` installed via Mason and `biome.json`/`biome.jsonc` exists in the project
+- JS/TS/Svelte/Pug/MDX with Prettier: Ensure `prettier` installed via Mason (Svelte and Pug need `prettier-plugin-svelte` / `@prettier/plugin-pug` in the project)
 - Check `:ConformInfo`
 
 **TreeSitter parsers not compiling:**
