@@ -10,7 +10,7 @@ return {
   config = function()
     require('mason').setup()
 
-    local servers = { 'ts_ls', 'eslint', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls', 'svelte', 'astro', 'mdx_analyzer' }
+    local servers = { 'ts_ls', 'eslint', 'biome', 'html', 'cssls', 'jsonls', 'tailwindcss', 'emmet_ls', 'phpactor', 'lua_ls', 'svelte', 'astro', 'mdx_analyzer' }
     local ensure = { 'prettier', 'eslint_d', 'stylua', 'pug-lsp' }
     vim.list_extend(ensure, servers)
 
@@ -27,7 +27,7 @@ return {
     local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
     local function on_attach(client, bufnr)
-      if client.name == 'ts_ls' or client.name == 'eslint' then
+      if client.name == 'ts_ls' or client.name == 'eslint' or client.name == 'biome' then
         client.server_capabilities.documentFormattingProvider = false
         client.server_capabilities.documentRangeFormattingProvider = false
       end

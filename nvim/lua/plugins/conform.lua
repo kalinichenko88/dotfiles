@@ -1,3 +1,14 @@
+local function biome_or_prettier(bufnr)
+  local has_biome = vim.fs.find({ 'biome.json', 'biome.jsonc' }, {
+    upward = true,
+    path = vim.api.nvim_buf_get_name(bufnr),
+  })
+  if #has_biome > 0 then
+    return { 'biome' }
+  end
+  return { 'eslint_d', 'prettier' }
+end
+
 return {
   'stevearc/conform.nvim',
   event = { 'BufWritePre' },
@@ -6,11 +17,12 @@ return {
     require('conform').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
-        javascript = { 'eslint_d', 'prettier' },
-        javascriptreact = { 'eslint_d', 'prettier' },
-        typescript = { 'eslint_d', 'prettier' },
-        typescriptreact = { 'eslint_d', 'prettier' },
-        json = { 'prettier' },
+        javascript = biome_or_prettier,
+        javascriptreact = biome_or_prettier,
+        typescript = biome_or_prettier,
+        typescriptreact = biome_or_prettier,
+        json = biome_or_prettier,
+        jsonc = biome_or_prettier,
         css = { 'prettier' },
         scss = { 'prettier' },
         html = { 'prettier' },
