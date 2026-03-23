@@ -17,7 +17,7 @@ alias vi='nvim'
 alias vim='nvim'
 
 # Claude
-alias cc='claude'
+alias cc='claude --dangerously-skip-permissions'
 
 # Shell
 alias reload='source ~/.zshrc'
