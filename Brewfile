@@ -1,3 +1,4 @@
+brew "1password-cli"
 brew "colima"
 brew "docker"
 brew "docker-buildx"
