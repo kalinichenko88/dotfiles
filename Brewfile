@@ -30,7 +30,6 @@ cask "font-jetbrains-mono"
 cask "font-jetbrains-mono-nerd-font"
 cask "ghostty"
 cask "kap"
-cask "keycastr"
 cask "yt-dlp"
 cask "wezterm"
 
