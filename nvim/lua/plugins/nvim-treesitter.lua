@@ -3,12 +3,17 @@ return {
   lazy = false,
   build = ':TSUpdate',
   config = function()
-    -- Enable highlighting for all filetypes
+    -- Neovim 0.12 auto-starts treesitter for: lua, markdown, help, query
+    -- Start it for all OTHER filetypes that have a parser installed
+    local builtin_ts_fts = { lua = true, markdown = true, help = true, query = true }
+
     vim.api.nvim_create_autocmd('FileType', {
       pattern = '*',
-      callback = function()
-        local buf = vim.api.nvim_get_current_buf()
-        pcall(vim.treesitter.start, buf)
+      callback = function(args)
+        if builtin_ts_fts[args.match] then
+          return
+        end
+        pcall(vim.treesitter.start, args.buf)
       end,
     })
 
