@@ -12,3 +12,6 @@ done
 
 # bun completions
 [ -s "/Users/ivan_kalinichenko/.bun/_bun" ] && source "/Users/ivan_kalinichenko/.bun/_bun"
+
+# Sync kitty theme with macOS appearance (runs detached; harmless if kitty is not installed)
+[ -x "$HOME/.config/kitty/theme-sync.sh" ] && "$HOME/.config/kitty/theme-sync.sh" &!
