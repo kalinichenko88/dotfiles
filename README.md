@@ -9,6 +9,7 @@ My personal configuration files for macOS.
 - **git/** - Git configuration with separate profiles for personal and work
 - **docker/** - Docker CLI configuration for Colima
 - **wezterm.lua** - WezTerm terminal emulator configuration
+- **kitty/** - Kitty terminal emulator configuration with auto dark/light theme switching
 - **alacritty/** - Alacritty terminal emulator configuration with theme variants
 - **nvim/** - Neovim configuration with lazy.nvim plugin manager
 - **gh/** - GitHub CLI configuration
@@ -89,6 +90,23 @@ Symlinks `wezterm.lua` to `~/.wezterm.lua`.
 - Exports `BAT_THEME` and `DELTA_THEME_MODE` so `delta` follows terminal theme
 - Native macOS fullscreen and integrated window buttons
 - Blinking bar cursor
+
+### Kitty
+
+```bash
+make kitty-config-install
+```
+
+Symlinks `kitty/` to `~/.config/kitty/` and runs `kitty/theme-sync.sh` once so the theme symlink points at the current macOS appearance.
+
+#### Kitty Features
+
+- Monaco DemiBold font with JetBrainsMono Nerd Font fallback for icon glyphs
+- Automatic dark/light theme switching (kanagawabones / AtomOneLight) via `theme-sync.sh` triggered from `zshrc`
+- IDE-like 3-pane layout binding on `Cmd+Shift+|` (left half + right top + right bottom 15%)
+- Native pane splits via the `splits` layout — no tmux required
+- Beam cursor blinking at 600ms (matches wezterm)
+- Integrated macOS title bar
 
 ### Neovim
 
