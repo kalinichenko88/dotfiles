@@ -22,8 +22,8 @@ kitty/
 ├── theme-sync.sh           # reads macOS appearance, swaps current-theme.conf symlink, calls `kitty @ load-config`
 └── themes/
     ├── current-theme.conf  # symlink → dark.conf or light.conf, swapped by theme-sync.sh
-    ├── dark.conf           # vendored from kovidgoyal/kitty-themes (kanagawa.conf)
-    └── light.conf          # vendored from kovidgoyal/kitty-themes (Atom_One_Light.conf)
+    ├── dark.conf           # vendored from kovidgoyal/kitty-themes (kanagawabones.conf)
+    └── light.conf          # vendored from kovidgoyal/kitty-themes (AtomOneLight.conf)
 ```
 
 The whole `kitty/` directory is symlinked to `~/.config/kitty/` (matches the `nvim/` install pattern). Themes are vendored as static files so installation is offline-safe.
@@ -68,10 +68,10 @@ Kitty has no reactive equivalent to wezterm's `window-config-reloaded` event. Th
 
 Vendored from `kovidgoyal/kitty-themes` (official, MIT-licensed):
 
-- `themes/dark.conf` ← `themes/kanagawa.conf` from kitty-themes (closest match to wezterm's `kanagawabones`)
-- `themes/light.conf` ← `themes/Atom_One_Light.conf` from kitty-themes (closest match to wezterm's `One Light (Gogh)`)
+- `themes/dark.conf` ← `themes/kanagawabones.conf` from kitty-themes (exact match to wezterm's `kanagawabones`)
+- `themes/light.conf` ← `themes/AtomOneLight.conf` from kitty-themes (closest available match to wezterm's `One Light (Gogh)`)
 
-Files are copied verbatim with a header comment noting the source and SHA. No hand-tuning — accepting "close enough" parity.
+Files are copied verbatim with a header comment noting the source URL. No hand-tuning — accepting "close enough" parity.
 
 ## Keybindings
 
@@ -141,8 +141,8 @@ Add `cask "kitty"` if not already present. (Verify during implementation; do not
 ## Open implementation questions (resolve during build, not now)
 
 - Whether `--bias=50` / `--bias=15` produces the expected geometry (may need to flip to 50/85 if kitty's semantics are inverted)
-- Whether `kitty-themes` includes both `kanagawa.conf` and `Atom_One_Light.conf` under those exact names (verify upstream; pick closest if names differ)
-- Whether `cask "kitty"` is already in the Brewfile (check before adding)
+- ~~Whether `kitty-themes` includes both theme files~~ — verified: `kanagawabones.conf` (exact match) and `AtomOneLight.conf` exist upstream
+- ~~Whether `cask "kitty"` is already in the Brewfile~~ — verified: not present, will be added
 
 ## Verification plan
 
