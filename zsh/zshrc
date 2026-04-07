@@ -12,3 +12,20 @@ done
 
 # bun completions
 [ -s "/Users/ivan_kalinichenko/.bun/_bun" ] && source "/Users/ivan_kalinichenko/.bun/_bun"
+
+# pnpm
+export PNPM_HOME="/Users/ivan_kalinichenko/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+export PATH="$HOME/bin:$PATH"
+
+# OpenClaw Completion
+source "/Users/ivan_kalinichenko/.openclaw/completions/openclaw.zsh"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/ivan_kalinichenko/.lmstudio/bin"
+# End of LM Studio CLI section
+
