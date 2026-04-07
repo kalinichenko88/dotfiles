@@ -1,0 +1,3 @@
+# current-theme.conf is a symlink swapped at runtime by ../theme-sync.sh,
+# so it's a runtime artifact, not a tracked file.
+current-theme.conf

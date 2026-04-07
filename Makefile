@@ -2,12 +2,13 @@ GIT_CONFIG_DIR := $(HOME)/.config/git
 DOTFILES_GIT_DIR := $(PWD)/git
 STARSHIP_CONFIG_DIR := $(HOME)/.config
 NVIM_CONFIG_DIR := $(HOME)/.config/nvim
+KITTY_CONFIG_DIR := $(HOME)/.config/kitty
 GH_CONFIG_DIR := $(HOME)/.config/gh
 CLAUDE_SKILLS_DIR := $(HOME)/.claude/skills
 CLAUDE_HOOKS_DIR := $(HOME)/.claude/hooks
 CLAUDE_SETTINGS := $(HOME)/.claude/settings.json
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump claude-skills-install claude-hooks-install
+.PHONY: git git-install git-local git-check wezterm-config-install kitty-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump claude-skills-install claude-hooks-install
 
 git-install: git-local git
 	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
@@ -49,6 +50,13 @@ wezterm-config-install:
 	@echo "→ Installing wezterm config"
 	ln -sf $(PWD)/wezterm.lua $(HOME)/.wezterm.lua
 	@echo "✓ wezterm config installed"
+
+kitty-config-install:
+	@echo "→ Installing kitty config"
+	mkdir -p $(HOME)/.config
+	ln -shf $(PWD)/kitty $(KITTY_CONFIG_DIR)
+	@$(PWD)/kitty/theme-sync.sh || true
+	@echo "✓ kitty config installed"
 
 docker-config-install:
 	@echo "→ Installing docker config"
