@@ -42,9 +42,8 @@ config.font = wezterm.font_with_fallback({
   'Apple Color Emoji',
   'PingFang SC',
 })
-config.font_size = 13.0
+config.font_size = 13.5
 config.line_height = 1.2
-config.freetype_load_flags = 'NO_HINTING'
 
 -- Colors
 local appearance = (wezterm.gui and wezterm.gui.get_appearance()) or 'Dark'
