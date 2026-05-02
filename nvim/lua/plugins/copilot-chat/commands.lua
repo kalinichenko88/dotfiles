@@ -60,9 +60,81 @@ function M.setup()
 
     vim.notify('Generating commit message...', vim.log.levels.INFO)
 
+    -- CopilotChat in headless mode swallows errors (only writes to its log file)
+    -- and never invokes the callback on failure. To surface failures (expired
+    -- subscription, auth issues, etc.) we poll the log file size and bail out
+    -- as soon as a new ERROR line appears, plus a hard timeout as a backstop.
+    local done = false
+    local log_path = vim.fn.stdpath('state') .. '/CopilotChat.log'
+    local initial_log_size = (vim.uv.fs_stat(log_path) or {}).size or 0
+    local timer = vim.uv.new_timer()
+    local poll_timer = vim.uv.new_timer()
+
+    local function cleanup()
+      if not timer:is_closing() then
+        timer:stop()
+        timer:close()
+      end
+      if not poll_timer:is_closing() then
+        poll_timer:stop()
+        poll_timer:close()
+      end
+    end
+
+    local function fail(msg)
+      if done then
+        return
+      end
+      done = true
+      cleanup()
+      vim.schedule(function()
+        vim.notify(msg, vim.log.levels.ERROR)
+      end)
+    end
+
+    -- Hard timeout backstop (in case CopilotChat hangs without logging).
+    timer:start(
+      60000,
+      0,
+      vim.schedule_wrap(function()
+        fail('Commit message generation timed out after 60s. Check :CopilotChatLog.')
+      end)
+    )
+
+    -- Poll the log for new ERROR entries to fail fast on auth/quota issues.
+    poll_timer:start(
+      300,
+      300,
+      vim.schedule_wrap(function()
+        if done then
+          return
+        end
+        local stat = vim.uv.fs_stat(log_path)
+        if not stat or stat.size <= initial_log_size then
+          return
+        end
+        local fd = vim.uv.fs_open(log_path, 'r', 438)
+        if not fd then
+          return
+        end
+        local chunk = vim.uv.fs_read(fd, stat.size - initial_log_size, initial_log_size) or ''
+        vim.uv.fs_close(fd)
+        local err_line = chunk:match('%[ERROR[^\n]+')
+        if err_line then
+          local detail = err_line:gsub('^%[ERROR[^%]]+%]%s*', ''):gsub('^[^:]+:%d+:%s*', '')
+          fail('Copilot error: ' .. detail .. '\nFull log: :CopilotChatLog')
+        end
+      end)
+    )
+
     local ok, err = pcall(require('CopilotChat').ask, prompt, {
       headless = true,
       callback = function(response)
+        if done then
+          return
+        end
+        done = true
+        cleanup()
         local msg = extract_message(response)
         if not msg then
           vim.schedule(function()
@@ -88,7 +160,7 @@ function M.setup()
       end,
     })
     if not ok then
-      vim.notify('Copilot error: ' .. tostring(err), vim.log.levels.ERROR)
+      fail('Copilot error: ' .. tostring(err))
     end
   end, {})
 
