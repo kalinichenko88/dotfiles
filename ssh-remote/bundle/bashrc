@@ -1,0 +1,19 @@
+# bash trampoline (--init-file). Deterministic login-ish startup, then overrides.
+# shellcheck source=/dev/null
+[ -r "$DOTFILES_REMOTE/shell/profile-select.sh" ] && . "$DOTFILES_REMOTE/shell/profile-select.sh"
+
+if [ -z "${_DFR_BASHRC_DONE:-}" ]; then
+  _DFR_BASHRC_DONE=1   # shell-local (no export) — child shells re-apply
+  command -v _dfr_source_first_profile >/dev/null 2>&1 && _dfr_source_first_profile
+  # shellcheck source=/dev/null
+  [ -r "$DOTFILES_REMOTE/shell/prompt.sh" ] && . "$DOTFILES_REMOTE/shell/prompt.sh"
+  if [ -n "${DFR_NVIM:-}" ]; then
+    # shellcheck disable=SC2139  # DFR_NVIM is fixed at bootstrap time; expand-at-define is correct.
+    alias v="$DFR_NVIM"
+    # shellcheck disable=SC2139
+    alias vim="$DFR_NVIM"
+    # shellcheck disable=SC2139
+    alias vi="$DFR_NVIM"
+    export EDITOR="$DFR_NVIM"
+  fi
+fi
