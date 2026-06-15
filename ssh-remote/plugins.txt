@@ -1,0 +1,4 @@
+# <name> <git-url> <commit-sha>   — vendored into bundle/.../pack/plugins/start/<name>
+# mini.nvim ships both the plugin modules AND colorschemes (minischeme), so it is the
+# only dependency. Pin the SHA; `make ssh-remote-vendor` checks it out and strips .git.
+mini.nvim https://github.com/echasnovski/mini.nvim 7ed410c73ebb910754c2938a6dae50c51c3a096a
