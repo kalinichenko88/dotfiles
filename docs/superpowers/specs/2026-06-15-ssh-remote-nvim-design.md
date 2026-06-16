@@ -147,7 +147,7 @@ nvim reads `$XDG_CONFIG_HOME/nvim/init.lua` from the synced bundle and writes sh
 
 `init.lua` — **no plugin manager**, explicit content (not "a subset"):
 
-- **Options (server-appropriate, enumerated):** `mapleader=' '`, `number`, `signcolumn=yes`, `termguicolors`, `cursorline`, `mouse=a`, `expandtab`/`shiftwidth=2`/`tabstop=2`/`softtabstop=2`, `smartindent`, `wrap=false`, `scrolloff=8`, `splitright`/`splitbelow`, `ignorecase`/`smartcase`, `hidden`, `swapfile=false`, `undofile=true` (writes inside isolated XDG state). **Deliberately NOT set:** `clipboard=unnamedplus` (no clipboard provider on most servers — left default; OSC52 may be enabled separately if wanted).
+- **Options (server-appropriate, enumerated):** `mapleader=' '`, `number`, `signcolumn=yes`, `termguicolors`, `cursorline`, `mouse=a`, `expandtab`/`shiftwidth=2`/`tabstop=2`/`softtabstop=2`, `smartindent`, `wrap=false`, `scrolloff=8`, `splitright`/`splitbelow`, `ignorecase`/`smartcase`, `hidden`, `swapfile=false`, `undofile=true` (writes inside isolated XDG state). **Clipboard (updated after live testing):** set `clipboard=unnamedplus` with the built-in **OSC 52** provider (`vim.ui.clipboard.osc52`, `pcall`-guarded for nvim <0.10) so `y` reaches the *local* clipboard over SSH via wezterm; paste reads the remote nvim's own register (no terminal round-trip, which OSC52 paste would otherwise stall on).
 - **Keymaps (remapped to vendored plugins, no dangling commands):** `<Esc>`→clear highlight, `<leader>w`→save, `]b`/`[b`→buffers, `<A-j>`/`<A-k>`→move line (normal+visual). Explorer/finder maps point at **mini.nvim**, not Neotree/Telescope: `<leader>e`→`MiniFiles`, `<leader>ff`→`MiniPick files`, `<leader>fb`→`MiniPick buffers`.
 - **CLI-tool-aware grep (per mini.pick docs):** `files()` falls back to `vim.fs.dir()` and `grep()` to a Lua matcher when no `rg`/`fd`/`git` is present, **but `grep_live()` throws an error** with no CLI tool. So `init.lua` checks `vim.fn.executable('rg')`/`'git'` at startup: if either is present → `<leader>fg`→`MiniPick grep_live`; otherwise → `<leader>fg`→`MiniPick grep` (the slower Lua-fallback variant) plus a one-line `:notify` that live-grep is unavailable. No map ever errors on a bare server.
 - No LSP/diagnostic maps (no LSP on the bundle).
@@ -182,7 +182,7 @@ The repo is PUBLIC. Non-negotiable:
 - No starship binary shipped (zero-dep prompt instead).
 - No kitty title integration (wezterm only, by decision).
 - No permanent full-config install on any box.
-- No auto-install of nvim on servers — graceful fallback only.
+- ~~No auto-install of nvim on servers~~ **(revised after live testing):** when a server has no nvim, a pinned, checksum-verified official build is downloaded once into `~/.dotfiles-remote/state/`; vim/vi remain the fallback if the download/verify/run fails.
 - No interception of option-bearing `ssh` invocations — passthrough by design.
 
 ## Risks & mitigations

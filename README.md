@@ -182,7 +182,7 @@ make ssh-remote-install   # vendor plugins + make bootstrap executable
 
 For intercepted connections, the bundle is rsynced to `~/.dotfiles-remote/bundle/` on the server via a shared ControlMaster (so password/MFA hosts prompt only once). State files are isolated under `~/.dotfiles-remote/state/`; the server's own rc files are never touched — prompt and aliases are injected only for the session via `ZDOTDIR` / `bash --init-file`.
 
-On the server, `v` / `vim` / `vi` open the portable Neovim (mini.nvim, no LSP). If Neovim is absent, the aliases fall back to the system `vim` or `vi`.
+On the server, `v` / `vim` / `vi` open the portable Neovim (mini.nvim, no LSP). If the server has no Neovim, a pinned, checksum-verified official build is downloaded once into `~/.dotfiles-remote/state/` (needs internet + `curl`/`wget`; cached for later connects); if that fails (offline, unsupported arch, old glibc) the aliases fall back to the system `vim` or `vi`. Yanking (`y`) copies to your **local** clipboard over SSH via OSC 52 (paste reads the remote nvim's own register).
 
 #### Usage
 
@@ -202,7 +202,7 @@ vim file.ts                 # same
 |--------|-------------|
 | `make ssh-remote-vendor` | Vendor plugins listed in `ssh-remote/plugins.txt` |
 | `make ssh-remote-install` | Vendor plugins + ensure `bootstrap.sh` is executable |
-| `make ssh-remote-test` | Run guard / profile-select / nvim smoke tests |
+| `make ssh-remote-test` | Run guard / profile-select / nvim-install / nvim smoke tests |
 | `make ssh-remote-clean-host HOST=<host>` | Remove `~/.dotfiles-remote` from a server |
 
 > **Public-repo rule:** no hostnames, IPs, or per-host data belong in tracked files. Put per-host tweaks in the gitignored `zsh/local.zsh`.
