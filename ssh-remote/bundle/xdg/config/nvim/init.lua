@@ -14,8 +14,7 @@ pcall(vim.cmd.packadd, 'mini.nvim')
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- Options (server-appropriate). clipboard is intentionally NOT set to
--- unnamedplus: servers usually lack a clipboard provider.
+-- Options (server-appropriate).
 local o = vim.opt
 o.number = true
 o.signcolumn = 'yes'
@@ -36,6 +35,20 @@ o.smartcase = true
 o.hidden = true
 o.swapfile = false
 o.undofile = true
+
+-- Clipboard over SSH via OSC 52: `y` reaches the LOCAL clipboard (wezterm supports
+-- OSC52 copy). Paste reads nvim's own register (no terminal round-trip — OSC52 paste
+-- is usually blocked by terminals and would otherwise stall). Guarded for nvim < 0.10.
+local ok_osc, osc52 = pcall(require, 'vim.ui.clipboard.osc52')
+if ok_osc then
+  local function reg_paste() return vim.fn.getreg('"', 1, true) end
+  vim.g.clipboard = {
+    name = 'osc52-ssh',
+    copy = { ['+'] = osc52.copy('+'), ['*'] = osc52.copy('*') },
+    paste = { ['+'] = reg_paste, ['*'] = reg_paste },
+  }
+  vim.opt.clipboard = 'unnamedplus'
+end
 
 -- Colorscheme shipped by mini.nvim. pcall so a rename never aborts startup.
 pcall(vim.cmd.colorscheme, 'minischeme')
