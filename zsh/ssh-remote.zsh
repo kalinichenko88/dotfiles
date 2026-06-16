@@ -73,9 +73,12 @@ ssh() {
   # Intercept: one shared ControlMaster for mkdir + rsync + final connect. The path
   # is keyed on this shell's PID ($$) too, so concurrent sessions to the same host
   # (separate terminals) get separate masters and one exiting can't drop the other.
+  # %C (fixed-length hash of local-host/host/port/user) keeps the socket path within
+  # the sun_path limit (~104 bytes on macOS) that a long FQDN host + username would
+  # otherwise overflow, which would silently break ControlMaster and drop the bundle.
   local remote='~/.dotfiles-remote/bundle'
   local -a cm=(-o ControlMaster=auto -o ControlPersist=30 \
-               -o "ControlPath=$HOME/.ssh/cm-dotfiles-%r@%h-%p-$$")
+               -o "ControlPath=$HOME/.ssh/cm-dotfiles-%C-$$")
 
   # Refuse to sync into a symlinked bundle dir: rsync --delete (below) follows a
   # symlinked destination and would wipe files in its target. A symlinked PARENT
