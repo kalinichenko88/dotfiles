@@ -140,10 +140,11 @@ ssh-remote-install: ssh-remote-vendor
 
 ssh-remote-test:
 	@echo "→ Running ssh-remote tests"
-	@test -f $(PWD)/ssh-remote/tests/test-guard.zsh -a -f $(PWD)/ssh-remote/tests/test-profile-select.sh \
-		|| { echo "✗ test files not created yet (Tasks 3 & 7)"; exit 1; }
+	@test -f $(PWD)/ssh-remote/tests/test-guard.zsh -a -f $(PWD)/ssh-remote/tests/test-profile-select.sh -a -f $(PWD)/ssh-remote/tests/test-nvim-install.sh \
+		|| { echo "✗ test files not created yet (Tasks 3, 7 & 11)"; exit 1; }
 	@zsh $(PWD)/ssh-remote/tests/test-guard.zsh
 	@sh  $(PWD)/ssh-remote/tests/test-profile-select.sh
+	@sh  $(PWD)/ssh-remote/tests/test-nvim-install.sh
 	@XDG_CONFIG_HOME="$(PWD)/ssh-remote/bundle/xdg/config" \
 		XDG_DATA_HOME="$$(mktemp -d)" XDG_STATE_HOME="$$(mktemp -d)" \
 		XDG_CACHE_HOME="$$(mktemp -d)" \
