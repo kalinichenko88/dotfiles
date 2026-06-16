@@ -1,5 +1,5 @@
 user root
-sessiontype none
+sessiontype default
 requesttty false
 remotecommand none
 permitlocalcommand no

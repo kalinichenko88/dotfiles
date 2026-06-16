@@ -120,9 +120,11 @@ ssh-remote-vendor:
 	grep -vE '^[[:space:]]*(#|$$)' "$(PWD)/ssh-remote/plugins.txt" | while read -r name url sha; do \
 		d="$$dest/$$name"; \
 		if [ -d "$$d" ] && [ ! -d "$$d/.git" ]; then rm -rf "$$d"; fi; \
-		if [ ! -d "$$d/.git" ]; then git clone --quiet "$$url" "$$d"; \
-		else git -C "$$d" fetch --quiet --all; fi; \
-		git -C "$$d" checkout --quiet "$$sha"; \
+		if [ ! -d "$$d/.git" ]; then git clone --quiet "$$url" "$$d" || { echo "✗ $$name: clone failed"; exit 1; }; \
+		else git -C "$$d" fetch --quiet --all || { echo "✗ $$name: fetch failed"; exit 1; }; fi; \
+		git -C "$$d" checkout --quiet "$$sha" || { echo "✗ $$name: checkout $$sha failed"; exit 1; }; \
+		head="$$(git -C "$$d" rev-parse HEAD)"; \
+		case "$$head" in "$$sha"*) ;; *) echo "✗ $$name: HEAD $$head != pinned $$sha"; exit 1;; esac; \
 		rm -rf "$$d/.git"; \
 		echo "  ✓ $$name @ $$sha"; \
 	done

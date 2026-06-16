@@ -32,7 +32,8 @@ check "sessiontype none => pass"     0 "$(probe sessiontype-none)"
 check "proxyjump => intercept"       1 "$(probe proxyjump)"
 check "localcommand => passthrough"  0 "$(probe localcommand)"
 check "forkafterauth => passthrough"  0 "$(probe forkafterauth)"
-check "requesttty no => passthrough"  0 "$(probe requesttty-no)"
+check "requesttty false => passthrough" 0 "$(probe requesttty-false)"
+check "requesttty no (legacy) => passthrough" 0 "$(probe requesttty-no)"
 
 (( fails == 0 )) || { print "$fails failures"; exit 1 }
 print "all guard tests passed"

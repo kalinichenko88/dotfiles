@@ -38,7 +38,9 @@ _dfr_should_passthrough_cfg() {
       remotecommand) [[ -n "$val" && "$val" != none ]] && return 0 ;;
       localforward|remoteforward|dynamicforward) [[ -n "$val" ]] && return 0 ;;
       sessiontype) [[ "$val" == none ]] && return 0 ;;
-      requesttty) [[ "$val" == no ]] && return 0 ;;
+      # `ssh -G` prints RequestTTY=no as `false` on OpenSSH >=8/10; older
+      # builds print `no`. Match both so no-TTY hosts pass through.
+      requesttty) [[ "$val" == no || "$val" == false ]] && return 0 ;;
       forkafterauthentication) [[ "$val" == yes ]] && return 0 ;;
       permitlocalcommand) [[ "$val" == yes ]] && permit_local=1 ;;
       localcommand) [[ -n "$val" && "$val" != none ]] && has_localcommand=1 ;;
@@ -75,7 +77,11 @@ ssh() {
   local -a cm=(-o ControlMaster=auto -o ControlPersist=30 \
                -o "ControlPath=$HOME/.ssh/cm-dotfiles-%r@%h-%p-$$")
 
-  if ! command ssh -T "${cm[@]}" "$host" "mkdir -p $remote" 2>/dev/null; then
+  # Refuse to sync into a symlinked bundle dir: rsync --delete (below) follows a
+  # symlinked destination and would wipe files in its target. A symlinked PARENT
+  # (~/.dotfiles-remote relocated to another volume) is fine — deletes stay
+  # confined to the real bundle/ dir, so only the rsync target itself is guarded.
+  if ! command ssh -T "${cm[@]}" "$host" "[ -L $remote ] && exit 1; mkdir -p $remote" 2>/dev/null; then
     print -u2 "ssh-remote: cannot prepare $host; using plain ssh."
     command ssh "${cm[@]}" -O exit "$host" 2>/dev/null
     command ssh -t "$host"; return $?
