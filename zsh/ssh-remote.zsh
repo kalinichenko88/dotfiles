@@ -70,21 +70,24 @@ ssh() {
   host="$(_dfr_bare_host "$@")"        || { command ssh "$@"; return }
   _dfr_should_passthrough_cfg "$host"  && { command ssh "$@"; return }
 
-  # Intercept: one shared ControlMaster for mkdir + rsync + final connect. The path
-  # is keyed on this shell's PID ($$) too, so concurrent sessions to the same host
-  # (separate terminals) get separate masters and one exiting can't drop the other.
-  # %C (fixed-length hash of local-host/host/port/user) keeps the socket path within
-  # the sun_path limit (~104 bytes on macOS) that a long FQDN host + username would
-  # otherwise overflow, which would silently break ControlMaster and drop the bundle.
+  # Intercept: one shared ControlMaster for mkdir + rsync + final connect, keyed on
+  # %C (host/port/user hash) for per-host separation and $$ (this shell) so separate
+  # terminals get separate masters and one exiting can't drop the other.
+  # The socket path MUST stay short: macOS caps Unix-socket paths at ~104 bytes, and
+  # ssh appends a ~17-char temp suffix while creating the master. %C alone is 40 chars,
+  # so a long prefix here overflows and silently breaks ControlMaster ("cannot prepare").
+  # Keep the prefix minimal (`dfr-`).
   local remote='~/.dotfiles-remote/bundle'
   local -a cm=(-o ControlMaster=auto -o ControlPersist=30 \
-               -o "ControlPath=$HOME/.ssh/cm-dotfiles-%C-$$")
+               -o "ControlPath=$HOME/.ssh/dfr-%C-$$")
 
   # Refuse to sync into a symlinked bundle dir: rsync --delete (below) follows a
   # symlinked destination and would wipe files in its target. A symlinked PARENT
   # (~/.dotfiles-remote relocated to another volume) is fine — deletes stay
   # confined to the real bundle/ dir, so only the rsync target itself is guarded.
-  if ! command ssh -T "${cm[@]}" "$host" "[ -L $remote ] && exit 1; mkdir -p $remote" 2>/dev/null; then
+  # Probe stderr is intentionally NOT suppressed: a fatal ssh/config error here (e.g.
+  # ControlPath too long, auth failure) must surface, not hide behind "cannot prepare".
+  if ! command ssh -T "${cm[@]}" "$host" "[ -L $remote ] && exit 1; mkdir -p $remote"; then
     print -u2 "ssh-remote: cannot prepare $host; using plain ssh."
     command ssh "${cm[@]}" -O exit "$host" 2>/dev/null
     command ssh -t "$host"; return $?
