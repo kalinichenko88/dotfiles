@@ -89,6 +89,7 @@ Symlinks `wezterm.lua` to `~/.wezterm.lua`.
 - Exports `BAT_THEME` and `DELTA_THEME_MODE` so `delta` follows terminal theme
 - Native macOS fullscreen and integrated window buttons
 - Blinking bar cursor
+- Tab title shows the SSH host when connected (set by the `ssh()` wrapper), otherwise the current directory name
 
 ### Neovim
 

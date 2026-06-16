@@ -1,0 +1,6 @@
+user root
+sessiontype default
+requesttty auto
+remoteforward 2222 127.0.0.1:22
+remotecommand none
+permitlocalcommand no

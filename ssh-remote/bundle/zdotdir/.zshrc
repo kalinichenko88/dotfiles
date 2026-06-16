@@ -1,5 +1,6 @@
-# Load the user's real interactive config first…
-[[ -r "$HOME/.zshrc" ]] && source "$HOME/.zshrc"
+# Load the user's real interactive config first… (from their ZDOTDIR if they set one,
+# captured as _DFR_USER_ZDOTDIR by our .zshenv; else $HOME).
+[[ -r "${_DFR_USER_ZDOTDIR:-$HOME}/.zshrc" ]] && source "${_DFR_USER_ZDOTDIR:-$HOME}/.zshrc"
 
 # …then our overrides, once per shell (guard is shell-local, NOT exported, so a
 # child interactive shell re-applies the remote prompt/aliases). The ${...:-}

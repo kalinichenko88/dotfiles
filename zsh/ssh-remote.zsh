@@ -68,10 +68,12 @@ ssh() {
   host="$(_dfr_bare_host "$@")"        || { command ssh "$@"; return }
   _dfr_should_passthrough_cfg "$host"  && { command ssh "$@"; return }
 
-  # Intercept: one shared ControlMaster for mkdir + rsync + final connect.
+  # Intercept: one shared ControlMaster for mkdir + rsync + final connect. The path
+  # is keyed on this shell's PID ($$) too, so concurrent sessions to the same host
+  # (separate terminals) get separate masters and one exiting can't drop the other.
   local remote='~/.dotfiles-remote/bundle'
   local -a cm=(-o ControlMaster=auto -o ControlPersist=30 \
-               -o "ControlPath=$HOME/.ssh/cm-dotfiles-%r@%h-%p")
+               -o "ControlPath=$HOME/.ssh/cm-dotfiles-%r@%h-%p-$$")
 
   if ! command ssh -T "${cm[@]}" "$host" "mkdir -p $remote" 2>/dev/null; then
     print -u2 "ssh-remote: cannot prepare $host; using plain ssh."

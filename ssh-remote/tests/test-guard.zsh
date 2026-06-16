@@ -12,10 +12,13 @@ check() { # $1=label $2=expected(0/1) $3=actual_rc
 # --- bare-host parser: returns 0 + echoes host only for the bare form ---
 host=$(_dfr_bare_host myhost);            check "bare host"            0 $?
 [[ "$host" == myhost ]] || { print "FAIL bare host value ($host)"; ((fails++)); }
-_dfr_bare_host user@myhost >/dev/null;    check "user@host"            0 $?
+host=$(_dfr_bare_host user@myhost);       check "user@host"            0 $?
+[[ "$host" == user@myhost ]] || { print "FAIL user@host value ($host)"; ((fails++)); }
 _dfr_bare_host -p 2222 myhost >/dev/null; check "option => passthrough" 1 $?
 _dfr_bare_host myhost uptime >/dev/null;  check "remote cmd => pass"    1 $?
+_dfr_bare_host myhost -v >/dev/null;      check "flag after host => pass" 1 $?
 _dfr_bare_host -N myhost >/dev/null;      check "-N => passthrough"     1 $?
+_dfr_bare_host '' >/dev/null;             check "empty operand => pass" 1 $?
 _dfr_bare_host >/dev/null;                check "no operand => pass"    1 $?
 
 # --- config probe: stub _dfr_ssh_config to read a fixture (zsh dynamic scope
@@ -24,6 +27,7 @@ probe() { local fx="$1"; _dfr_ssh_config() { cat "$here/fixtures/$fx.txt" }; _df
 check "plain => intercept"          1 "$(probe plain)"
 check "remotecommand => passthrough" 0 "$(probe remotecommand)"
 check "localforward => passthrough"  0 "$(probe localforward)"
+check "remoteforward => passthrough" 0 "$(probe remoteforward)"
 check "sessiontype none => pass"     0 "$(probe sessiontype-none)"
 check "proxyjump => intercept"       1 "$(probe proxyjump)"
 check "localcommand => passthrough"  0 "$(probe localcommand)"
