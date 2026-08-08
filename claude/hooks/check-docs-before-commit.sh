@@ -10,8 +10,11 @@
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 
-# Only intercept git commit commands
-if ! echo "$COMMAND" | grep -qE '^\s*git\s+(-C\s+\S+\s+)?commit'; then
+# Only intercept git commit commands. The command may sit anywhere in a
+# compound line, so match at a command boundary rather than at the start:
+# "git add . && git commit" is by far the common form.
+if ! echo "$COMMAND" | grep -qE \
+  '(^[[:space:]]*|[;&|][[:space:]]*)git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+)?commit([[:space:]]|$)'; then
   exit 0
 fi
 
@@ -55,7 +58,7 @@ fi
 touch "$CHECK_FILE"
 
 # Format file list relative to repo root
-DOC_LIST=$(echo "$DOC_FILES" | while read -r f; do echo "  - ${f#${REPO_ROOT}/}"; done)
+DOC_LIST=$(echo "$DOC_FILES" | while read -r f; do echo "  - ${f#"${REPO_ROOT}"/}"; done)
 
 REASON="Review documentation before committing. Check if these files need updating based on your staged changes:
 ${DOC_LIST}

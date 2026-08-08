@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: shellcheck
-        run: shellcheck scripts/*.sh scripts/lib/*.sh tests/*.sh tests/fixtures/bin/*
+        run: shellcheck scripts/*.sh scripts/lib/*.sh claude/hooks/*.sh tests/*.sh tests/fixtures/bin/*
 
   test:
     # The scripts target Apple Silicon macOS, so the tests run there too.

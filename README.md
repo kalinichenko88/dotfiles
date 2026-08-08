@@ -190,8 +190,8 @@ creates credentials outside this repository.
 ## Keeping the repository publishable
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
-`shellcheck` over scripts, tests and fixtures; `make test` on macOS; `gitleaks`
-over the working tree **and the full history**.
+`shellcheck` over scripts, hooks, tests and fixtures; `make test` on macOS;
+`gitleaks` over the working tree **and the full history**.
 
 The same scan locally:
 
