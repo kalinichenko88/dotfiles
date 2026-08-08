@@ -125,6 +125,9 @@ install_homebrew() {
   if [ "${DRY_RUN:-0}" != 1 ]; then
     dotfiles_resolve_homebrew
     brew_command=$DOTFILES_BREW_COMMAND
+    # The installer only writes shellenv into ~/.zprofile, which this process
+    # never reads. Without this, the tools layer cannot see what brew installs.
+    eval "$("$brew_command" shellenv)"
   fi
 
   install_brew_bundles "$brew_command"
@@ -147,6 +150,9 @@ update_workstation() {
   dotfiles_run "$DOTFILES_BREW_COMMAND" update
   install_brew_bundles "$DOTFILES_BREW_COMMAND"
   dotfiles_run "$DOTFILES_BREW_COMMAND" upgrade
+  # Doctor checks the Node and UV manifests too, so update has to apply them
+  # or it reports drift it just declined to fix.
+  install_tools
   dotfiles_run "$SCRIPT_DIR/doctor.sh"
 }
 
@@ -221,63 +227,14 @@ copy_git_template_if_missing() {
   dotfiles_info "created Git config template: $target"
 }
 
+# Per-event merge, not a wholesale replace: a user's hooks on events this
+# repository does not declare have to keep firing.
 install_claude_settings() {
-  local settings_file settings_dir temp_file
-  settings_file=$DOTFILES_TARGET_HOME/.claude/settings.json
-  settings_dir=$(dirname -- "$settings_file")
-
-  if [ "${DRY_RUN:-0}" = 1 ]; then
-    dotfiles_info "would merge Claude hooks into $settings_file"
-    return 0
-  fi
-
-  mkdir -p "$settings_dir"
-  umask 077
-  temp_file=$(mktemp "$settings_dir/.settings.json.XXXXXX")
-
-  if dotfiles_path_exists "$settings_file"; then
-    if ! jq --slurpfile hooks "$DOTFILES_ROOT/claude/hooks-config.json" \
-      '.hooks = $hooks[0]' "$settings_file" > "$temp_file"; then
-      rm -f "$temp_file"
-      dotfiles_die "could not merge Claude hooks into $settings_file"
-      return 1
-    fi
-  else
-    if ! jq -n --slurpfile hooks "$DOTFILES_ROOT/claude/hooks-config.json" \
-      '{hooks: $hooks[0]}' > "$temp_file"; then
-      rm -f "$temp_file"
-      dotfiles_die 'could not create Claude hook settings'
-      return 1
-    fi
-  fi
-  chmod 600 "$temp_file"
-
-  if ! jq empty "$temp_file" >/dev/null 2>&1; then
-    rm -f "$temp_file"
-    dotfiles_die 'Claude hook merge produced invalid JSON'
-    return 1
-  fi
-
-  if [ -f "$settings_file" ] && cmp -s "$settings_file" "$temp_file"; then
-    rm -f "$temp_file"
-    dotfiles_info "Claude hook settings already installed: $settings_file"
-    return 0
-  fi
-
-  if dotfiles_path_exists "$settings_file"; then
-    if [ "${FORCE:-0}" != 1 ]; then
-      rm -f "$temp_file"
-      dotfiles_die "Claude settings would change; rerun with FORCE=1 to back them up: $settings_file"
-      return 1
-    fi
-    dotfiles_backup_target "$settings_file" || {
-      rm -f "$temp_file"
-      return 1
-    }
-  fi
-
-  mv "$temp_file" "$settings_file"
-  dotfiles_info "installed Claude hook settings: $settings_file"
+  # $source is a jq variable, not a shell one.
+  # shellcheck disable=SC2016
+  dotfiles_merge_json claude/hooks-config.json \
+    "$DOTFILES_TARGET_HOME/.claude/settings.json" \
+    '.hooks = ((.hooks // {}) + $source[0])'
 }
 
 config_dev_dirs() {
@@ -324,8 +281,11 @@ config_starship() {
     "$DOTFILES_TARGET_HOME/.config/starship.toml"
 }
 
+# Merged, never copied: `docker login` writes registry credentials into the
+# same file, and replacing it would log the user out of every registry.
 config_docker() {
-  dotfiles_copy docker/config.json "$DOTFILES_TARGET_HOME/.docker/config.json"
+  dotfiles_merge_json docker/config.json \
+    "$DOTFILES_TARGET_HOME/.docker/config.json"
 }
 
 config_claude() {
@@ -391,7 +351,6 @@ verify_target() {
   dotfiles_run env \
     "DOTFILES_ROOT=$DOTFILES_ROOT" \
     "DOTFILES_TARGET_HOME=$DOTFILES_TARGET_HOME" \
-    DOTFILES_STRICT_BREW=1 \
     "$SCRIPT_DIR/doctor.sh"
   dotfiles_prepare_parent "$marker"
   dotfiles_run touch "$marker"

@@ -29,7 +29,6 @@ assert_file_excludes "$tmp/tools.out" 'ohmyzsh'
 
 DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/home" \
   "$TEST_ROOT/scripts/bootstrap.sh" all > "$tmp/all.out"
-assert_file_contains "$tmp/all.out" 'DOTFILES_STRICT_BREW=1'
 assert_file_contains "$tmp/all.out" 'scripts/doctor.sh'
 assert_file_contains "$tmp/all.out" 'bootstrap-complete'
 [ ! -e "$tmp/home/.config/dotfiles/bootstrap-complete" ] || \

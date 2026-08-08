@@ -10,6 +10,14 @@ fi
 # Homebrew's libpq is keg-only.
 [[ -d /opt/homebrew/opt/libpq/bin ]] && path=(/opt/homebrew/opt/libpq/bin $path)
 
+# Homebrew's python formulae link only python3/pip3 into bin; the unversioned
+# python and pip live in libexec. Globbed rather than pinned so a version bump
+# in the Brewfile needs no edit here; numeric sort leaves the newest first.
+for python_libexec in /opt/homebrew/opt/python@*/libexec/bin(Nn); do
+  path=("$python_libexec" $path)
+done
+unset python_libexec
+
 # User-space command-line tools.
 path=("$HOME/.local/bin" $path)
 export PNPM_HOME="$HOME/Library/pnpm"

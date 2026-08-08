@@ -242,9 +242,12 @@ check_config() {
   check_link starship/starship.toml \
     "$DOTFILES_TARGET_HOME/.config/starship.toml" starship
 
-  if [ -f "$DOTFILES_TARGET_HOME/.docker/config.json" ] && \
-    cmp -s "$DOTFILES_ROOT/docker/config.json" \
-      "$DOTFILES_TARGET_HOME/.docker/config.json"; then
+  # Containment, not equality: docker login adds registry credentials to the
+  # same file, and the merge deliberately leaves them alone.
+  if command -v jq >/dev/null 2>&1 && \
+    jq -e --slurpfile source "$DOTFILES_ROOT/docker/config.json" \
+      'contains($source[0])' \
+      "$DOTFILES_TARGET_HOME/.docker/config.json" >/dev/null 2>&1; then
     doctor_status present config docker
   else
     doctor_missing config docker
@@ -270,9 +273,21 @@ check_config() {
     doctor_missing config git-local-templates
   fi
 
+  # An untouched template satisfies useConfigOnly, so Git would happily author
+  # work commits as the placeholder instead of refusing.
+  if grep -Fq 'your-work-email@company.com' \
+    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work" 2>/dev/null; then
+    doctor_missing config git-work-email
+  else
+    doctor_status present config git-work-email
+  fi
+
+  # Containment, not equality: the merge preserves hooks this repository does
+  # not declare, and demanding equality would delete them to stay green.
   if command -v jq >/dev/null 2>&1 && \
     jq -e --slurpfile hooks "$DOTFILES_ROOT/claude/hooks-config.json" \
-      '.hooks == $hooks[0]' "$DOTFILES_TARGET_HOME/.claude/settings.json" \
+      '.hooks | contains($hooks[0])' \
+      "$DOTFILES_TARGET_HOME/.claude/settings.json" \
       >/dev/null 2>&1; then
     doctor_status present config claude-settings
   else
@@ -286,8 +301,10 @@ check_manual_state() {
     case "$kind" in
       command)
         probe_command=${probe%% *}
+        # Not installed yet is a warning: these ship their own installers and
+        # bootstrap only prints the checklist. Installed but broken is a failure.
         if ! command -v "$probe_command" >/dev/null 2>&1; then
-          doctor_missing manual-command "$name"
+          doctor_status warning manual-command "$name"
         elif run_with_timeout "$DOCTOR_COMMAND_TIMEOUT_SECONDS" \
           /bin/bash -c "exec $probe" >/dev/null 2>&1; then
           doctor_status present manual-command "$name"
@@ -333,24 +350,10 @@ check_outdated() {
   fi
 }
 
-check_strict_bundle() {
-  local marker manifest
-  marker=$DOTFILES_TARGET_HOME/.config/dotfiles/bootstrap-complete
-  if [ "${DOTFILES_STRICT_BREW:-0}" != 1 ] && [ ! -f "$marker" ]; then
-    return 0
-  fi
-
-  for manifest in Brewfile Brewfile.local; do
-    [ -f "$DOTFILES_ROOT/$manifest" ] || continue
-    if "$DOTFILES_BREW_COMMAND" bundle check --no-upgrade \
-      --file "$DOTFILES_ROOT/$manifest" \
-      >/dev/null 2>&1; then
-      doctor_status present brew-bundle "$manifest"
-    else
-      doctor_missing brew-bundle "$manifest"
-    fi
-  done
-}
+# `brew bundle check` used to run here as a second opinion, but it re-failed
+# every cask that check_casks had deliberately accepted as present-manual, so a
+# machine with a hand-installed app could never reach a green doctor. The tap,
+# formula and cask checks above already cover the same manifests.
 
 main() {
   local timeout_value
@@ -374,7 +377,6 @@ main() {
   check_config
   check_manual_state
   check_outdated
-  check_strict_bundle
 
   if [ "$DOCTOR_FAILURES" -ne 0 ]; then
     printf 'Doctor found %s required issue(s).\n' "$DOCTOR_FAILURES"

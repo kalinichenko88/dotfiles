@@ -42,7 +42,21 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 - The tracked `Brewfile` and `setup/cask-apps.tsv` must stay free of
   machine-specific casks; `setup/manual-checks.tsv` must contain no `app` rows.
 - `Brewfile.local` and the `.local` TSVs must stay untracked.
-- Tracked Zsh files must contain no absolute `/Users/<name>` paths.
+- Tracked Zsh files must contain no absolute `/Users/<name>` paths, and no
+  pinned `python@<version>` — the PATH entry is globbed so a Brewfile bump
+  needs no edit.
+
+Two rules that look like redundancy but are not:
+
+- `~/.docker/config.json` and `~/.claude/settings.json` are **merged**
+  (`dotfiles_merge_json`), never copied. Other tools write to both — `docker
+  login` stores registry credentials there, and the user may have their own
+  Claude hooks. Doctor checks `contains`, not equality, for the same reason.
+  Turning either back into a copy or an equality check destroys user state and
+  leaves doctor with no state that can ever be green.
+- A manual-install CLI that is missing is a **warning**; one that is installed
+  but fails its probe is a failure. Bootstrap only prints the checklist for
+  those tools, so making absence a failure means a first run can never finish.
 
 ## Architecture
 

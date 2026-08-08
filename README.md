@@ -79,9 +79,10 @@ git pull
 make update
 ```
 
-`make update` refreshes Homebrew, reapplies both Brewfiles so anything new in
-the manifests gets installed, upgrades packages, and finishes with a `doctor`
-pass. Casks that update themselves are left alone — Homebrew skips them by
+`make update` refreshes Homebrew, reapplies both Brewfiles, reapplies the pinned
+Node and UV manifests, upgrades packages, and finishes with a `doctor` pass — it
+installs everything doctor then checks, so a manifest bump needs no second
+command. Casks that update themselves are left alone — Homebrew skips them by
 design, and this repository does not use `--greedy`.
 
 Then look at what this machine has that no manifest declares:
@@ -146,17 +147,21 @@ reappear in the tracked manifests.
 
 ## What doctor reports
 
-Required failures: missing taps, formulae, or casks; a wrong Node or UV
-version; missing tracked configuration. Warnings: available upgrades,
-unsupported manual applications, and authentication state. Auth output is
-suppressed and every external probe is bounded by a timeout.
+Required failures: missing taps, formulae, or casks; a wrong Node or UV version;
+missing tracked configuration; a work Git identity still holding the template's
+placeholder address. Warnings: available upgrades, unsupported manual
+applications, authentication state, and a manual CLI that is not installed yet —
+those ship their own installers, so their absence must not fail a first run. A
+manual CLI that *is* installed but fails its probe stays a required failure.
 
 For casks, doctor accepts either a Homebrew receipt or the expected application
 bundle from `setup/cask-apps.tsv`, so an app installed by hand is not
 reinstalled just to change package-manager ownership.
 
-After a successful bootstrap, doctor additionally runs `brew bundle check
---no-upgrade` against both Brewfiles.
+Files other tools also write — `~/.docker/config.json` and
+`~/.claude/settings.json` — are merged rather than replaced, and doctor checks
+that the tracked keys are present rather than that the file matches exactly.
+Docker registry credentials and Claude hooks you added yourself survive.
 
 ## Configuration destinations
 

@@ -40,7 +40,17 @@ assert_equals '1' "$local_source_count"
 # shellcheck disable=SC2016
 assert_file_contains "$TEST_ROOT/zsh/path.zsh" 'export NVM_DIR="$HOME/.nvm"'
 
-zsh -n "$TEST_ROOT/zsh/zshrc" "$TEST_ROOT/zsh/path.zsh"
+# One file per invocation: `zsh -n a b` parses only a and hands b to it as $1,
+# so every extra argument was silently unchecked.
+while IFS= read -r tracked_file; do
+  zsh -n "$TEST_ROOT/$tracked_file" || fail "zsh syntax error in $tracked_file"
+done < "$tmp/tracked-zsh-files"
+
+# The Brewfile installs a keg-only python, so the unversioned python and pip
+# only exist if libexec is on PATH — without a pinned version in the path.
+if grep -q '^brew "python@' "$TEST_ROOT/Brewfile"; then
+  assert_file_contains "$TEST_ROOT/zsh/path.zsh" '/opt/homebrew/opt/python@*/libexec/bin'
+fi
 
 while IFS= read -r tracked_file; do
   [ "$tracked_file" != 'zsh/local.zsh' ] || continue

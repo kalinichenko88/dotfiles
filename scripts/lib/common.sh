@@ -33,12 +33,14 @@ dotfiles_manifest() {
   return 0
 }
 
+# A broken uv must leave the caller with an empty list, not kill it: this
+# pipeline's status would otherwise propagate under `set -o pipefail`.
 dotfiles_uv_tool_specs() {
   uv tool list 2>/dev/null | awk '/^[^[:space:]]+[[:space:]]+v?[0-9]/ {
     version=$2
     sub(/^v/, "", version)
     print $1 "==" version
-  }' | sort -u
+  }' | sort -u || return 0
 }
 
 dotfiles_resolve_homebrew() {
@@ -137,6 +139,57 @@ dotfiles_link() {
   dotfiles_prepare_parent "$target"
   dotfiles_run ln -s "$source_path" "$target"
   dotfiles_info "linked $target"
+}
+
+# Merges tracked JSON into a target that other tools also write to, so their
+# keys survive. The jq program gets the target as input and the tracked file as
+# $source; a missing target is treated as {}. Unlike dotfiles_copy this needs no
+# FORCE, because nothing outside the tracked keys is replaced.
+dotfiles_merge_json() {
+  local relative_source target program source_path target_dir temp_file
+  relative_source=$1
+  target=$2
+  # $source is a jq variable, not a shell one.
+  # shellcheck disable=SC2016
+  program=${3:-'. * $source[0]'}
+  source_path=$DOTFILES_ROOT/$relative_source
+  target_dir=$(dirname -- "$target")
+
+  if [ ! -f "$source_path" ]; then
+    dotfiles_die "merge source is not a file: $source_path"
+    return 1
+  fi
+  if [ "${DRY_RUN:-0}" = 1 ]; then
+    dotfiles_info "would merge $relative_source into $target"
+    return 0
+  fi
+
+  mkdir -p "$target_dir"
+  if ! temp_file=$(mktemp "$target_dir/.dotfiles-merge.XXXXXX"); then
+    dotfiles_die "could not create a temporary file next to $target"
+    return 1
+  fi
+
+  if ! { [ -f "$target" ] && cat "$target" || printf '{}\n'; } \
+    | jq --slurpfile source "$source_path" "$program" > "$temp_file"; then
+    rm -f "$temp_file"
+    dotfiles_die "could not merge $relative_source into $target"
+    return 1
+  fi
+  chmod 600 "$temp_file"
+
+  if [ -f "$target" ] && cmp -s "$target" "$temp_file"; then
+    rm -f "$temp_file"
+    dotfiles_info "merge already applied: $target"
+    return 0
+  fi
+  if [ -f "$target" ] && ! dotfiles_backup_target "$target"; then
+    rm -f "$temp_file"
+    return 1
+  fi
+
+  mv "$temp_file" "$target"
+  dotfiles_info "merged $relative_source into $target"
 }
 
 dotfiles_copy() {

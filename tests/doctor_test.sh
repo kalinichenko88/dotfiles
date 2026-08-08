@@ -24,6 +24,14 @@ done
 
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config >/dev/null
 
+# The copied template still carries the placeholder address, which doctor must
+# reject; the rest of the run needs a real one.
+grep -Fq 'your-work-email@company.com' \
+  "$target_home/.config/git/gitconfig-work" || \
+  fail 'work Git template lost its placeholder address'
+printf '[user]\n    email = person@example.test\n' \
+  > "$target_home/.config/git/gitconfig-work"
+
 # Doctor verifies the shared baseline plus the optional machine-local manifest,
 # so the stub state has to cover both.
 manifest() {
@@ -74,6 +82,9 @@ elapsed=$((SECONDS - started_at))
 [ "$elapsed" -lt 4 ] || fail 'doctor did not time out a hanging auth probe'
 
 assert_file_contains "$tmp/ready.out" 'present-manual cask obsidian'
+# A cask installed by hand must not be re-failed by a second, stricter pass.
+assert_file_excludes "$tmp/ready.out" 'missing brew-bundle'
+assert_file_excludes "$tmp/ready.out" 'missing manual-command'
 assert_file_contains "$tmp/ready.out" 'warning outdated fd'
 assert_file_contains "$tmp/ready.out" 'needs-login auth GitHub CLI'
 assert_file_excludes "$tmp/ready.out" 'AUTH_SECRET_SENTINEL'
@@ -87,6 +98,18 @@ done
 for local_cask in steam plex-media-server tor-browser qmk-toolbox; do
   assert_file_excludes "$TEST_ROOT/Brewfile" "cask \"$local_cask\""
 done
+
+# A CLI with its own installer is not present right after bootstrap, so its
+# absence must stay a warning — otherwise a first run can never finish.
+unlink "$stub_bin/lms"
+BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
+BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
+specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
+DOTFILES_APPLICATIONS_ROOT="$apps_root" \
+  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/uninstalled-cli.out" || \
+  fail 'a not-yet-installed manual CLI must not fail doctor'
+assert_file_contains "$tmp/uninstalled-cli.out" 'warning manual-command LM Studio CLI'
+ln -s /usr/bin/true "$stub_bin/lms"
 
 printf '#!/bin/sh\nprintf "v24.17.0\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
@@ -182,15 +205,17 @@ assert_file_contains "$tmp/node.out" 'missing node-default v24.18.0'
 printf 'v24.18.0\n' > "$target_home/.nvm/alias/default"
 mkdir -p "$target_home/.config/dotfiles"
 printf 'verified\n' > "$target_home/.config/dotfiles/bootstrap-complete"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" BREW_STUB_BUNDLE_STATUS=1 \
-  UV_STUB_TOOLS='mcp-telegram v0.1.2
+# The completion marker used to switch on a second `brew bundle check` pass
+# that re-failed every present-manual cask. It must stay gone.
+BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
+BREW_STUB_TAPS="$brew_taps" BREW_STUB_BUNDLE_STATUS=1 \
+UV_STUB_TOOLS='mcp-telegram v0.1.2
 specify-cli v0.8.4' PATH="$doctor_path" \
-  DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/strict.out"; then
-  fail 'target marker must enable strict brew bundle verification'
-fi
-assert_file_contains "$tmp/strict.out" 'missing brew-bundle Brewfile'
+DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
+  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/marked.out" || \
+  fail 'the completion marker must not make a hand-installed cask fail doctor'
+assert_file_contains "$tmp/marked.out" 'present-manual cask obsidian'
+assert_file_excludes "$tmp/marked.out" 'brew-bundle'
 
 [ -z "$(find "$tmp/doctor-tmp" -mindepth 1 -print -quit)" ] || \
   fail 'doctor temporary directories were not removed'

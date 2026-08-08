@@ -31,16 +31,25 @@ assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/
 assert_link "$TEST_ROOT/claude/hooks/check-docs-before-commit.sh" \
   "$target_home/.claude/hooks/check-docs-before-commit.sh"
 
-cmp -s "$TEST_ROOT/docker/config.json" "$target_home/.docker/config.json" || \
-  fail 'Docker config copy differs from the tracked source'
+# Containment, not equality: docker login writes credentials into this file.
+jq -e --slurpfile source "$TEST_ROOT/docker/config.json" 'contains($source[0])' \
+  "$target_home/.docker/config.json" >/dev/null || \
+  fail 'Docker config merge lost the tracked keys'
+
+jq '. + {auths: {"ghcr.io": {auth: "token"}}}' \
+  "$target_home/.docker/config.json" > "$tmp/docker-with-auth.json"
+mv "$tmp/docker-with-auth.json" "$target_home/.docker/config.json"
+DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config docker
+assert_equals 'token' \
+  "$(jq -r '.auths["ghcr.io"].auth' "$target_home/.docker/config.json")"
 cmp -s "$TEST_ROOT/git/gitconfig-work.example" \
   "$target_home/.config/git/gitconfig-work" || fail 'work Git template is missing'
 cmp -s "$TEST_ROOT/git/gitconfig-local.example" \
   "$target_home/.config/git/gitconfig-local" || fail 'local Git template is missing'
 
 jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
-  '.hooks == $hooks[0]' "$target_home/.claude/settings.json" >/dev/null || \
-  fail 'Claude hook settings were not merged'
+  '.hooks | contains($hooks[0])' "$target_home/.claude/settings.json" \
+  >/dev/null || fail 'Claude hook settings were not merged'
 
 # Add a non-hook key, then verify a second install preserves it without backups.
 jq '. + {theme: "dark"}' "$target_home/.claude/settings.json" > "$tmp/settings-with-theme.json"
@@ -64,25 +73,39 @@ zsh_backup=$(find "$target_home" -maxdepth 1 -name '.zshrc.backup.*' -print -qui
 [ -n "$zsh_backup" ] || fail 'forced config install did not back up .zshrc'
 assert_equals 'local zsh' "$(cat "$zsh_backup")"
 
-jq '.hooks = {unexpected: true}' "$target_home/.claude/settings.json" \
-  > "$tmp/settings-conflict.json"
-mv "$tmp/settings-conflict.json" "$target_home/.claude/settings.json"
-if DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
-  > "$tmp/claude-conflict.out" 2> "$tmp/claude-conflict.err"; then
-  fail 'changed Claude settings must require FORCE=1'
-fi
-assert_equals 'true' "$(jq -r '.hooks.unexpected' "$target_home/.claude/settings.json")"
-
-FORCE=1 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
-  > "$tmp/claude-force.out"
+# A hook the user owns, on an event this repository does not declare, must keep
+# firing. Demanding exact equality here would delete it to stay green.
+jq '.hooks.Stop = [{hooks: [{type: "command", command: "mine"}]}]' \
+  "$target_home/.claude/settings.json" > "$tmp/settings-user-hook.json"
+mv "$tmp/settings-user-hook.json" "$target_home/.claude/settings.json"
+DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
+  > "$tmp/claude-user-hook.out"
+assert_equals 'mine' \
+  "$(jq -r '.hooks.Stop[0].hooks[0].command' "$target_home/.claude/settings.json")"
 jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
-  '.hooks == $hooks[0] and .theme == "dark"' \
+  '(.hooks | contains($hooks[0])) and .theme == "dark"' \
   "$target_home/.claude/settings.json" >/dev/null || \
-  fail 'forced Claude merge did not preserve non-hook settings'
+  fail 'Claude merge lost the tracked hooks or unrelated settings'
+
+[ -z "$(find "$target_home/.claude" -maxdepth 1 -name 'settings.json.backup.*' \
+  -print -quit)" ] || fail 'a no-op Claude merge created a backup'
+
+# On an event this repository does declare, the tracked hooks win — and the
+# file that gets rewritten is backed up first.
+jq '.hooks.PreToolUse = [{matcher: "Bash", hooks: [{type: "command", command: "stale"}]}]' \
+  "$target_home/.claude/settings.json" > "$tmp/settings-stale-hook.json"
+mv "$tmp/settings-stale-hook.json" "$target_home/.claude/settings.json"
+DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
+  > "$tmp/claude-stale-hook.out"
+jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
+  '(.hooks | contains($hooks[0])) and .hooks.Stop[0].hooks[0].command == "mine"' \
+  "$target_home/.claude/settings.json" >/dev/null || \
+  fail 'Claude merge did not restore the tracked hooks alongside the user hook'
 settings_backup=$(find "$target_home/.claude" -maxdepth 1 \
   -name 'settings.json.backup.*' -print -quit)
-[ -n "$settings_backup" ] || fail 'forced Claude merge did not create a backup'
-assert_equals 'true' "$(jq -r '.hooks.unexpected' "$settings_backup")"
+[ -n "$settings_backup" ] || fail 'Claude merge did not back up the changed file'
+assert_equals 'stale' \
+  "$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$settings_backup")"
 
 # With several identities in play, a guessed address is worse than an error.
 grep -E '^[[:space:]]*useConfigOnly[[:space:]]*=[[:space:]]*true' \
