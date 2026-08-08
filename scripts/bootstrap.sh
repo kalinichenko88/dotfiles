@@ -32,7 +32,6 @@ check_platform() {
 load_tool_versions() {
   local line key value versions_file
   versions_file=$DOTFILES_ROOT/setup/tool-versions.env
-  OH_MY_ZSH_COMMIT=
   NVM_VERSION=
 
   while IFS= read -r line || [ -n "$line" ]; do
@@ -52,7 +51,6 @@ load_tool_versions() {
         ;;
     esac
     case "$key" in
-      OH_MY_ZSH_COMMIT) OH_MY_ZSH_COMMIT=$value ;;
       NVM_VERSION) NVM_VERSION=$value ;;
       *)
         dotfiles_die "unknown tool version key: $key"
@@ -61,7 +59,7 @@ load_tool_versions() {
     esac
   done < "$versions_file"
 
-  if [ -z "$OH_MY_ZSH_COMMIT" ] || [ -z "$NVM_VERSION" ]; then
+  if [ -z "$NVM_VERSION" ]; then
     dotfiles_die 'tool version manifest is incomplete'
     return 1
   fi
@@ -377,11 +375,6 @@ install_tools() {
     return 1
   fi
 
-  install_git_checkout \
-    'Oh My Zsh' \
-    'https://github.com/ohmyzsh/ohmyzsh.git' \
-    "$DOTFILES_TARGET_HOME/.oh-my-zsh" \
-    "$OH_MY_ZSH_COMMIT"
   install_git_checkout \
     'NVM' \
     'https://github.com/nvm-sh/nvm.git' \

@@ -37,7 +37,7 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 
 1. platform check — Apple Silicon macOS with Command Line Tools;
 2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
-3. pinned Oh My Zsh and NVM, the exact Node version, UV tools;
+3. pinned NVM, the exact Node version, UV tools;
 4. the `~/Dev` project directories, then all configuration;
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1–5 pass.
@@ -100,7 +100,7 @@ make config-nvim                 # one unit
 | --- | --- |
 | `make bootstrap` | Full provisioning: brew, tools, config, doctor, marker |
 | `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
-| `make bootstrap-tools` | Pinned Oh My Zsh, NVM/Node, and UV tools |
+| `make bootstrap-tools` | Pinned NVM/Node and UV tools |
 | `make config-install` | Install every configuration unit |
 | `make config-<unit>` | Install one unit |
 | `make update` | Refresh, reapply manifests, upgrade, then doctor |
@@ -178,8 +178,10 @@ those directories Git refuses to commit rather than inventing
 `user@hostname` — with more than one identity in play, a wrong address is
 worse than an error. Set `user.email` in the repository, or clone it under
 `~/Dev`.
-Machine-specific Zsh overrides belong in the ignored `zsh/local.zsh`, sourced
-exactly once after every tracked module.
+
+Zsh loads every tracked module from `zsh/`, then the ignored `zsh/local.zsh`
+exactly once, last. Shell behaviour — history, completion, keybindings — lives
+in `zsh/options.zsh`; there is no framework.
 
 See [`nvim/README.md`](nvim/README.md) for Neovim plugins, keybindings, LSP, and
 formatters. `gh/config.yml` holds public preferences only — `gh auth login`

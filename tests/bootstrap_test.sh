@@ -14,7 +14,6 @@ DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/home" \
   "$TEST_ROOT/scripts/bootstrap.sh" tools > "$tmp/tools.out"
 
 for value in \
-  '0912e05c0589d26ea20d79555487900880aad4d5' \
   'v0.40.3' \
   'nvm install v24.18.0' \
   'nvm alias default v24.18.0' \
@@ -25,6 +24,7 @@ done
 assert_file_excludes "$tmp/tools.out" 'v20.20.0'
 assert_file_excludes "$tmp/tools.out" 'v22.23.1'
 assert_file_excludes "$tmp/tools.out" '.bun'
+assert_file_excludes "$tmp/tools.out" 'ohmyzsh'
 [ ! -e "$tmp/home/.nvm" ] || fail 'tools dry run mutated the target home'
 
 DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/home" \
@@ -59,10 +59,10 @@ if DRY_RUN=1 DOTFILES_HOMEBREW_BIN="$TEST_ROOT/tests/fixtures/bin/brew" \
 fi
 assert_file_contains "$tmp/intel.err" 'expected /opt/homebrew'
 
-mkdir -p "$tmp/wrong-origin-home/.oh-my-zsh"
-git -C "$tmp/wrong-origin-home/.oh-my-zsh" init -q
-git -C "$tmp/wrong-origin-home/.oh-my-zsh" remote add origin \
-  https://example.invalid/not-ohmyzsh.git
+mkdir -p "$tmp/wrong-origin-home/.nvm"
+git -C "$tmp/wrong-origin-home/.nvm" init -q
+git -C "$tmp/wrong-origin-home/.nvm" remote add origin \
+  https://example.invalid/not-nvm.git
 if DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/wrong-origin-home" \
   "$TEST_ROOT/scripts/bootstrap.sh" tools \
   > "$tmp/origin.out" 2> "$tmp/origin.err"; then

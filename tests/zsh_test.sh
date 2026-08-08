@@ -11,7 +11,7 @@ trap 'rm -rf "$tmp"' EXIT
 tracked_zsh=$tmp/tracked-zsh
 mutated_zsh=$tmp/mutated-zsh
 mkdir -p "$tracked_zsh" "$mutated_zsh" \
-  "$tmp/home/.oh-my-zsh" "$tmp/home/.openclaw/completions" "$tmp/bin"
+  "$tmp/home/.openclaw/completions" "$tmp/bin"
 git -C "$TEST_ROOT" ls-files 'zsh/zshrc' 'zsh/*.zsh' \
   > "$tmp/tracked-zsh-files"
 
@@ -57,7 +57,6 @@ if ! assert_tracked_zsh_is_portable "$ignored_zsh"; then
   fail 'ignored local.zsh affected tracked Zsh portability check'
 fi
 
-printf ':\n' > "$tmp/home/.oh-my-zsh/oh-my-zsh.sh"
 # shellcheck disable=SC2016
 printf '#!/bin/sh\nprintf sourced > "$COMPLETION_MARKER"\n' > \
   "$tmp/home/.openclaw/completions/openclaw.zsh"
