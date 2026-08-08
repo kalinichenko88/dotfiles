@@ -1,40 +1,25 @@
 # Manual Workstation Steps
 
-These items belong to the shared baseline but have no trusted, deterministic
-installer in this repository. Install them manually and use the listed probe to
-verify them. Do not copy application data from another Mac.
+A few baseline tools have no trusted, deterministic installer in this
+repository and are installed by hand. `setup/manual-checks.tsv` is the
+authoritative list — `make doctor` runs the probe in every row. Install each
+tool from its own installer, and never copy application data from another Mac.
 
-## Standalone and Application-Bundled CLIs
+Machine-specific applications belong in the gitignored
+`setup/manual-checks.local.tsv`, described in the README.
 
-| Tool | Verification |
+## Logging In
+
+The `auth` probes in `manual-checks.tsv` only report whether a session already
+exists. These are the commands that create one:
+
+| Tool | Command |
 | --- | --- |
-| Claude Code | `claude --version` |
-| OpenCode | `opencode --version` |
-| Cursor Agent | `agent --version` |
-| LM Studio CLI | `lms --version` |
+| 1Password CLI | `op signin` |
+| GitHub CLI | `gh auth login` |
+| Codex | `codex login` |
+| Claude Code | follow the interactive prompt on first run |
+| npm and other registries | their own interactive login |
 
-## Authentication Checklist
-
-Authenticate locally after installation. Never add the resulting files to this
-repository:
-
-- 1Password CLI: `op signin`
-- GitHub CLI: `gh auth login`
-- Codex: `codex login`
-- Claude Code: follow the interactive login prompt
-- npm or other package registries: use their interactive login commands
-
-## Machine-Specific Software
-
-This repository is public, so per-machine software is never tracked. Declare it
-in the gitignored files instead; `bootstrap`, `update` and `doctor` pick them up
-automatically when present:
-
-| File | Holds |
-| --- | --- |
-| `Brewfile.local` | `brew`/`cask`/`tap` lines for this machine only |
-| `setup/cask-apps.local.tsv` | `cask-token<TAB>/Applications/Name.app` |
-| `setup/manual-checks.local.tsv` | `app<TAB>Display Name<TAB>/Applications/Name.app` |
-
-Mac App Store applications belong in `setup/manual-checks.local.tsv` as well.
-This repository intentionally does not automate App Store authentication.
+Authentication files, tokens, and caches must never be added to this
+repository.

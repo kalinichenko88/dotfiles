@@ -162,14 +162,12 @@ dependency look missing.
 ## Manual Applications and Authentication
 
 This repository intentionally does not use `mas` or copy application databases.
-See [`setup/manual-apps.md`](setup/manual-apps.md) for unsupported applications,
-Mac App Store software, standalone AI CLIs, expected `.app` paths, and local
-verification commands.
+`setup/manual-checks.tsv` is the authoritative list of hand-installed tools and
+their verification probes; [`setup/manual-apps.md`](setup/manual-apps.md) holds
+the login commands that create the sessions those probes look for.
 
-Authenticate on the target after installation, including 1Password CLI, GitHub
-CLI, Codex, Claude Code, and required package registries. Authentication files,
-tokens, histories, caches, model data, browser profiles, SSH keys, and Docker
-credentials must never be added to this repository.
+Authentication files, tokens, histories, caches, model data, browser profiles,
+SSH keys, and Docker credentials must never be added to this repository.
 
 ## Configuration Destinations
 
