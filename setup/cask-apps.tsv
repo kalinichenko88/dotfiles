@@ -1,0 +1,23 @@
+# cask-token	application-bundle
+1password	/Applications/1Password.app
+agterm	/Applications/agterm.app
+arc	/Applications/Arc.app
+chatgpt	/Applications/ChatGPT.app
+claude	/Applications/Claude.app
+codexbar	/Applications/CodexBar.app
+cursor	/Applications/Cursor.app
+discord	/Applications/Discord.app
+google-chrome	/Applications/Google Chrome.app
+handy	/Applications/Handy.app
+lm-studio	/Applications/LM Studio.app
+meetingbar	/Applications/MeetingBar.app
+obsidian	/Applications/Obsidian.app
+ollama-app	/Applications/Ollama.app
+raycast	/Applications/Raycast.app
+slack	/Applications/Slack.app
+tableplus	/Applications/TablePlus.app
+tailscale-app	/Applications/Tailscale.app
+telegram	/Applications/Telegram.app
+visual-studio-code	/Applications/Visual Studio Code.app
+wezterm@nightly	/Applications/WezTerm.app
+zed	/Applications/Zed.app

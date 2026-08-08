@@ -1,0 +1,4 @@
+#!/bin/bash
+
+printf 'AUTH_SECRET_SENTINEL\n'
+exit "${GH_STUB_STATUS:-1}"

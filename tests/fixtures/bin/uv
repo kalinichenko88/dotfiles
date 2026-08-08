@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -eu
+
+if [ "${1:-}" = tool ] && [ "${2:-}" = list ]; then
+  printf '%s\n' "${UV_STUB_TOOLS:-}"
+  exit 0
+fi
+
+exit 2

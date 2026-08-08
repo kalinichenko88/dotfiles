@@ -1,0 +1,129 @@
+#!/bin/bash
+
+set -eu
+
+if [ "${1:-}" = --prefix ] && [ "$#" -eq 1 ]; then
+  printf '%s\n' "${BREW_STUB_PREFIX:-/opt/homebrew}"
+  exit 0
+fi
+
+if [ "${1:-}" = bundle ] && [ "${2:-}" = dump ]; then
+  output_file=
+  shift 2
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --file)
+        output_file=$2
+        shift 2
+        ;;
+      --file=*)
+        output_file=${1#--file=}
+        shift
+        ;;
+      *) shift ;;
+    esac
+  done
+  [ -n "$output_file" ] || exit 2
+  printf '%s\n' "${BREW_STUB_SNAPSHOT:-}" > "$output_file"
+  exit 0
+fi
+
+if [ "${1:-}" = bundle ] && [ "${2:-}" = check ]; then
+  exit "${BREW_STUB_BUNDLE_STATUS:-0}"
+fi
+
+if [ "${1:-}" = tap ] && [ "$#" -eq 1 ]; then
+  printf '%s\n' "${BREW_STUB_TAPS:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = list ] && [ "${2:-}" = --formula ]; then
+  if [ "$#" -eq 3 ]; then
+    if [ "$3" = "${BREW_STUB_FORMULA_ALIAS_CANDIDATE:-}" ]; then
+      printf '/opt/homebrew/Cellar/%s/1.0/bin/actual-tool\n' "$3"
+    fi
+    exit 0
+  fi
+  printf '%s\n' "${BREW_STUB_FORMULAE:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = list ] && [ "${2:-}" = --cask ]; then
+  printf '%s\n' "${BREW_STUB_CASKS:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = outdated ]; then
+  if [ "${2:-}" != --quiet ] || [ "$#" -ne 2 ]; then
+    exit 2
+  fi
+  printf '%s\n' "${BREW_STUB_OUTDATED:-}"
+  exit "${BREW_STUB_OUTDATED_STATUS:-0}"
+fi
+
+if [ "${1:-}" = deps ] && [ "${2:-}" = --formula ] && [ "$#" -eq 3 ]; then
+  candidate=$3
+  if [ "$candidate" = "${BREW_STUB_FAIL_CANDIDATE:-}" ]; then
+    exit 2
+  fi
+  if [ "$candidate" = "${BREW_STUB_FORWARD_CANDIDATE:-}" ]; then
+    printf '%s\n' "${BREW_STUB_FORWARD_DEPENDENCIES:-dependency-context}"
+  fi
+  exit 0
+fi
+
+if [ "${1:-}" = uses ] && [ "${2:-}" = --installed ] && \
+  [ "${3:-}" = --recursive ] && [ "$#" -eq 4 ]; then
+  candidate=$4
+  if [ "$candidate" = "${BREW_STUB_FAIL_CANDIDATE:-}" ]; then
+    exit 2
+  fi
+  if [ "$candidate" = "${BREW_STUB_REVERSE_CANDIDATE:-}" ]; then
+    printf '%s\n' "${BREW_STUB_REVERSE_DEPENDENCIES:-installed-consumer}"
+  fi
+  exit 0
+fi
+
+if [ "${1:-}" = info ] && [ "${2:-}" = --json=v2 ] && \
+  [ "${3:-}" = --formula ] && [ "$#" -eq 4 ]; then
+  if [ "$4" = "${BREW_STUB_FAIL_CANDIDATE:-}" ]; then
+    exit 2
+  fi
+  if [ "$4" = "${BREW_STUB_FORMULA_ALIAS_CANDIDATE:-}" ]; then
+    printf '{"formulae":[{"name":"%s","aliases":["actual-tool"],"oldnames":[]}]}\n' "$4"
+  else
+    printf '{"formulae":[{"name":"%s","aliases":[],"oldnames":[]}]}\n' "$4"
+  fi
+  exit 0
+fi
+
+if [ "${1:-}" = info ] && [ "${2:-}" = --json=v2 ] && \
+  [ "${3:-}" = --cask ] && [ "$#" -eq 4 ]; then
+  if [ "$4" = "${BREW_STUB_FAIL_CANDIDATE:-}" ]; then
+    exit 2
+  fi
+  if [ "$4" = "${BREW_STUB_CASK_ARTIFACT_CANDIDATE:-}" ]; then
+    printf '{"casks":[{"token":"%s","artifacts":[{"binary":["/fixture/actual-cask-tool"]}]}]}\n' "$4"
+  else
+    printf '{"casks":[{"token":"%s","artifacts":[]}]}\n' "$4"
+  fi
+  exit 0
+fi
+
+if [ "${1:-}" = tap-info ] && [ "${2:-}" = --json=v1 ] && [ "$#" -eq 3 ]; then
+  if [ "$3" = "${BREW_STUB_FAIL_CANDIDATE:-}" ]; then
+    exit 2
+  fi
+  if [ "$3" = "${BREW_STUB_TAP_INFO_NAME:-}" ]; then
+    printf '[{"name":"%s","formula_names":["%s"],"cask_tokens":[]}]\n' \
+      "$3" "${BREW_STUB_TAP_FORMULAE:-}"
+  else
+    printf '[{"name":"%s","formula_names":[],"cask_tokens":[]}]\n' "$3"
+  fi
+  exit 0
+fi
+
+printf 'unexpected brew stub invocation:' >&2
+printf ' %s' "$@" >&2
+printf '\n' >&2
+exit 2
