@@ -1,23 +1,25 @@
-# Homebrew
-export PATH="/opt/homebrew/bin:$PATH"
+typeset -U path PATH
 
-# Python
-export PATH="/opt/homebrew/opt/python@3.14/libexec/bin:$PATH"
+# Homebrew on Apple Silicon. The fallback makes a newly installed brew visible.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+  path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
+fi
 
-# PostgreSQL
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+# Homebrew's libpq is keg-only.
+[[ -d /opt/homebrew/opt/libpq/bin ]] && path=(/opt/homebrew/opt/libpq/bin $path)
 
-# Local binaries
-export PATH="$HOME/.local/bin:$PATH"
+# User-space command-line tools.
+path=("$HOME/.local/bin" $path)
+export PNPM_HOME="$HOME/Library/pnpm"
+path=("$PNPM_HOME" $path)
 
-# nvm
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+# NVM and the exact Node baseline are installed by scripts/bootstrap.sh.
+export NVM_DIR="$HOME/.nvm"
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
-# bun
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
+# Optional application-bundled CLIs.
+[[ -d "$HOME/.opencode/bin" ]] && path=("$HOME/.opencode/bin" $path)
+[[ -d "$HOME/.lmstudio/bin" ]] && path=("$HOME/.lmstudio/bin" $path)
+[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
