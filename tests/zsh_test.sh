@@ -15,15 +15,18 @@ mkdir -p "$tracked_zsh" "$mutated_zsh" \
 git -C "$TEST_ROOT" ls-files 'zsh/zshrc' 'zsh/*.zsh' \
   > "$tmp/tracked-zsh-files"
 
+# grep, not ripgrep: this has to run on a bare macOS runner. A missing tool
+# used to look exactly like a clean result here.
 assert_tracked_zsh_is_portable() {
-  local source_root tracked_file
+  local source_root tracked_file grep_status
   source_root=$1
 
   while IFS= read -r tracked_file; do
-    if rg -n '/Users/[^/]+/|\.bun/(bin|_bun)|BUN_INSTALL|python@[0-9]' \
-      "$source_root/$tracked_file"; then
-      return 1
-    fi
+    grep -nE '/Users/[^/]+/|\.bun/(bin|_bun)|BUN_INSTALL|python@[0-9]' \
+      "$source_root/$tracked_file" && return 1
+    grep_status=$?
+    [ "$grep_status" -eq 1 ] || \
+      fail "portability check could not read $tracked_file"
   done < "$tmp/tracked-zsh-files"
 }
 
@@ -31,7 +34,7 @@ if ! assert_tracked_zsh_is_portable "$TEST_ROOT"; then
   fail 'non-portable Zsh path remains'
 fi
 
-local_source_count=$(rg -n 'source .*local\.zsh' "$TEST_ROOT/zsh/zshrc" | wc -l | tr -d ' ')
+local_source_count=$(grep -cE 'source .*local\.zsh' "$TEST_ROOT/zsh/zshrc" || true)
 assert_equals '1' "$local_source_count"
 # $HOME must remain literal in the tracked configuration.
 # shellcheck disable=SC2016
