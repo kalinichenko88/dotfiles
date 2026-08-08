@@ -1,136 +1,133 @@
 # dotfiles
 
-Reproducible macOS workstation configuration for an Apple Silicon Mac. The
-reviewed target is an M1 Pro using Homebrew at `/opt/homebrew`.
+Reproducible macOS workstation setup for Apple Silicon: Homebrew packages,
+pinned runtimes, and the configuration for Git, Zsh, Neovim, WezTerm, GitHub
+CLI, Starship, Docker, and Claude Code.
 
-The repository has three responsibilities:
+Nothing here ever uninstalls software. Every command is idempotent and refuses
+to overwrite a file it does not manage.
 
-1. install the shared workstation baseline on a new machine;
-2. keep an existing machine up to date and report drift in both directions;
-3. stay publishable — no secrets, no personal inventory, no agent planning notes.
+## Install on a new Mac
 
-No command here ever uninstalls software.
+**1. Prerequisites**
 
-## What Is Managed
+```bash
+xcode-select --install          # skip if already present
+```
 
-- Homebrew taps, formulae, casks, terminal applications, and fonts in
-  `Brewfile`;
-- exact Node `v24.18.0` and UV tool versions under `setup/`;
-- `~/Dev/Personal` and `~/Dev/Work`, which drive the Git identity switch;
-- Git, Zsh, Neovim, WezTerm, GitHub CLI, Starship, Docker CLI, and Claude Code
-  public configuration;
-- explicit checks for standalone or application-bundled AI CLIs;
-- a manual checklist for applications without a Homebrew cask.
+You also need an SSH key registered with GitHub. Homebrew is not required in
+advance — step 3 can install it.
 
-WezTerm Nightly and agterm are the retained terminal baseline. Ghostty, kitty,
-and Alacritty are not part of the target. The retained fonts are JetBrains Mono
-and JetBrains Mono Nerd Font.
-
-Homebrew Bun is authoritative. Tracked Zsh configuration does not load a
-standalone `~/.bun` installation. Poppler remains for Codex and Claude PDF
-workflows, and SoX remains for Claude voice workflows.
-
-OpenClaw, Pi, Perplexity, ZCode, and Buzz are excluded from the baseline.
-
-## Target Bootstrap
-
-Prerequisites:
-
-- Apple Silicon macOS;
-- internet access;
-- Xcode Command Line Tools (`xcode-select --install` when absent);
-- repository access through the configured SSH key.
-
-Clone the repository:
+**2. Clone**
 
 ```bash
 git clone git@github.com:kalinichenko88/dotfiles.git ~/Dev/Personal/dotfiles
 cd ~/Dev/Personal/dotfiles
 ```
 
-Preview a fresh target, including the explicitly authorized Homebrew installer:
+**3. Preview, then apply**
 
 ```bash
-DRY_RUN=1 INSTALL_HOMEBREW=1 make bootstrap
-```
-
-Apply the complete baseline:
-
-```bash
+DRY_RUN=1 INSTALL_HOMEBREW=1 make bootstrap    # prints every command, changes nothing
 INSTALL_HOMEBREW=1 make bootstrap
 ```
 
-The full flow checks the platform, applies `Brewfile`, installs pinned user-space
-tools, installs configuration, runs strict doctor verification, and only then
-creates `~/.config/dotfiles/bootstrap-complete`.
+`INSTALL_HOMEBREW=1` is only needed when Homebrew is absent; installing it is
+never inferred from a plain bootstrap request. Bootstrap runs in this order:
 
-Homebrew installation is never inferred from a generic bootstrap request. When
-Homebrew is absent, `INSTALL_HOMEBREW=1` is required. On a machine where Brew is
-already installed, the flag may be omitted.
+1. platform check — Apple Silicon macOS with Command Line Tools;
+2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
+3. pinned Oh My Zsh and NVM, the exact Node version, UV tools;
+4. `~/Dev/Personal` and `~/Dev/Work`, then all configuration;
+5. strict `doctor` verification;
+6. `~/.config/dotfiles/bootstrap-complete` — written only after 1–5 pass.
 
-## Safety Flags
+**4. Resolve conflicts, if it stops**
 
-- `DRY_RUN=1` prints mutation commands without executing them.
-- Existing configuration is never replaced by default.
-- `FORCE=1` moves each conflicting target to a timestamped sibling such as
-  `.zshrc.backup.20260806-120000` before installing the reviewed config.
-
-Use force only after inspecting the reported conflict:
+If an unmanaged file already sits at a target path, bootstrap stops and names
+it. Inspect it, then rerun with backups enabled:
 
 ```bash
-FORCE=1 make config-install
+FORCE=1 make config-install     # moves each conflict to <name>.backup.<timestamp>
 ```
 
-Git work/local identity files are created from examples only when absent and are
-then preserved. Claude settings are merged through `jq`; non-hook keys are
-preserved, and a changed existing file requires `FORCE=1`. Docker config is
-copied rather than linked because Docker may rewrite it.
+**5. Install what Homebrew cannot**
 
-## Public Commands
+The run prints the checklist from `setup/manual-checks.tsv` — the CLIs that ship
+with their own installers. Install those, then log in using
+[`setup/manual-apps.md`](setup/manual-apps.md).
 
-| Command | Purpose |
-| --- | --- |
-| `make bootstrap` | Run Brew, tools, config, strict doctor, and target marker |
-| `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
-| `make bootstrap-tools` | Install pinned Oh My Zsh, NVM/Node, and UV tools |
-| `make config-install` | Install every configuration unit safely |
-| `make config-<unit>` | Install one unit, e.g. `make config-nvim` |
-| `make update` | `brew update`, reapply manifests, `brew upgrade`, then doctor |
-| `make doctor` | Report manifest entries missing on this machine |
-| `make inventory` | Report software installed here that no manifest declares |
-| `make test` | Run shell integration and regression tests |
-
-Units are `dev-dirs`, `git`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
-`docker`, and `claude`. Every target is idempotent and safe to rerun.
-
-`brew-dump` is intentionally absent: a raw dump must never overwrite the curated
-Brewfile.
-
-## Keeping a Machine Current
+**6. Verify**
 
 ```bash
+make doctor
+```
+
+On first Neovim launch, install the parsers listed in
+[`nvim/README.md`](nvim/README.md).
+
+## Update an existing Mac
+
+```bash
+git pull
 make update
 ```
 
-This refreshes Homebrew, reinstalls anything the manifests gained since the last
-run, upgrades installed packages, and finishes with a doctor pass. Nothing is
-removed.
+`make update` refreshes Homebrew, reapplies both Brewfiles so anything new in
+the manifests gets installed, upgrades packages, and finishes with a `doctor`
+pass. Casks that update themselves are left alone — Homebrew skips them by
+design, and this repository does not use `--greedy`.
 
-Drift is reported from both directions. `make doctor` lists manifest entries
-that are missing here; `make inventory` lists taps, formulae, casks, Node
-versions, and UV tools installed here that no manifest declares. Inventory
-writes its Homebrew dump to a temporary directory that is removed on exit and
-never modifies `Brewfile`.
+Then look at what this machine has that no manifest declares:
 
-For cask-backed applications, doctor accepts either a Homebrew receipt or the
-expected application bundle, so a manually installed app is not reinstalled just
-to change package-manager ownership.
+```bash
+make inventory
+```
 
-## Machine-Specific Software
+For each entry decide where it belongs: `Brewfile` if every machine should get
+it, `Brewfile.local` if only this one. Removing software is always manual.
 
-This repository is public, so software that belongs to one machine is never
-tracked. Declare it in the gitignored siblings instead; bootstrap, update, and
-doctor read them automatically when present:
+To reinstall configuration without touching packages:
+
+```bash
+make config-install              # everything
+make config-nvim                 # one unit
+```
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `make bootstrap` | Full provisioning: brew, tools, config, doctor, marker |
+| `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
+| `make bootstrap-tools` | Pinned Oh My Zsh, NVM/Node, and UV tools |
+| `make config-install` | Install every configuration unit |
+| `make config-<unit>` | Install one unit |
+| `make update` | Refresh, reapply manifests, upgrade, then doctor |
+| `make doctor` | What the manifests declare and this machine lacks |
+| `make inventory` | What this machine has and no manifest declares |
+| `make git-check` | Active `user.name`/`user.email` and their sources |
+| `make test` | Shell integration and regression tests |
+
+Units: `dev-dirs`, `git`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`, `docker`,
+`claude`.
+
+## Safety
+
+- `DRY_RUN=1` prints mutation commands instead of running them.
+- Existing configuration is never replaced by default; a conflict is an error.
+- `FORCE=1` backs the conflicting file up to a timestamped sibling first.
+- Git work and local identity files are created from examples only when absent,
+  then left alone.
+- Claude settings are merged with `jq`: unrelated keys survive, and changing an
+  existing file still requires `FORCE=1`.
+- Docker config is copied rather than symlinked, because Docker rewrites it.
+
+## Machine-specific software
+
+This repository is public, so software belonging to one machine is never
+tracked. Declare it in the gitignored siblings; bootstrap, update, and doctor
+read them automatically when present:
 
 | File | Holds |
 | --- | --- |
@@ -138,38 +135,24 @@ doctor read them automatically when present:
 | `setup/cask-apps.local.tsv` | `cask-token<TAB>/Applications/Name.app` |
 | `setup/manual-checks.local.tsv` | `app<TAB>Display Name<TAB>/Applications/Name.app` |
 
-The tracked manifests must stay free of personal inventory; `make test` fails if
-machine-specific casks or an application list reappear in them.
+`make test` fails if machine-specific casks or an application inventory
+reappear in the tracked manifests.
 
-## Doctor
+## What doctor reports
 
-```bash
-make doctor
-```
+Required failures: missing taps, formulae, or casks; a wrong Node or UV
+version; missing tracked configuration. Warnings: available upgrades,
+unsupported manual applications, and authentication state. Auth output is
+suppressed and every external probe is bounded by a timeout.
 
-Required failures include missing taps/packages, exact Node or UV tools, and
-tracked configuration. Outdated packages, unsupported manual applications, and
-authentication state are warnings. Auth command output is suppressed, and each
-external probe has a timeout.
+For casks, doctor accepts either a Homebrew receipt or the expected application
+bundle from `setup/cask-apps.tsv`, so an app installed by hand is not
+reinstalled just to change package-manager ownership.
 
-After a successful target bootstrap, doctor additionally runs
-`brew bundle check --no-upgrade` for `Brewfile` and, when present,
-`Brewfile.local`.
+After a successful bootstrap, doctor additionally runs `brew bundle check
+--no-upgrade` against both Brewfiles.
 
-Available upgrades are reported separately and do not make an otherwise present
-dependency look missing.
-
-## Manual Applications and Authentication
-
-This repository intentionally does not use `mas` or copy application databases.
-`setup/manual-checks.tsv` is the authoritative list of hand-installed tools and
-their verification probes; [`setup/manual-apps.md`](setup/manual-apps.md) holds
-the login commands that create the sessions those probes look for.
-
-Authentication files, tokens, histories, caches, model data, browser profiles,
-SSH keys, and Docker credentials must never be added to this repository.
-
-## Configuration Destinations
+## Configuration destinations
 
 | Source | Target |
 | --- | --- |
@@ -180,52 +163,39 @@ SSH keys, and Docker credentials must never be added to this repository.
 | `wezterm.lua` | `~/.wezterm.lua` |
 | `gh/config.yml` | `~/.config/gh/config.yml` |
 | `starship/starship.toml` | `~/.config/starship.toml` |
-| `docker/config.json` | `~/.docker/config.json` (safe copy) |
+| `docker/config.json` | `~/.docker/config.json` (copy) |
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
-| — | `~/Dev/Personal`, `~/Dev/Work` (created, never touched again) |
+| — | `~/Dev/Personal`, `~/Dev/Work` (created once) |
 
+Git switches identity by path: `~/Dev/Personal/` uses the tracked personal
+profile, `~/Dev/Work/` uses a gitignored work file created from an example.
 Machine-specific Zsh overrides belong in the ignored `zsh/local.zsh`, sourced
-exactly once after all tracked modules.
+exactly once after every tracked module.
 
-### Configuration Notes
+See [`nvim/README.md`](nvim/README.md) for Neovim plugins, keybindings, LSP, and
+formatters. `gh/config.yml` holds public preferences only — `gh auth login`
+creates credentials outside this repository.
 
-Git uses conditional includes for `~/Dev/Personal/` and `~/Dev/Work/`. The
-tracked personal profile contains public identity data; work identity and local
-signing overrides remain ignored machine-local files. `delta` follows terminal
-or macOS light/dark appearance through `DELTA_THEME_MODE`.
-
-`wezterm.lua` configures the retained WezTerm terminal, automatic appearance
-switching, pane keybindings, and SSH tab titles. See
-[`nvim/README.md`](nvim/README.md) for Neovim plugins, keybindings, Mason/LSP,
-Tree-sitter parser, and formatter details.
-
-`gh/config.yml` contains public GitHub CLI preferences only; authentication is
-created by `gh auth login` outside the repository. Claude integration installs
-the `create-post` skill and `check-docs-before-commit` hook while preserving
-unrelated local Claude settings.
-
-## Keeping the Repository Publishable
+## Keeping the repository publishable
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
+`shellcheck` over scripts, tests and fixtures; `make test` on macOS; `gitleaks`
+over the working tree **and the full history**.
 
-- `shellcheck` over the scripts, tests, and fixtures;
-- `make test` on macOS, matching the platform the scripts target;
-- `gitleaks` over the working tree **and the full history** (`fetch-depth: 0`).
-
-Run the same secret scan locally before pushing anything sensitive:
+The same scan locally:
 
 ```bash
 gitleaks dir . && gitleaks git .
 ```
 
-Three classes of content are kept out of the repository by `.gitignore`:
-agent planning artefacts (`.superpowers/`, `docs/superpowers/`), machine-local
-software manifests, and machine-local shell, Git, and Claude state.
+`.gitignore` keeps out three classes of content: agent planning artefacts
+(`.superpowers/`, `docs/superpowers/`), machine-local software manifests, and
+machine-local shell, Git, and Claude state.
 
-If a credential ever does land in a commit, rotate it first. Removing it from
-the current tree does not remove it from history, and rewriting published
-history is a separate, deliberate decision.
+If a credential ever lands in a commit, rotate it first. Deleting it from the
+working tree does not remove it from history, and rewriting published history
+is a separate, deliberate decision.
 
 ## License
 
