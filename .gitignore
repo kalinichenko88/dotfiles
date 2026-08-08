@@ -6,7 +6,6 @@ git/gitconfig-local
 zsh/local.zsh
 
 .claude/
-CLAUDE.md
 
 # Agent planning artefacts. Never publish specs, plans or review diffs.
 .superpowers/
