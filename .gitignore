@@ -7,3 +7,12 @@ zsh/local.zsh
 
 .claude/
 CLAUDE.md
+
+# Agent planning artefacts. Never publish specs, plans or review diffs.
+.superpowers/
+docs/superpowers/
+
+# Machine-specific software. The tracked manifests hold the shared baseline only.
+Brewfile.local
+setup/cask-apps.local.tsv
+setup/manual-checks.local.tsv
