@@ -172,6 +172,12 @@ Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use
 the tracked personal profile, `~/Dev/Work/` uses a gitignored work file created
 from an example. Every directory bootstrap creates has a matching rule, and
 `make test` fails if one is ever added without it.
+
+No email is set at the top level, and `user.useConfigOnly = true`. Outside
+those directories Git refuses to commit rather than inventing
+`user@hostname` — with more than one identity in play, a wrong address is
+worse than an error. Set `user.email` in the repository, or clone it under
+`~/Dev`.
 Machine-specific Zsh overrides belong in the ignored `zsh/local.zsh`, sourced
 exactly once after every tracked module.
 

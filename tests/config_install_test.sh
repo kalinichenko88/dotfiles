@@ -84,6 +84,13 @@ settings_backup=$(find "$target_home/.claude" -maxdepth 1 \
 [ -n "$settings_backup" ] || fail 'forced Claude merge did not create a backup'
 assert_equals 'true' "$(jq -r '.hooks.unexpected' "$settings_backup")"
 
+# With several identities in play, a guessed address is worse than an error.
+grep -E '^[[:space:]]*useConfigOnly[[:space:]]*=[[:space:]]*true' \
+  "$TEST_ROOT/git/gitconfig" >/dev/null || \
+  fail 'git must refuse to invent an author identity'
+grep -E '^[[:space:]]*email[[:space:]]*=' "$TEST_ROOT/git/gitconfig" >/dev/null && \
+  fail 'gitconfig must not set a top-level email; identity comes from includeIf'
+
 # Every project directory bootstrap creates must have a Git identity rule.
 # Without one, commits there fall back to a guessed user@hostname address.
 DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/dev-dirs" \
