@@ -35,7 +35,6 @@ brew "tree-sitter-cli"
 brew "uv"
 
 # AI and agent tools
-brew "gemini-cli"
 brew "gitleaks"
 brew "herdr"
 brew "umputun/apps/ralphex"
