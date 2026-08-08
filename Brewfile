@@ -70,7 +70,6 @@ cask "font-jetbrains-mono"
 cask "font-jetbrains-mono-nerd-font"
 
 # Browsers, communication, and productivity
-cask "arc"
 cask "discord"
 cask "google-chrome"
 cask "meetingbar"

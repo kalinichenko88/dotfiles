@@ -13,7 +13,7 @@ target_home=$tmp/home
 apps_root=$tmp/apps-root
 stub_bin=$tmp/bin
 mkdir -p "$target_home/.nvm/versions/node/v24.18.0" \
-  "$target_home/.nvm/alias" "$apps_root/Applications/Arc.app" "$stub_bin" \
+  "$target_home/.nvm/alias" "$apps_root/Applications/Obsidian.app" "$stub_bin" \
   "$tmp/doctor-tmp"
 export TMPDIR=$tmp/doctor-tmp/
 printf 'v24.18.0\n' > "$target_home/.nvm/alias/default"
@@ -40,7 +40,7 @@ brew_formulae=$(manifest | awk 'match($0, /^brew "[^"]+"/) {
 brew_casks=$(manifest | awk 'match($0, /^cask "[^"]+"/) {
   value=substr($0, RSTART + 6, RLENGTH - 7)
   sub(/^.*\//, "", value)
-  if (value != "arc") print value
+  if (value != "obsidian") print value
 }')
 brew_taps=$(manifest | awk 'match($0, /^tap "[^"]+"/) {
   print substr($0, RSTART + 5, RLENGTH - 6)
@@ -73,7 +73,7 @@ DOTFILES_APPLICATIONS_ROOT="$apps_root" \
 elapsed=$((SECONDS - started_at))
 [ "$elapsed" -lt 4 ] || fail 'doctor did not time out a hanging auth probe'
 
-assert_file_contains "$tmp/ready.out" 'present-manual cask arc'
+assert_file_contains "$tmp/ready.out" 'present-manual cask obsidian'
 assert_file_contains "$tmp/ready.out" 'warning outdated fd'
 assert_file_contains "$tmp/ready.out" 'needs-login auth GitHub CLI'
 assert_file_excludes "$tmp/ready.out" 'AUTH_SECRET_SENTINEL'
