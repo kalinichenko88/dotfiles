@@ -36,6 +36,9 @@
 [includeIf "gitdir:~/Dev/Personal/"]
     path = ~/.config/git/gitconfig-personal
 
+[includeIf "gitdir:~/Dev/Open Source/"]
+    path = ~/.config/git/gitconfig-personal
+
 [include]
     path = ~/.config/git/gitconfig-local
 

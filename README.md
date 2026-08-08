@@ -38,7 +38,7 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 1. platform check — Apple Silicon macOS with Command Line Tools;
 2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
 3. pinned Oh My Zsh and NVM, the exact Node version, UV tools;
-4. `~/Dev/Personal` and `~/Dev/Work`, then all configuration;
+4. the `~/Dev` project directories, then all configuration;
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1–5 pass.
 
@@ -166,10 +166,12 @@ After a successful bootstrap, doctor additionally runs `brew bundle check
 | `docker/config.json` | `~/.docker/config.json` (copy) |
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
-| — | `~/Dev/Personal`, `~/Dev/Work` (created once) |
+| — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
 
-Git switches identity by path: `~/Dev/Personal/` uses the tracked personal
-profile, `~/Dev/Work/` uses a gitignored work file created from an example.
+Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use
+the tracked personal profile, `~/Dev/Work/` uses a gitignored work file created
+from an example. Every directory bootstrap creates has a matching rule, and
+`make test` fails if one is ever added without it.
 Machine-specific Zsh overrides belong in the ignored `zsh/local.zsh`, sourced
 exactly once after every tracked module.
 

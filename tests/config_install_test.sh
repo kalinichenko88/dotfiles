@@ -84,4 +84,18 @@ settings_backup=$(find "$target_home/.claude" -maxdepth 1 \
 [ -n "$settings_backup" ] || fail 'forced Claude merge did not create a backup'
 assert_equals 'true' "$(jq -r '.hooks.unexpected' "$settings_backup")"
 
+# Every project directory bootstrap creates must have a Git identity rule.
+# Without one, commits there fall back to a guessed user@hostname address.
+DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/dev-dirs" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config dev-dirs > "$tmp/dev-dirs.out"
+project_dirs=$(sed -n 's/^info: created project directory: //p' "$tmp/dev-dirs.out")
+[ -n "$project_dirs" ] || fail 'bootstrap created no project directories'
+while IFS= read -r project_dir; do
+  [ -n "$project_dir" ] || continue
+  grep -F "gitdir:~/$project_dir/" "$TEST_ROOT/git/gitconfig" >/dev/null 2>&1 || \
+    fail "no Git identity rule for $project_dir"
+done <<EOF
+$project_dirs
+EOF
+
 pass 'configuration installation is complete, safe, and idempotent'

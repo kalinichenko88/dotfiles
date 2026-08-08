@@ -285,7 +285,7 @@ install_claude_settings() {
 config_dev_dirs() {
   local directory
   # git/gitconfig selects the personal or work identity by these paths.
-  for directory in Dev/Personal Dev/Work; do
+  for directory in Dev/Personal Dev/Work 'Dev/Open Source'; do
     if [ -d "$DOTFILES_TARGET_HOME/$directory" ]; then
       dotfiles_info "project directory already present: $directory"
       continue
