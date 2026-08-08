@@ -42,6 +42,12 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1–5 pass.
 
+Software already installed by hand does not stop the run: `brew bundle install`
+adopts an existing `/Applications/Name.app` instead of failing. Note that it
+adopts even when the installed version differs from the cask's, and records the
+cask's version — so an adopted app that is behind looks current to
+`brew upgrade`. `brew reinstall --cask <token>` fixes that one.
+
 **4. Resolve conflicts, if it stops**
 
 If an unmanaged file already sits at a target path, bootstrap stops and names
