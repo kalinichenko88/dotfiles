@@ -1,3 +1,2 @@
-# Exact UV-managed command-line tools.
-mcp-telegram==0.1.2
-specify-cli==0.8.4
+# Exact UV-managed command-line tools. Empty is a valid state: bootstrap,
+# doctor, and inventory all handle a manifest with no entries.

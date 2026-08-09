@@ -65,8 +65,11 @@ done
 
 node_versions=$(grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/node-versions.txt")
 assert_equals 'v24.18.0' "$node_versions"
-assert_file_contains "$TEST_ROOT/setup/uv-tools.txt" 'mcp-telegram==0.1.2'
-assert_file_contains "$TEST_ROOT/setup/uv-tools.txt" 'specify-cli==0.8.4'
+# The manifest may be empty; what it must never hold is an unpinned spec,
+# which would install a different version on every machine and every rerun.
+grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/uv-tools.txt" \
+  | grep -Ev '^[A-Za-z0-9._-]+==[0-9][A-Za-z0-9._-]*$' \
+  && fail 'uv-tools.txt entries must be pinned as name==version'
 
 awk -F '\t' 'NF && $1 !~ /^#/ && NF != 2 { exit 1 }' \
   "$TEST_ROOT/setup/cask-apps.tsv" || fail 'invalid cask-apps.tsv'
