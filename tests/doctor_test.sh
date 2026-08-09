@@ -18,7 +18,7 @@ mkdir -p "$target_home/.nvm/versions/node/v24.18.0" \
 export TMPDIR=$tmp/doctor-tmp/
 printf 'v24.18.0\n' > "$target_home/.nvm/alias/default"
 
-for command_name in claude opencode agent lms op codex; do
+for command_name in claude opencode lms op codex; do
   ln -s /usr/bin/true "$stub_bin/$command_name"
 done
 
@@ -168,15 +168,15 @@ assert_file_contains "$tmp/unterminated-node-output.out" 'missing node v24.18.0'
 printf '#!/bin/sh\nprintf "v24.18.0\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 
-unlink "$stub_bin/agent"
-printf '#!/bin/sh\nexit 1\n' > "$stub_bin/agent"
-chmod +x "$stub_bin/agent"
+unlink "$stub_bin/opencode"
+printf '#!/bin/sh\nexit 1\n' > "$stub_bin/opencode"
+chmod +x "$stub_bin/opencode"
 if run_doctor > "$tmp/probe.out"; then
   fail 'doctor must fail when a present manual command fails its probe'
 fi
-assert_file_contains "$tmp/probe.out" 'probe-failed manual-command Cursor Agent'
-unlink "$stub_bin/agent"
-ln -s /usr/bin/true "$stub_bin/agent"
+assert_file_contains "$tmp/probe.out" 'probe-failed manual-command OpenCode'
+unlink "$stub_bin/opencode"
+ln -s /usr/bin/true "$stub_bin/opencode"
 
 if STUB_FORMULAE=$(printf '%s\n' "$brew_formulae" | grep -v '^gitleaks$') \
   run_doctor > "$tmp/missing.out"; then

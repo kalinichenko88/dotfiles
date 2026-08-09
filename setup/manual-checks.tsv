@@ -1,7 +1,5 @@
 # kind	display-name	probe
-command	Claude Code	claude --version
 command	OpenCode	opencode --version
-command	Cursor Agent	agent --version
 command	LM Studio CLI	lms --version
 auth	1Password CLI	op account list
 auth	GitHub CLI	gh auth status
