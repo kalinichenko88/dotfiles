@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# `gh config get <key>` answers from GH_STUB_CONFIG, a newline-separated list of
+# key=value pairs. Everything else behaves as a failed auth probe whose output
+# must never reach the report.
+if [ "${1:-}" = config ] && [ "${2:-}" = get ]; then
+  printf '%s\n' "${GH_STUB_CONFIG:-}" \
+    | awk -F= -v key="$3" '$1 == key { print $2 }'
+  exit 0
+fi
+
+printf 'AUTH_SECRET_SENTINEL\n'
+exit "${GH_STUB_STATUS:-1}"

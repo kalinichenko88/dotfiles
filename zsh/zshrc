@@ -1,31 +1,16 @@
-[[ "$TERM_PROGRAM" == "vscode" ]] && eval "$(~/.local/bin/agent shell-integration zsh)"
-# Resolve dotfiles path from this symlink
-DOTFILES_ZSH="$(dirname "$(readlink -f "$HOME/.zshrc")")"
+if [[ "${TERM_PROGRAM:-}" == "vscode" && -x "$HOME/.local/bin/agent" ]]; then
+  eval "$("$HOME/.local/bin/agent" shell-integration zsh)"
+fi
 
-# Load all .zsh files from dotfiles
-for file in "$DOTFILES_ZSH"/*.zsh; do
-  source "$file"
+# Resolve this file's real directory even when ~/.zshrc is a symlink.
+DOTFILES_ZSH="${${(%):-%N}:A:h}"
+
+# Load tracked modules, reserving local.zsh for the final override layer.
+for zsh_file in "$DOTFILES_ZSH"/*.zsh(N); do
+  [[ "${zsh_file:t}" == "local.zsh" ]] && continue
+  source "$zsh_file"
 done
+unset zsh_file
 
-# Local overrides (gitignored)
-[[ -f "$DOTFILES_ZSH/local.zsh" ]] && source "$DOTFILES_ZSH/local.zsh"
-
-# bun completions
-[ -s "/Users/ivan_kalinichenko/.bun/_bun" ] && source "/Users/ivan_kalinichenko/.bun/_bun"
-
-# pnpm
-export PNPM_HOME="/Users/ivan_kalinichenko/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
-export PATH="$HOME/bin:$PATH"
-
-# OpenClaw Completion
-source "/Users/ivan_kalinichenko/.openclaw/completions/openclaw.zsh"
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/ivan_kalinichenko/.lmstudio/bin"
-# End of LM Studio CLI section
-
+# Machine-local overrides are intentionally loaded once, last.
+[[ -r "$DOTFILES_ZSH/local.zsh" ]] && source "$DOTFILES_ZSH/local.zsh"

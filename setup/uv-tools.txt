@@ -1,0 +1,3 @@
+# Exact UV-managed command-line tools.
+mcp-telegram==0.1.2
+specify-cli==0.8.4

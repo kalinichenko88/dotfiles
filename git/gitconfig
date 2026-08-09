@@ -29,11 +29,18 @@
 
 [user]
     name = Ivan Kalinichenko
+    # No email here on purpose: it comes from the includeIf rules below, per
+    # directory. useConfigOnly makes Git refuse to commit anywhere those rules
+    # do not apply, instead of silently inventing user@hostname.
+    useConfigOnly = true
 
 [includeIf "gitdir:~/Dev/Work/"]
     path = ~/.config/git/gitconfig-work
 
 [includeIf "gitdir:~/Dev/Personal/"]
+    path = ~/.config/git/gitconfig-personal
+
+[includeIf "gitdir:~/Dev/Open Source/"]
     path = ~/.config/git/gitconfig-personal
 
 [include]

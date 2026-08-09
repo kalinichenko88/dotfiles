@@ -1,0 +1,11 @@
+# Colima regenerates this on every VM restart; it declares its own Host block.
+Include ~/.colima/ssh_config
+
+# Machine-local hosts next: ssh keeps the first value it finds for each keyword,
+# so entries there override the defaults below. Per-host data — hostnames, IPs,
+# jump hosts, deploy users — belongs in ~/.ssh/config.local, which this public
+# repository never tracks. A missing include is not an error.
+Include ~/.ssh/config.local
+
+Host *
+	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"

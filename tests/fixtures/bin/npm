@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sleep "${NPM_STUB_SLEEP:-0}"
+printf 'NPM_AUTH_SECRET_SENTINEL\n'
+exit 1

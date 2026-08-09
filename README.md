@@ -1,171 +1,241 @@
 # dotfiles
 
-My personal configuration files for macOS.
+Reproducible macOS workstation setup for Apple Silicon: Homebrew packages,
+pinned runtimes, and the configuration for Git, Zsh, Neovim, WezTerm, GitHub
+CLI, Starship, Docker, and Claude Code.
 
-## Contents
+Nothing here ever uninstalls software. Every command is idempotent and refuses
+to overwrite a file it does not manage.
 
-- **Brewfile** - Homebrew packages and casks
-- **zsh/** - Zsh configuration with modular structure
-- **git/** - Git configuration with separate profiles for personal and work
-- **docker/** - Docker CLI configuration for Colima
-- **wezterm.lua** - WezTerm terminal emulator configuration
-- **alacritty/** - Alacritty terminal emulator configuration with theme variants
-- **nvim/** - Neovim configuration with lazy.nvim plugin manager
-- **gh/** - GitHub CLI configuration
-- **starship/** - Starship prompt configuration
-- **claude/** - Claude Code skills (create-post) and hooks (check-docs-before-commit)
-- **.editorconfig** - Editor configuration for consistent coding style
+## Install on a new Mac
 
-## Installation
-
-### Homebrew
+**1. Prerequisites and clone**
 
 ```bash
-make brew-install
+curl -fsSL https://raw.githubusercontent.com/kalinichenko88/dotfiles/main/scripts/preinstall.sh | bash
 ```
 
-Installs all packages and casks from `Brewfile`.
+That installs Apple's Command Line Tools, which provide `git`, and clones this
+repository to `~/Dev/Personal/dotfiles`. Rerunning it is harmless.
 
-To update the Brewfile with currently installed packages:
+The clone uses **HTTPS on purpose**: the SSH key lives in 1Password, which the
+bootstrap installs from the `Brewfile` inside this repository, so requiring SSH
+here would be a loop with no way in. Switching the remote to SSH is the last
+step, after 1Password is signed in.
+
+By hand, if you prefer:
 
 ```bash
-make brew-dump
+xcode-select --install          # skip if already present
+git clone https://github.com/kalinichenko88/dotfiles.git ~/Dev/Personal/dotfiles
+cd ~/Dev/Personal/dotfiles
 ```
 
-### Git
+**2. Preview, then apply**
 
 ```bash
-make git-install
+DRY_RUN=1 INSTALL_HOMEBREW=1 make bootstrap    # prints every command, changes nothing
+INSTALL_HOMEBREW=1 make bootstrap
 ```
 
-This will:
-1. Create `~/.config/git/` directory
-2. Symlink git config files
-3. Create `gitconfig-work` and `gitconfig-local` from examples if they don't exist
+`INSTALL_HOMEBREW=1` is only needed when Homebrew is absent; installing it is
+never inferred from a plain bootstrap request. Bootstrap runs in this order:
 
-After installation, edit `git/gitconfig-work` with your work email.
+1. platform check — Apple Silicon macOS with Command Line Tools;
+2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
+3. pinned NVM, the exact Node version, UV tools;
+4. the `~/Dev` project directories, then all configuration;
+5. strict `doctor` verification;
+6. `~/.config/dotfiles/bootstrap-complete` — written only after 1-5 pass.
 
-#### Git Configuration Structure
+Software already installed by hand does not stop the run: `brew bundle install`
+adopts an existing `/Applications/Name.app` instead of failing. Note that it
+adopts even when the installed version differs from the cask's, and records the
+cask's version — so an adopted app that is behind looks current to
+`brew upgrade`. `brew reinstall --cask <token>` fixes that one.
 
-| File | Purpose |
-|------|---------|
-| `gitconfig` | Main config with user name and conditional includes |
-| `gitconfig-personal` | Email for `~/Dev/Personal/` repositories |
-| `gitconfig-work` | Email for `~/Dev/Work/` repositories (gitignored) |
-| `gitconfig-local` | Machine-specific overrides like GPG signing (gitignored) |
+**3. Resolve conflicts, if it stops**
 
-Verify your configuration:
-```bash
-make git-check
-```
-
-#### Delta Theme Switching
-
-`delta` theme switches automatically between:
-- `OneHalfLight` for light mode
-- `OneHalfDark` for dark mode
-
-Priority:
-1. `DELTA_THEME_MODE` environment variable (`light` / `dark`)
-2. macOS appearance (`defaults read -g AppleInterfaceStyle`)
-
-This applies to both:
-- normal git pager output (`core.pager`)
-- interactive hunk mode (`interactive.diffFilter`)
-
-### WezTerm
+If an unmanaged file already sits at a target path, bootstrap stops and names
+it. Inspect it, then rerun with backups enabled:
 
 ```bash
-make wezterm-config-install
+FORCE=1 make config-install     # moves each conflict to <name>.backup.<timestamp>
 ```
 
-Symlinks `wezterm.lua` to `~/.wezterm.lua`.
+**4. Install what Homebrew cannot**
 
-#### WezTerm Features
+The run prints the checklist from `setup/manual-checks.tsv` — the CLIs that ship
+with their own installers. Install those, then log in using
+[`setup/manual-apps.md`](setup/manual-apps.md).
 
-- WebGpu rendering at 120 FPS
-- Monaco font with Menlo and Nerd Font fallbacks
-- Automatic dark/light theme switching (OneDark/One Light)
-- Exports `BAT_THEME` and `DELTA_THEME_MODE` so `delta` follows terminal theme
-- Native macOS fullscreen and integrated window buttons
-- Blinking bar cursor
-
-### Neovim
+**5. Verify**
 
 ```bash
-make nvim-config-install
+make doctor
 ```
 
-Symlinks `nvim/` directory to `~/.config/nvim`.
+On first Neovim launch, install the parsers listed in
+[`nvim/README.md`](nvim/README.md).
 
-See [nvim/README.md](nvim/README.md) for full documentation, keybindings, and setup instructions.
+**6. Switch the remote to SSH**
 
-### GitHub CLI
+Once 1Password is signed in and its SSH agent is on, this machine can push:
 
 ```bash
-make gh-config-install
+git remote set-url origin git@github.com:kalinichenko88/dotfiles.git
 ```
 
-Symlinks `gh/config.yml` to `~/.config/gh/config.yml`. Configured with SSH protocol, Neovim as editor, and delta as pager.
-
-After installation, authenticate with `gh auth login`.
-
-### Zsh
+## Update an existing Mac
 
 ```bash
-make zsh-install
+git pull
+make update
 ```
 
-Symlinks `zsh/zshrc` to `~/.zshrc`.
+`make update` refreshes Homebrew, reapplies both Brewfiles, the pinned Node and
+UV manifests and every configuration unit, upgrades packages, and finishes with
+a `doctor` pass. It applies everything that pass then verifies, so a pull that
+bumps any manifest needs no second command. Casks that update themselves are left alone — Homebrew skips them by
+design, and this repository does not use `--greedy`.
 
-#### Zsh Configuration Structure
-
-| File | Purpose |
-|------|---------|
-| `zshrc` | Entry point — sources all `.zsh` files from the directory |
-| `options.zsh` | Oh My Zsh setup, theme, plugins, editor |
-| `path.zsh` | PATH entries for Homebrew, nvm, bun, Python, etc. |
-| `aliases.zsh` | Custom aliases |
-| `starship.zsh` | Starship prompt init |
-| `local.zsh` | Machine-specific overrides (gitignored, create from `local.zsh.example`) |
-
-### Starship
+Then look at what this machine has that no manifest declares:
 
 ```bash
-make starship-config-install
+make inventory
 ```
 
-Symlinks `starship/starship.toml` to `~/.config/starship.toml`. Configured with increased command timeout (1000ms) to prevent slow plugin warnings.
+For each entry decide where it belongs: `Brewfile` if every machine should get
+it, `Brewfile.local` if only this one. Removing software is always manual.
 
-### Docker
+To reinstall configuration without touching packages:
 
 ```bash
-make docker-config-install
+make config-install              # everything
+make config-nvim                 # one unit
 ```
 
-Copies `docker/config.json` to `~/.docker/config.json`. Configured for [Colima](https://github.com/abiosoft/colima) with Homebrew CLI plugins.
+## Commands
 
-### Claude Code Skills
+| Command | Purpose |
+| --- | --- |
+| `make bootstrap` | Full provisioning: brew, tools, config, doctor, marker |
+| `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
+| `make bootstrap-tools` | Pinned NVM/Node and UV tools |
+| `make config-install` | Install every configuration unit |
+| `make config-<unit>` | Install one unit |
+| `make update` | Refresh, reapply manifests, upgrade, then doctor |
+| `make doctor` | What the manifests declare and this machine lacks |
+| `make inventory` | What this machine has and no manifest declares |
+| `make git-check` | Active `user.name`/`user.email` and their sources |
+| `make test` | Shell integration and regression tests |
+
+Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
+`docker`, `claude`.
+
+## Safety
+
+- `DRY_RUN=1` prints mutation commands instead of running them.
+- Existing configuration is never replaced by default; a conflict is an error.
+- `FORCE=1` backs the conflicting file up to a timestamped sibling first.
+- The work Git identity is never created from the example: a placeholder
+  address would satisfy `useConfigOnly` and author commits as itself. Until you
+  write `~/.config/git/gitconfig-work`, Git refuses commits under `~/Dev/Work`
+  and doctor warns.
+- Docker config and Claude settings are merged with `jq` rather than replaced,
+  because other tools write to those files too. Unrelated keys survive, and a
+  file that does change is backed up first.
+
+## Machine-specific software
+
+This repository is public, so software belonging to one machine is never
+tracked. Declare it in the gitignored siblings; bootstrap, update, and doctor
+read them automatically when present:
+
+| File | Holds |
+| --- | --- |
+| `Brewfile.local` | extra `tap`/`brew`/`cask` lines for this machine |
+| `setup/cask-apps.local.tsv` | `cask-token<TAB>/Applications/Name.app` |
+| `setup/manual-checks.local.tsv` | `app<TAB>Display Name<TAB>/Applications/Name.app` |
+| `~/.ssh/config.local` | every `Host` entry: names, addresses, jump hosts |
+
+`make test` fails if machine-specific casks or an application inventory
+reappear in the tracked manifests.
+
+## What doctor reports
+
+Required failures: missing taps, formulae, or casks; a wrong Node or UV version;
+missing tracked configuration; a work Git identity still holding the template's
+placeholder address. Warnings: available upgrades, unsupported manual
+applications, authentication state, and a manual CLI that is not installed yet —
+those ship their own installers, so their absence must not fail a first run. A
+manual CLI that *is* installed but fails its probe stays a required failure.
+
+For casks, doctor accepts either a Homebrew receipt or the expected application
+bundle from `setup/cask-apps.tsv`, so an app installed by hand is not
+reinstalled just to change package-manager ownership.
+
+Files other tools also write — `~/.docker/config.json` and
+`~/.claude/settings.json` — are merged rather than replaced, and doctor checks
+that the tracked keys are present rather than that the file matches exactly.
+Docker registry credentials and Claude hooks you added yourself survive.
+
+## Configuration destinations
+
+| Source | Target |
+| --- | --- |
+| `git/gitconfig` | `~/.config/git/config` |
+| `git/gitconfig-personal` | `~/.config/git/gitconfig-personal` |
+| `ssh/config` | `~/.ssh/config` |
+| `zsh/zshrc` | `~/.zshrc` |
+| `nvim/` | `~/.config/nvim` |
+| `wezterm.lua` | `~/.wezterm.lua` |
+| `starship/starship.toml` | `~/.config/starship.toml` |
+| `docker/config.json` | `~/.docker/config.json` (merge) |
+| `claude/skills/*` | `~/.claude/skills/*` |
+| `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
+| `claude/hooks-config.json` | `~/.claude/settings.json` (merge) |
+| — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
+
+Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use
+the tracked personal profile, `~/Dev/Work/` uses a gitignored work file created
+from an example. Every directory bootstrap creates has a matching rule, and
+`make test` fails if one is ever added without it.
+
+No email is set at the top level, and `user.useConfigOnly = true`. Outside
+those directories Git refuses to commit rather than inventing
+`user@hostname` — with more than one identity in play, a wrong address is
+worse than an error. Set `user.email` in the repository, or clone it under
+`~/Dev`.
+
+Zsh loads every tracked module from `zsh/`, then the ignored `zsh/local.zsh`
+exactly once, last. Shell behaviour — history, completion, keybindings — lives
+in `zsh/options.zsh`; there is no framework.
+
+See [`nvim/README.md`](nvim/README.md) for Neovim plugins, keybindings, LSP, and
+formatters. `gh/config.yml` holds public preferences only, applied with
+`gh config set` rather than symlinked, because gh writes its own state into
+that file. `gh auth login` keeps credentials outside this repository.
+
+## Keeping the repository publishable
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request:
+`shellcheck` over scripts, hooks, tests and fixtures; `make test` on macOS;
+`gitleaks` over the working tree **and the full history**.
+
+The same scan locally:
 
 ```bash
-make claude-skills-install
+gitleaks dir . && gitleaks git .
 ```
 
-Symlinks skill directories from `claude/skills/` to `~/.claude/skills/`.
+`.gitignore` keeps out three classes of content: agent planning artefacts
+(`.superpowers/`, `docs/superpowers/`), machine-local software manifests, and
+machine-local shell, Git, and Claude state.
 
-Available skills:
-- **create-post** - Creates English blog posts from rough Russian technical drafts for kalinichenko.dev
-
-### Claude Code Hooks
-
-```bash
-make claude-hooks-install
-```
-
-Symlinks hook scripts from `claude/hooks/` to `~/.claude/hooks/` and merges hook configuration into `~/.claude/settings.json`.
-
-Available hooks:
-- **check-docs-before-commit** - Blocks commits until Claude reviews documentation files (CLAUDE.md, README.md) for accuracy
+If a credential ever lands in a commit, rotate it first. Deleting it from the
+working tree does not remove it from history, and rewriting published history
+is a separate, deliberate decision.
 
 ## License
 
