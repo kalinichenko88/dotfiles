@@ -138,8 +138,10 @@ Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
 - `DRY_RUN=1` prints mutation commands instead of running them.
 - Existing configuration is never replaced by default; a conflict is an error.
 - `FORCE=1` backs the conflicting file up to a timestamped sibling first.
-- Git work and local identity files are created from examples only when absent,
-  then left alone.
+- The work Git identity is never created from the example: a placeholder
+  address would satisfy `useConfigOnly` and author commits as itself. Until you
+  write `~/.config/git/gitconfig-work`, Git refuses commits under `~/Dev/Work`
+  and doctor warns.
 - Docker config and Claude settings are merged with `jq` rather than replaced,
   because other tools write to those files too. Unrelated keys survive, and a
   file that does change is backed up first.

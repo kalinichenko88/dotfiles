@@ -42,10 +42,13 @@ mv "$tmp/docker-with-auth.json" "$target_home/.docker/config.json"
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config docker
 assert_equals 'token' \
   "$(jq -r '.auths["ghcr.io"].auth' "$target_home/.docker/config.json")"
-cmp -s "$TEST_ROOT/git/gitconfig-work.example" \
-  "$target_home/.config/git/gitconfig-work" || fail 'work Git template is missing'
-cmp -s "$TEST_ROOT/git/gitconfig-local.example" \
-  "$target_home/.config/git/gitconfig-local" || fail 'local Git template is missing'
+# The work identity is deliberately NOT created from the example: a placeholder
+# address satisfies useConfigOnly, so Git would author work commits as it
+# instead of refusing. Git ignores an includeIf whose path does not exist.
+[ ! -e "$target_home/.config/git/gitconfig-work" ] || \
+  fail 'bootstrap must not invent a work Git identity'
+[ ! -e "$target_home/.config/git/gitconfig-local" ] || \
+  fail 'bootstrap must not invent a local Git config'
 
 jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
   '.hooks | contains($hooks[0])' "$target_home/.claude/settings.json" \

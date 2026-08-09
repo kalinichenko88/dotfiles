@@ -37,7 +37,8 @@ run_with_timeout() {
 
   "$@" &
   command_pid=$!
-  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) &
+  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) \
+    </dev/null >/dev/null 2>&1 &
   timer_pid=$!
 
   wait "$command_pid" && command_status=0 || command_status=$?
@@ -229,17 +230,14 @@ check_config() {
       "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name" "claude-hook-$item_name"
   done
 
-  if [ -f "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work" ] && \
-    [ -f "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local" ]; then
-    doctor_status present config git-local-templates
-  else
-    doctor_missing config git-local-templates
-  fi
-
-  # An untouched template satisfies useConfigOnly, so Git would happily author
-  # work commits as the placeholder instead of refusing.
-  if grep -Fq 'your-work-email@company.com' \
-    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work" 2>/dev/null; then
+  # Absent is fine and expected on a new machine: useConfigOnly then refuses
+  # commits under ~/Dev/Work, which is the safe outcome. A copied-but-unedited
+  # example is not fine — the placeholder satisfies useConfigOnly, so Git would
+  # author work commits as it.
+  if [ ! -f "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work" ]; then
+    doctor_status warning config git-work-email
+  elif grep -Fq 'your-work-email@company.com' \
+    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work"; then
     doctor_missing config git-work-email
   else
     doctor_status present config git-work-email
@@ -269,7 +267,7 @@ check_manual_state() {
         if ! command -v "$probe_command" >/dev/null 2>&1; then
           doctor_status warning manual-command "$name"
         elif run_with_timeout 5 \
-          /bin/bash -c "exec $probe" >/dev/null 2>&1; then
+          /bin/bash -c "exec $probe" </dev/null >/dev/null 2>&1; then
           doctor_status present manual-command "$name"
         else
           DOCTOR_FAILURES=$((DOCTOR_FAILURES + 1))
@@ -288,7 +286,7 @@ check_manual_state() {
         probe_command=${probe%% *}
         if command -v "$probe_command" >/dev/null 2>&1 && \
           run_with_timeout "$DOCTOR_AUTH_TIMEOUT_SECONDS" \
-            /bin/bash -c "exec $probe" >/dev/null 2>&1; then
+            /bin/bash -c "exec $probe" </dev/null >/dev/null 2>&1; then
           doctor_status ready auth "$name"
         else
           doctor_status needs-login auth "$name"

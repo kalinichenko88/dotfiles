@@ -71,8 +71,10 @@ Conditional includes switch identity by repository location:
 
 - `git/gitconfig` — `includeIf` directives, `user.name`, `useConfigOnly`, no email
 - `git/gitconfig-personal` — email for `~/Dev/Personal/*` and `~/Dev/Open Source/*`
-- `git/gitconfig-work` — email for `~/Dev/Work/*` (gitignored, from example)
-- `git/gitconfig-local` — GPG and signing overrides (gitignored)
+- `~/.config/git/gitconfig-work` — email for `~/Dev/Work/*`. **Never created by
+  bootstrap**: a placeholder satisfies useConfigOnly, so Git would author work
+  commits as it. Absent is the safe state — Git refuses instead.
+- `~/.config/git/gitconfig-local` — GPG and signing overrides, also hand-written
 
 Outside those three directories Git refuses to commit rather than inventing
 `user@hostname`. With a personal and a work address in play, a wrong author is

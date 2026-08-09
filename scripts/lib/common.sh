@@ -25,8 +25,6 @@ dotfiles_die() {
   return 1
 }
 
-# Streams a tracked manifest followed by its optional gitignored machine-local
-# sibling, so machine-specific software never lands in the shared baseline.
 # Private scratch directory plus its cleanup. An unset DOTFILES_TMP makes the
 # removal a no-op on its own, so the trap needs no further guarding.
 dotfiles_make_tmp() {
@@ -40,10 +38,17 @@ dotfiles_cleanup_tmp() {
   DOTFILES_TMP=
 }
 
+# Streams a tracked manifest followed by its optional gitignored machine-local
+# sibling, so machine-specific software never lands in the shared baseline.
+# awk rather than cat: it terminates the last line of each file, so a tracked
+# manifest that lost its trailing newline cannot glue its final entry onto the
+# local file's first one and drop both.
 dotfiles_manifest() {
-  cat "$DOTFILES_ROOT/$1"
-  [ -f "$DOTFILES_ROOT/$2" ] && cat "$DOTFILES_ROOT/$2"
-  return 0
+  if [ -f "$DOTFILES_ROOT/$2" ]; then
+    awk 1 "$DOTFILES_ROOT/$1" "$DOTFILES_ROOT/$2"
+  else
+    awk 1 "$DOTFILES_ROOT/$1"
+  fi
 }
 
 # A broken uv must leave the caller with an empty list, not kill it: this

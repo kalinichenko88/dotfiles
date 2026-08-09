@@ -161,19 +161,15 @@ print_manual_command_checks() {
   done < <(dotfiles_manifest setup/manual-checks.tsv setup/manual-checks.local.tsv)
 }
 
-copy_git_template_if_missing() {
-  local relative_source target
-  relative_source=$1
-  target=$2
+announce_missing_git_identity() {
+  local target
+  target=$1
 
-  if dotfiles_path_exists "$target"; then
-    dotfiles_info "preserving machine-local Git config: $target"
-    return 0
-  fi
-
-  dotfiles_prepare_parent "$target"
-  dotfiles_run cp "$DOTFILES_ROOT/$relative_source" "$target"
-  dotfiles_info "created Git config template: $target"
+  dotfiles_path_exists "$target" && return 0
+  # Deliberately not created from the example: a placeholder address satisfies
+  # useConfigOnly, so Git would author commits as it instead of refusing. Git
+  # ignores an includeIf whose path does not exist.
+  dotfiles_info "not configured, commits there will be refused until you write it: $target"
 }
 
 # Per-event merge, not a wholesale replace: a user's hooks on events this
@@ -203,9 +199,9 @@ config_git() {
   dotfiles_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config"
   dotfiles_link git/gitconfig-personal \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-personal"
-  copy_git_template_if_missing git/gitconfig-work.example \
+  announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work"
-  copy_git_template_if_missing git/gitconfig-local.example \
+  announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local"
 }
 

@@ -1,8 +1,20 @@
 CONFIG_UNITS := dev-dirs git ssh zsh nvim wezterm gh starship docker claude
 CONFIG_TARGETS := $(addprefix config-,$(CONFIG_UNITS))
 
-.PHONY: bootstrap bootstrap-brew bootstrap-tools config-install update doctor \
-	inventory test git-check $(CONFIG_TARGETS)
+# A bare `make` must not provision the machine: bootstrap is the first target
+# and would otherwise run on a stray keystroke.
+.DEFAULT_GOAL := help
+
+.PHONY: help bootstrap bootstrap-brew bootstrap-tools config-install update \
+	doctor inventory test git-check $(CONFIG_TARGETS)
+
+help:
+	@printf 'make bootstrap   provision a new machine (INSTALL_HOMEBREW=1 if brew is absent)\n'
+	@printf 'make update      refresh this machine, then verify it\n'
+	@printf 'make doctor      what the manifests declare and this machine lacks\n'
+	@printf 'make inventory   what this machine has and no manifest declares\n'
+	@printf 'make test        run the test suite\n'
+	@printf '\nSee README.md for the rest.\n'
 
 # Full provisioning of a new machine: Homebrew, user-space tools, configs, doctor.
 bootstrap:

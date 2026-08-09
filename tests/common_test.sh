@@ -70,9 +70,15 @@ DRY_RUN=1 dotfiles_link zsh/zshrc "$tmp/home/dry/.zshrc" >/dev/null
 [ ! -e "$tmp/home/dry/.zshrc" ] || fail 'dry run mutated the target home'
 
 printf 'cask "shared"\n' > "$tmp/repo/Brewfile"
-assert_equals 'cask "shared"' "$(dotfiles_manifest Brewfile Brewfile.local)"
+assert_equals 'cask "shared"' "$(dotfiles_manifest Brewfile Brewfile.local | grep .)"
 printf 'cask "machine-only"\n' > "$tmp/repo/Brewfile.local"
 assert_equals 'cask "shared"
-cask "machine-only"' "$(dotfiles_manifest Brewfile Brewfile.local)"
+cask "machine-only"' "$(dotfiles_manifest Brewfile Brewfile.local | grep .)"
+
+# A tracked manifest without a trailing newline must not swallow its own last
+# entry and the local file's first one.
+printf 'cask "shared"' > "$tmp/repo/Brewfile"
+assert_equals 'cask "shared"
+cask "machine-only"' "$(dotfiles_manifest Brewfile Brewfile.local | grep .)"
 
 pass 'shared bootstrap primitives are safe and idempotent'

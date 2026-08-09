@@ -24,11 +24,10 @@ done
 
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config >/dev/null
 
-# The copied template still carries the placeholder address, which doctor must
-# reject; the rest of the run needs a real one.
-grep -Fq 'your-work-email@company.com' \
-  "$target_home/.config/git/gitconfig-work" || \
-  fail 'work Git template lost its placeholder address'
+# Bootstrap must not have invented a work identity; the rest of the run needs a
+# real one so the warning does not muddy the other assertions.
+[ ! -e "$target_home/.config/git/gitconfig-work" ] || \
+  fail 'bootstrap created a work Git identity'
 printf '[user]\n    email = person@example.test\n' \
   > "$target_home/.config/git/gitconfig-work"
 
@@ -104,6 +103,20 @@ done
 for local_cask in steam plex-media-server tor-browser qmk-toolbox; do
   assert_file_excludes "$TEST_ROOT/Brewfile" "cask \"$local_cask\""
 done
+
+# An absent work identity is safe — useConfigOnly refuses the commit — but an
+# unedited copy of the example is not: the placeholder satisfies it.
+mv "$target_home/.config/git/gitconfig-work" "$tmp/work-identity"
+run_doctor > "$tmp/no-work.out" || \
+  fail 'an absent work identity must not fail doctor'
+assert_file_contains "$tmp/no-work.out" 'warning config git-work-email'
+cp "$TEST_ROOT/git/gitconfig-work.example" \
+  "$target_home/.config/git/gitconfig-work"
+if run_doctor > "$tmp/placeholder-work.out"; then
+  fail 'an unedited work-email placeholder must fail doctor'
+fi
+assert_file_contains "$tmp/placeholder-work.out" 'missing config git-work-email'
+mv "$tmp/work-identity" "$target_home/.config/git/gitconfig-work"
 
 # A CLI with its own installer is not present right after bootstrap, so its
 # absence must stay a warning — otherwise a first run can never finish.

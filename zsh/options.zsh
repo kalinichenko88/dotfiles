@@ -23,7 +23,9 @@ unsetopt flow_control
 # on this file loading after path.zsh.
 [[ -d /opt/homebrew/share/zsh/site-functions ]] &&
   fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
-autoload -Uz compinit && compinit
+# -i skips insecure fpath entries instead of prompting; a group-writable
+# /opt/homebrew/share/zsh would otherwise block every new shell.
+autoload -Uz compinit && compinit -i
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}'
 zstyle ':completion:*' use-cache on
