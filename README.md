@@ -190,7 +190,6 @@ Docker registry credentials and Claude hooks you added yourself survive.
 | `zsh/zshrc` | `~/.zshrc` |
 | `nvim/` | `~/.config/nvim` |
 | `wezterm.lua` | `~/.wezterm.lua` |
-| `gh/config.yml` | `~/.config/gh/config.yml` |
 | `starship/starship.toml` | `~/.config/starship.toml` |
 | `docker/config.json` | `~/.docker/config.json` (merge) |
 | `claude/skills/*` | `~/.claude/skills/*` |
@@ -214,8 +213,9 @@ exactly once, last. Shell behaviour — history, completion, keybindings — liv
 in `zsh/options.zsh`; there is no framework.
 
 See [`nvim/README.md`](nvim/README.md) for Neovim plugins, keybindings, LSP, and
-formatters. `gh/config.yml` holds public preferences only — `gh auth login`
-creates credentials outside this repository.
+formatters. `gh/config.yml` holds public preferences only, applied with
+`gh config set` rather than symlinked, because gh writes its own state into
+that file. `gh auth login` keeps credentials outside this repository.
 
 ## Keeping the repository publishable
 

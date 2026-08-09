@@ -25,7 +25,6 @@ assert_link "$TEST_ROOT/git/gitconfig-personal" "$target_home/.config/git/gitcon
 assert_link "$TEST_ROOT/zsh/zshrc" "$target_home/.zshrc"
 assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
-assert_link "$TEST_ROOT/gh/config.yml" "$target_home/.config/gh/config.yml"
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
 assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"
 assert_link "$TEST_ROOT/claude/hooks/check-docs-before-commit.sh" \
@@ -130,6 +129,13 @@ while IFS= read -r project_dir; do
 done <<EOF
 $project_dirs
 EOF
+
+# gh owns its own config file — it writes state into it — so the preferences go
+# in through `gh config set` and nothing must symlink over it.
+[ -L "$target_home/.config/gh/config.yml" ] && \
+  fail 'gh config must not be symlinked; gh writes to it'
+grep -q 'gh config set' "$TEST_ROOT/scripts/bootstrap.sh" || \
+  fail 'gh preferences are no longer applied'
 
 # bootstrap.sh and doctor.sh keep two hand-maintained tables of the same
 # source→target pairs. Rather than merge them, fail when they drift: anything

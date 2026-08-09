@@ -193,6 +193,26 @@ check_link() {
   fi
 }
 
+# gh owns its config file and writes state into it, so the check is per
+# preference rather than a file comparison.
+check_gh_preferences() {
+  local key value actual
+  if ! command -v gh >/dev/null 2>&1; then
+    doctor_status warning config gh
+    return 0
+  fi
+  while IFS=': ' read -r key value; do
+    [ -n "$key" ] || continue
+    case "$key" in '#'*) continue ;; esac
+    actual=$(gh config get "$key" 2>/dev/null || :)
+    if [ "$actual" = "$value" ]; then
+      doctor_status present config "gh-$key"
+    else
+      doctor_missing config "gh-$key"
+    fi
+  done < "$DOTFILES_ROOT/gh/config.yml"
+}
+
 check_config() {
   local item item_name
   check_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config" git
@@ -202,7 +222,7 @@ check_config() {
   check_link zsh/zshrc "$DOTFILES_TARGET_HOME/.zshrc" zsh
   check_link nvim "$DOTFILES_TARGET_HOME/.config/nvim" nvim
   check_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua" wezterm
-  check_link gh/config.yml "$DOTFILES_TARGET_HOME/.config/gh/config.yml" gh
+  check_gh_preferences
   check_link starship/starship.toml \
     "$DOTFILES_TARGET_HOME/.config/starship.toml" starship
 

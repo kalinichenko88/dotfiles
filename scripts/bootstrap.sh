@@ -225,8 +225,20 @@ config_ssh() {
   dotfiles_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config"
 }
 
+# Applied through `gh config set`, never symlinked: gh writes its own state
+# into this file — it added `version: "1"` the first time the link was in
+# place, dirtying the repository — so the file has to stay gh's own.
 config_gh() {
-  dotfiles_link gh/config.yml "$DOTFILES_TARGET_HOME/.config/gh/config.yml"
+  local key value
+  if [ "${DRY_RUN:-0}" != 1 ] && ! command -v gh >/dev/null 2>&1; then
+    dotfiles_warn 'gh is unavailable; skipping its preferences'
+    return 0
+  fi
+  while IFS=': ' read -r key value; do
+    [ -n "$key" ] || continue
+    case "$key" in '#'*) continue ;; esac
+    dotfiles_run gh config set "$key" "$value"
+  done < "$DOTFILES_ROOT/gh/config.yml"
 }
 
 config_starship() {

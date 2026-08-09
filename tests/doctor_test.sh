@@ -53,6 +53,10 @@ brew_taps=$(manifest | awk 'match($0, /^tap "[^"]+"/) {
   print substr($0, RSTART + 5, RLENGTH - 6)
 }')
 
+# gh preferences are read back through `gh config get`, so the stub answers
+# from the same file bootstrap applies.
+gh_preferences=$(sed -n 's/^\([a-z_]*\): \(.*\)$/\1=\2/p' "$TEST_ROOT/gh/config.yml")
+
 doctor_path="$TEST_ROOT/tests/fixtures/bin:$stub_bin:/usr/bin:/bin"
 
 # Every invocation shares the same stub environment; a caller overrides one
@@ -61,6 +65,7 @@ run_doctor() {
   BREW_STUB_FORMULAE="${STUB_FORMULAE-$brew_formulae}" \
   BREW_STUB_CASKS="$brew_casks" BREW_STUB_TAPS="${STUB_TAPS-$brew_taps}" \
   BREW_STUB_OUTDATED="${STUB_OUTDATED-}" \
+  GH_STUB_CONFIG="${STUB_GH_CONFIG-$gh_preferences}" \
   NPM_STUB_SLEEP="${STUB_NPM_SLEEP-0}" \
   DOCTOR_AUTH_TIMEOUT_SECONDS="${STUB_AUTH_TIMEOUT-3}" \
   UV_STUB_TOOLS='mcp-telegram v0.1.2
@@ -103,6 +108,12 @@ done
 for local_cask in steam plex-media-server tor-browser qmk-toolbox; do
   assert_file_excludes "$TEST_ROOT/Brewfile" "cask \"$local_cask\""
 done
+
+# A gh preference that drifted from the tracked file is a required failure.
+if STUB_GH_CONFIG='git_protocol=https' run_doctor > "$tmp/gh-drift.out"; then
+  fail 'a drifted gh preference must fail doctor'
+fi
+assert_file_contains "$tmp/gh-drift.out" 'missing config gh-git_protocol'
 
 # An absent work identity is safe — useConfigOnly refuses the commit — but an
 # unedited copy of the example is not: the placeholder satisfies it.

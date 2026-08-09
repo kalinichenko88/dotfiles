@@ -54,7 +54,9 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 Two rules that look like redundancy but are not:
 
 - `~/.docker/config.json` and `~/.claude/settings.json` are **merged**
-  (`dotfiles_merge_json`), never copied. Other tools write to both — `docker
+  (`dotfiles_merge_json`), never copied. `~/.config/gh/config.yml` is applied
+  with `gh config set` and never symlinked, for the same reason: gh writes its
+  own state into it, and a symlink made the repository dirty on first use. Other tools write to both — `docker
   login` stores registry credentials there, and the user may have their own
   Claude hooks. Doctor checks `contains`, not equality, for the same reason.
   Turning either back into a copy or an equality check destroys user state and
