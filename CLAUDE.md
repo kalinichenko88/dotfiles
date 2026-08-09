@@ -176,6 +176,7 @@ Never track any of these, and never suggest adding one to a commit:
 | `setup/manual-checks.local.tsv` | Personal application inventory |
 | `docs/superpowers/`, `.superpowers/` | Agent specs, plans, review diffs |
 | `.claude/` | Local Claude state |
+| `ssh-remote/bundle/xdg/config/nvim/pack/` | Vendored upstream plugins, rebuilt by `make ssh-remote-vendor` from the SHA in `ssh-remote/plugins.txt` |
 
 The two `git/` files are created from `*.example` templates during installation
 and then preserved. The `.local` manifests are read automatically by bootstrap,
