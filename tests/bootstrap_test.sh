@@ -50,6 +50,14 @@ assert_file_contains "$tmp/brew-dry.out" 'https://raw.githubusercontent.com/Home
 assert_file_contains "$tmp/brew-dry.out" "$tmp/no-brew-bin/brew bundle install --file"
 [ ! -e "$tmp/home/.homebrew-installed" ] || fail 'brew dry run mutated the target home'
 
+# Homebrew will not load a formula or cask from an untrusted third-party tap,
+# and `brew bundle` aborts on the first one. Every tap the Brewfile declares
+# has to be trusted before the bundle runs, or a new machine cannot finish.
+while IFS= read -r tap; do
+  [ -n "$tap" ] || continue
+  assert_file_contains "$tmp/brew-dry.out" "trust --tap $tap"
+done < <(sed -n -E 's/^tap "([^"]+)".*/\1/p' "$TEST_ROOT/Brewfile")
+
 if DRY_RUN=1 DOTFILES_HOMEBREW_BIN="$TEST_ROOT/tests/fixtures/bin/brew" \
   BREW_STUB_PREFIX=/usr/local PATH="$TEST_ROOT/tests/fixtures/bin:/usr/bin:/bin" \
   DOTFILES_TARGET_HOME="$tmp/home" \

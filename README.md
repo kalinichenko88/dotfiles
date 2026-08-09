@@ -48,19 +48,32 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1-5 pass.
 
-Software already installed by hand does not stop the run: `brew bundle install`
-adopts an existing `/Applications/Name.app` instead of failing. Note that it
+Every tap a Brewfile declares is trusted first. Homebrew refuses to load a
+formula or cask from an untrusted third-party tap, and `brew bundle` stops at
+the first one, so declaring a tap here is what authorizes it — no separate
+`brew trust` run.
+
+A step that fails does not abandon the ones after it. Bootstrap names the
+failure, keeps going, then lists everything that needs attention and exits
+non-zero, so one stubborn cask cannot leave the shell and editor unconfigured.
+
+Software already installed by hand usually does not stop the run either:
+`brew bundle install` adopts an existing `/Applications/Name.app`. Note that it
 adopts even when the installed version differs from the cask's, and records the
 cask's version — so an adopted app that is behind looks current to
-`brew upgrade`. `brew reinstall --cask <token>` fixes that one.
+`brew upgrade`. `brew reinstall --cask <token>` fixes that one. Adoption does
+fail when the existing bundle's files cannot be re-permissioned (`chmod ...
+Operation not permitted`); move that app to the Trash and rerun, or keep the
+copy you have and let `doctor` report the cask as missing.
 
-**3. Resolve conflicts, if it stops**
+**3. Resolve conflicts, if any are reported**
 
-If an unmanaged file already sits at a target path, bootstrap stops and names
+If an unmanaged file already sits at a target path, that unit fails and names
 it. Inspect it, then rerun with backups enabled:
 
 ```bash
 FORCE=1 make config-install     # moves each conflict to <name>.backup.<timestamp>
+FORCE=1 make config-ssh         # or just the unit that was named
 ```
 
 **4. Install what Homebrew cannot**
@@ -136,7 +149,8 @@ Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
 ## Safety
 
 - `DRY_RUN=1` prints mutation commands instead of running them.
-- Existing configuration is never replaced by default; a conflict is an error.
+- Existing configuration is never replaced by default; a conflict fails its own
+  step and the whole run, but not the steps after it.
 - `FORCE=1` backs the conflicting file up to a timestamped sibling first.
 - The work Git identity is never created from the example: a placeholder
   address would satisfy `useConfigOnly` and author commits as itself. Until you

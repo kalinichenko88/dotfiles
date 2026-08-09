@@ -69,6 +69,22 @@ if DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config 
 fi
 assert_equals 'local zsh' "$(cat "$target_home/.zshrc")"
 
+# A file bootstrap refuses to overwrite must not cost the machine every unit
+# that comes after it: ssh precedes zsh, and a first run that stops there
+# leaves the shell, editor and terminal unconfigured. The run reports the
+# failure and still exits non-zero.
+partial_home=$tmp/partial-home
+mkdir -p "$partial_home/.ssh"
+printf 'local ssh\n' > "$partial_home/.ssh/config"
+if DOTFILES_TARGET_HOME="$partial_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
+  > "$tmp/partial.out" 2> "$tmp/partial.err"; then
+  fail 'a failed config unit must still fail the run'
+fi
+assert_file_contains "$tmp/partial.err" 'config ssh'
+assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"
+assert_link "$TEST_ROOT/zsh/zshrc" "$partial_home/.zshrc"
+assert_link "$TEST_ROOT/wezterm.lua" "$partial_home/.wezterm.lua"
+
 FORCE=1 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config
 assert_link "$TEST_ROOT/zsh/zshrc" "$target_home/.zshrc"
 zsh_backup=$(find "$target_home" -maxdepth 1 -name '.zshrc.backup.*' -print -quit)
