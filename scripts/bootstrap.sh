@@ -13,6 +13,32 @@ usage() {
   printf 'Usage: %s {all|brew|tools|config [unit]|update}\n' "$0" >&2
 }
 
+# A first run trips on things bootstrap cannot fix for the machine: a cask
+# whose application is already in /Applications and cannot be adopted, a file
+# it refuses to overwrite without FORCE=1. Stopping at the first one leaves
+# everything after it unprovisioned and makes the whole run start over, so a
+# step records its failure, the run continues, and the list is reported at the
+# end with a non-zero exit.
+DOTFILES_FAILED_STEPS=
+
+run_step() {
+  local name status
+  name=$1
+  shift
+  status=0
+  "$@" || status=$?
+  if [ "$status" -ne 0 ]; then
+    DOTFILES_FAILED_STEPS="${DOTFILES_FAILED_STEPS:+$DOTFILES_FAILED_STEPS, }$name"
+    dotfiles_warn "$name failed; continuing with the rest"
+  fi
+  return 0
+}
+
+report_failed_steps() {
+  [ -n "$DOTFILES_FAILED_STEPS" ] || return 0
+  dotfiles_die "finished with failures: $DOTFILES_FAILED_STEPS"
+}
+
 check_platform() {
   local system architecture
   system=$(uname -s)
@@ -81,16 +107,40 @@ install_homebrew() {
   install_brew_bundles "$brew_command"
 }
 
+# Homebrew refuses to load a formula or cask from a third-party tap until that
+# tap is trusted, and `brew bundle` aborts on the first one — which on a new
+# machine is every tap here. Declaring a tap in a Brewfile is that decision, so
+# apply it rather than making the user run `brew trust` and start over. Taps
+# arrive both as `tap "owner/name"` and inside a qualified `brew`/`cask` token.
+trust_brewfile_taps() {
+  local brew_command brewfile tap
+  brew_command=$1
+  brewfile=$2
+
+  while IFS= read -r tap; do
+    [ -n "$tap" ] || continue
+    dotfiles_run "$brew_command" trust --tap "$tap"
+  done < <(sed -n -E \
+    -e 's/^tap "([^"]+)".*/\1/p' \
+    -e 's/^(brew|cask) "([^"\/]+\/[^"\/]+)\/[^"]+".*/\2/p' \
+    "$brewfile" | sort -u)
+}
+
 # Brewfile holds the shared baseline; the gitignored Brewfile.local holds
 # software that belongs to this machine only.
 install_brew_bundles() {
-  local brew_command
+  local brew_command brewfile
   brew_command=$1
-  dotfiles_run "$brew_command" bundle install --file "$DOTFILES_ROOT/Brewfile"
-  if [ -f "$DOTFILES_ROOT/Brewfile.local" ]; then
-    dotfiles_run "$brew_command" bundle install \
-      --file "$DOTFILES_ROOT/Brewfile.local"
-  fi
+
+  # Recorded rather than fatal: `brew bundle` installs everything it can and
+  # then reports what it could not, and one unadoptable application must not
+  # cost the machine its shell and editor configuration.
+  for brewfile in "$DOTFILES_ROOT/Brewfile" "$DOTFILES_ROOT/Brewfile.local"; do
+    [ -f "$brewfile" ] || continue
+    trust_brewfile_taps "$brew_command" "$brewfile"
+    run_step "${brewfile##*/}" \
+      dotfiles_run "$brew_command" bundle install --file "$brewfile"
+  done
 }
 
 update_workstation() {
@@ -280,7 +330,7 @@ install_config() {
   for unit in $CONFIG_UNITS; do
     case "$requested" in
       all|"$unit")
-        "config_${unit//-/_}"
+        run_step "config $unit" "config_${unit//-/_}"
         matched=1
         ;;
     esac
@@ -326,10 +376,12 @@ install_tools() {
 verify_target() {
   local marker
   marker=$DOTFILES_TARGET_HOME/.config/dotfiles/bootstrap-complete
+  # Explicit, because run_step calls this with errexit suspended: a failing
+  # doctor must not go on to write the marker that says it passed.
   dotfiles_run env \
     "DOTFILES_ROOT=$DOTFILES_ROOT" \
     "DOTFILES_TARGET_HOME=$DOTFILES_TARGET_HOME" \
-    "$SCRIPT_DIR/doctor.sh"
+    "$SCRIPT_DIR/doctor.sh" || return 1
   dotfiles_prepare_parent "$marker"
   dotfiles_run touch "$marker"
   dotfiles_info "target bootstrap verified: $marker"
@@ -344,10 +396,12 @@ main() {
     brew) install_homebrew ;;
     tools) install_tools ;;
     all)
+      # Not guarded: without Homebrew at the expected prefix there is no run to
+      # continue. Package failures inside it are recorded, the layer is not.
       install_homebrew
-      install_tools
+      run_step 'user-space tools' install_tools
       install_config
-      verify_target
+      run_step verification verify_target
       ;;
     config) install_config "${2:-all}" ;;
     update) update_workstation ;;
@@ -356,6 +410,8 @@ main() {
       return 1
       ;;
   esac
+
+  report_failed_steps
 }
 
 main "$@"

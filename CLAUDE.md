@@ -22,7 +22,11 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   SSH key comes from 1Password, which the bootstrap installs from the Brewfile
   in here, so requiring SSH to clone would be a loop. Never change it to `git@`.
 - `scripts/bootstrap.sh {all|brew|tools|config [unit]|update}` — the only thing
-  that writes anything
+  that writes anything. Steps run through `run_step`: a failure is recorded,
+  the run continues, and `report_failed_steps` exits non-zero at the end. Note
+  that `run_step` suspends `set -e` inside the function it calls, so a function
+  invoked that way must return non-zero explicitly where it matters (see
+  `verify_target`, which would otherwise write its marker after doctor failed).
 - `scripts/doctor.sh` — read-only verification, exit 1 on required failures
 - `scripts/inventory.sh compare` — read-only drift report, the reverse of doctor
 - `scripts/lib/common.sh` — link/copy/backup primitives, `dotfiles_manifest`
@@ -50,6 +54,11 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 - Tracked Zsh files must contain no absolute `/Users/<name>` paths, and no
   pinned `python@<version>` — the PATH entry is globbed so a Brewfile bump
   needs no edit.
+- Every tap the `Brewfile` declares must be passed to `brew trust --tap` before
+  `brew bundle` runs. Homebrew refuses untrusted third-party taps and bundle
+  aborts on the first one, which blocks a first run entirely.
+- A failing config unit must not stop the units after it: `ssh` precedes `zsh`,
+  and stopping there leaves a new machine with no shell configuration.
 
 Two rules that look like redundancy but are not:
 
