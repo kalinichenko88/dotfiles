@@ -23,7 +23,7 @@ assert_make_target doctor './scripts/doctor.sh'
 assert_make_target inventory './scripts/inventory.sh compare'
 
 # Every unit installable on its own, and named after what it actually installs.
-for unit in dev-dirs git zsh nvim wezterm gh starship docker claude; do
+for unit in dev-dirs git ssh zsh nvim wezterm gh starship docker claude; do
   assert_make_target "config-$unit" "./scripts/bootstrap.sh config $unit"
 done
 

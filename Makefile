@@ -1,4 +1,4 @@
-CONFIG_UNITS := dev-dirs git zsh nvim wezterm gh starship docker claude
+CONFIG_UNITS := dev-dirs git ssh zsh nvim wezterm gh starship docker claude
 CONFIG_TARGETS := $(addprefix config-,$(CONFIG_UNITS))
 
 .PHONY: bootstrap bootstrap-brew bootstrap-tools config-install update doctor \

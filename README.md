@@ -130,8 +130,8 @@ make config-nvim                 # one unit
 | `make git-check` | Active `user.name`/`user.email` and their sources |
 | `make test` | Shell integration and regression tests |
 
-Units: `dev-dirs`, `git`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`, `docker`,
-`claude`.
+Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
+`docker`, `claude`.
 
 ## Safety
 
@@ -155,6 +155,7 @@ read them automatically when present:
 | `Brewfile.local` | extra `tap`/`brew`/`cask` lines for this machine |
 | `setup/cask-apps.local.tsv` | `cask-token<TAB>/Applications/Name.app` |
 | `setup/manual-checks.local.tsv` | `app<TAB>Display Name<TAB>/Applications/Name.app` |
+| `~/.ssh/config.local` | every `Host` entry: names, addresses, jump hosts |
 
 `make test` fails if machine-specific casks or an application inventory
 reappear in the tracked manifests.
@@ -183,6 +184,7 @@ Docker registry credentials and Claude hooks you added yourself survive.
 | --- | --- |
 | `git/gitconfig` | `~/.config/git/config` |
 | `git/gitconfig-personal` | `~/.config/git/gitconfig-personal` |
+| `ssh/config` | `~/.ssh/config` |
 | `zsh/zshrc` | `~/.zshrc` |
 | `nvim/` | `~/.config/nvim` |
 | `wezterm.lua` | `~/.wezterm.lua` |

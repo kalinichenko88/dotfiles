@@ -31,7 +31,7 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 - `tests/*_test.sh` — plain bash, fixtures in `tests/fixtures/bin`, run by
   `make test`
 
-Config units for `make config-<unit>`: `dev-dirs`, `git`, `zsh`, `nvim`,
+Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
 `wezterm`, `gh`, `starship`, `docker`, `claude`.
 
 CI (`.github/workflows/ci.yml`) runs shellcheck, `make test` on macOS, and
@@ -166,6 +166,7 @@ Never track any of these, and never suggest adding one to a commit:
 | `git/gitconfig-work` | Work email address |
 | `git/gitconfig-local` | GPG and signing keys |
 | `zsh/local.zsh` | Per-host tweaks, hostnames |
+| `~/.ssh/config.local` | SSH hosts, addresses, jump paths (outside the repo) |
 | `Brewfile.local` | Software for this machine only |
 | `setup/cask-apps.local.tsv` | Bundle paths for machine-local casks |
 | `setup/manual-checks.local.tsv` | Personal application inventory |

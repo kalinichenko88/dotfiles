@@ -197,6 +197,7 @@ check_config() {
   check_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config" git
   check_link git/gitconfig-personal \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-personal" git-personal
+  check_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config" ssh
   check_link zsh/zshrc "$DOTFILES_TARGET_HOME/.zshrc" zsh
   check_link nvim "$DOTFILES_TARGET_HOME/.config/nvim" nvim
   check_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua" wezterm

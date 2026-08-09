@@ -221,6 +221,14 @@ config_wezterm() {
   dotfiles_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua"
 }
 
+# Only the 1Password agent wiring is tracked. Hosts live in the untracked
+# ~/.ssh/config.local, which the tracked file includes first.
+config_ssh() {
+  dotfiles_run mkdir -p "$DOTFILES_TARGET_HOME/.ssh"
+  dotfiles_run chmod 700 "$DOTFILES_TARGET_HOME/.ssh"
+  dotfiles_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config"
+}
+
 config_gh() {
   dotfiles_link gh/config.yml "$DOTFILES_TARGET_HOME/.config/gh/config.yml"
 }
@@ -254,7 +262,7 @@ config_claude() {
   install_claude_settings
 }
 
-CONFIG_UNITS='dev-dirs git zsh nvim wezterm gh starship docker claude'
+CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm gh starship docker claude'
 
 install_config() {
   local requested unit matched

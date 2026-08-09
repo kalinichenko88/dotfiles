@@ -44,6 +44,14 @@ for token in base lunar plex-media-server qmk-toolbox skim steam tor-browser \
   assert_file_excludes "$TEST_ROOT/setup/cask-apps.tsv" "$token	/Applications/"
 done
 
+# The tracked SSH config carries the 1Password agent wiring and nothing else.
+# Hosts, addresses and jump paths live in the untracked ~/.ssh/config.local.
+if grep -qE '^[[:space:]]*(HostName|ProxyJump)|([0-9]{1,3}\.){3}[0-9]{1,3}' \
+  "$TEST_ROOT/ssh/config"; then
+  fail 'ssh/config must not name a host or address'
+fi
+assert_file_contains "$TEST_ROOT/ssh/config" 'Include ~/.ssh/config.local'
+
 if grep -q '^app	' "$TEST_ROOT/setup/manual-checks.tsv"; then
   fail 'tracked manual-checks.tsv must not enumerate installed applications'
 fi
