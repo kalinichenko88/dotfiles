@@ -9,23 +9,29 @@ to overwrite a file it does not manage.
 
 ## Install on a new Mac
 
-**1. Prerequisites**
+**1. Prerequisites and clone**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kalinichenko88/dotfiles/main/scripts/preinstall.sh | bash
+```
+
+That installs Apple's Command Line Tools, which provide `git`, and clones this
+repository to `~/Dev/Personal/dotfiles`. Rerunning it is harmless.
+
+The clone uses **HTTPS on purpose**: the SSH key lives in 1Password, which the
+bootstrap installs from the `Brewfile` inside this repository, so requiring SSH
+here would be a loop with no way in. Switching the remote to SSH is the last
+step, after 1Password is signed in.
+
+By hand, if you prefer:
 
 ```bash
 xcode-select --install          # skip if already present
-```
-
-You also need an SSH key registered with GitHub. Homebrew is not required in
-advance — step 3 can install it.
-
-**2. Clone**
-
-```bash
-git clone git@github.com:kalinichenko88/dotfiles.git ~/Dev/Personal/dotfiles
+git clone https://github.com/kalinichenko88/dotfiles.git ~/Dev/Personal/dotfiles
 cd ~/Dev/Personal/dotfiles
 ```
 
-**3. Preview, then apply**
+**2. Preview, then apply**
 
 ```bash
 DRY_RUN=1 INSTALL_HOMEBREW=1 make bootstrap    # prints every command, changes nothing
@@ -40,7 +46,7 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 3. pinned NVM, the exact Node version, UV tools;
 4. the `~/Dev` project directories, then all configuration;
 5. strict `doctor` verification;
-6. `~/.config/dotfiles/bootstrap-complete` — written only after 1–5 pass.
+6. `~/.config/dotfiles/bootstrap-complete` — written only after 1-5 pass.
 
 Software already installed by hand does not stop the run: `brew bundle install`
 adopts an existing `/Applications/Name.app` instead of failing. Note that it
@@ -48,7 +54,7 @@ adopts even when the installed version differs from the cask's, and records the
 cask's version — so an adopted app that is behind looks current to
 `brew upgrade`. `brew reinstall --cask <token>` fixes that one.
 
-**4. Resolve conflicts, if it stops**
+**3. Resolve conflicts, if it stops**
 
 If an unmanaged file already sits at a target path, bootstrap stops and names
 it. Inspect it, then rerun with backups enabled:
@@ -57,13 +63,13 @@ it. Inspect it, then rerun with backups enabled:
 FORCE=1 make config-install     # moves each conflict to <name>.backup.<timestamp>
 ```
 
-**5. Install what Homebrew cannot**
+**4. Install what Homebrew cannot**
 
 The run prints the checklist from `setup/manual-checks.tsv` — the CLIs that ship
 with their own installers. Install those, then log in using
 [`setup/manual-apps.md`](setup/manual-apps.md).
 
-**6. Verify**
+**5. Verify**
 
 ```bash
 make doctor
@@ -71,6 +77,14 @@ make doctor
 
 On first Neovim launch, install the parsers listed in
 [`nvim/README.md`](nvim/README.md).
+
+**6. Switch the remote to SSH**
+
+Once 1Password is signed in and its SSH agent is on, this machine can push:
+
+```bash
+git remote set-url origin git@github.com:kalinichenko88/dotfiles.git
+```
 
 ## Update an existing Mac
 
@@ -126,9 +140,9 @@ Units: `dev-dirs`, `git`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`, `docker`,
 - `FORCE=1` backs the conflicting file up to a timestamped sibling first.
 - Git work and local identity files are created from examples only when absent,
   then left alone.
-- Claude settings are merged with `jq`: unrelated keys survive, and changing an
-  existing file still requires `FORCE=1`.
-- Docker config is copied rather than symlinked, because Docker rewrites it.
+- Docker config and Claude settings are merged with `jq` rather than replaced,
+  because other tools write to those files too. Unrelated keys survive, and a
+  file that does change is backed up first.
 
 ## Machine-specific software
 
@@ -174,9 +188,10 @@ Docker registry credentials and Claude hooks you added yourself survive.
 | `wezterm.lua` | `~/.wezterm.lua` |
 | `gh/config.yml` | `~/.config/gh/config.yml` |
 | `starship/starship.toml` | `~/.config/starship.toml` |
-| `docker/config.json` | `~/.docker/config.json` (copy) |
+| `docker/config.json` | `~/.docker/config.json` (merge) |
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
+| `claude/hooks-config.json` | `~/.claude/settings.json` (merge) |
 | — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
 
 Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use

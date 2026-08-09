@@ -17,6 +17,10 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 
 ## Code Layout
 
+- `scripts/preinstall.sh` — runs *before* this repository exists locally, piped
+  from raw.githubusercontent. Command Line Tools, then an **HTTPS** clone: the
+  SSH key comes from 1Password, which the bootstrap installs from the Brewfile
+  in here, so requiring SSH to clone would be a loop. Never change it to `git@`.
 - `scripts/bootstrap.sh {all|brew|tools|config [unit]|update}` — the only thing
   that writes anything
 - `scripts/doctor.sh` — read-only verification, exit 1 on required failures

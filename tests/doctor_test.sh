@@ -55,11 +55,23 @@ brew_taps=$(manifest | awk 'match($0, /^tap "[^"]+"/) {
 }')
 
 doctor_path="$TEST_ROOT/tests/fixtures/bin:$stub_bin:/usr/bin:/bin"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
+
+# Every invocation shares the same stub environment; a caller overrides one
+# piece of it by setting STUB_* in front of the call.
+run_doctor() {
+  BREW_STUB_FORMULAE="${STUB_FORMULAE-$brew_formulae}" \
+  BREW_STUB_CASKS="$brew_casks" BREW_STUB_TAPS="${STUB_TAPS-$brew_taps}" \
+  BREW_STUB_OUTDATED="${STUB_OUTDATED-}" \
+  NPM_STUB_SLEEP="${STUB_NPM_SLEEP-0}" \
+  DOCTOR_AUTH_TIMEOUT_SECONDS="${STUB_AUTH_TIMEOUT-3}" \
+  UV_STUB_TOOLS='mcp-telegram v0.1.2
+specify-cli v0.8.4' \
+  PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
   DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/empty-node.out"; then
+  "$TEST_ROOT/scripts/doctor.sh"
+}
+
+if run_doctor > "$tmp/empty-node.out"; then
   fail 'doctor must reject an empty expected Node directory'
 fi
 assert_file_contains "$tmp/empty-node.out" 'missing node v24.18.0'
@@ -70,14 +82,8 @@ printf '#!/bin/sh\nprintf "v24.18.0\\n"\n' > \
 chmod +x "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 
 started_at=$SECONDS
-BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-BREW_STUB_TAPS="$brew_taps" BREW_STUB_OUTDATED=fd \
-UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' \
-NPM_STUB_SLEEP=5 DOCTOR_AUTH_TIMEOUT_SECONDS=1 \
-PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
-DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/ready.out"
+STUB_OUTDATED=fd STUB_NPM_SLEEP=5 STUB_AUTH_TIMEOUT=1 \
+  run_doctor > "$tmp/ready.out"
 elapsed=$((SECONDS - started_at))
 [ "$elapsed" -lt 4 ] || fail 'doctor did not time out a hanging auth probe'
 
@@ -102,55 +108,35 @@ done
 # A CLI with its own installer is not present right after bootstrap, so its
 # absence must stay a warning — otherwise a first run can never finish.
 unlink "$stub_bin/lms"
-BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
-DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/uninstalled-cli.out" || \
+run_doctor > "$tmp/uninstalled-cli.out" || \
   fail 'a not-yet-installed manual CLI must not fail doctor'
 assert_file_contains "$tmp/uninstalled-cli.out" 'warning manual-command LM Studio CLI'
 ln -s /usr/bin/true "$stub_bin/lms"
 
 printf '#!/bin/sh\nprintf "v24.17.0\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
-  DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/mismatched-node.out"; then
+if run_doctor > "$tmp/mismatched-node.out"; then
   fail 'doctor must reject a mismatched Node version binary'
 fi
 assert_file_contains "$tmp/mismatched-node.out" 'missing node v24.18.0'
 
 printf '#!/bin/sh\nprintf "v24.18.0\\n\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
-  DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/extra-node-output.out"; then
+if run_doctor > "$tmp/extra-node-output.out"; then
   fail 'doctor must reject extra Node version output'
 fi
 assert_file_contains "$tmp/extra-node-output.out" 'missing node v24.18.0'
 
 printf '#!/bin/sh\nprintf "v24.18.0\\000\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
-  DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/nul-node-output.out"; then
+if run_doctor > "$tmp/nul-node-output.out"; then
   fail 'doctor must reject Node version output containing a NUL byte'
 fi
 assert_file_contains "$tmp/nul-node-output.out" 'missing node v24.18.0'
 
 printf '#!/bin/sh\nprintf "v24.18.0"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
-  DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/unterminated-node-output.out"; then
+if run_doctor > "$tmp/unterminated-node-output.out"; then
   fail 'doctor must reject unterminated Node version output'
 fi
 assert_file_contains "$tmp/unterminated-node-output.out" 'missing node v24.18.0'
@@ -161,43 +147,27 @@ printf '#!/bin/sh\nprintf "v24.18.0\\n"\n' > \
 unlink "$stub_bin/agent"
 printf '#!/bin/sh\nexit 1\n' > "$stub_bin/agent"
 chmod +x "$stub_bin/agent"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" \
-  DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/probe.out"; then
+if run_doctor > "$tmp/probe.out"; then
   fail 'doctor must fail when a present manual command fails its probe'
 fi
 assert_file_contains "$tmp/probe.out" 'probe-failed manual-command Cursor Agent'
 unlink "$stub_bin/agent"
 ln -s /usr/bin/true "$stub_bin/agent"
 
-missing_formulae=$(printf '%s\n' "$brew_formulae" | grep -v '^gitleaks$')
-if BREW_STUB_FORMULAE="$missing_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" \
-  DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/missing.out"; then
+if STUB_FORMULAE=$(printf '%s\n' "$brew_formulae" | grep -v '^gitleaks$') \
+  run_doctor > "$tmp/missing.out"; then
   fail 'doctor must fail when a required formula is missing'
 fi
 assert_file_contains "$tmp/missing.out" 'missing formula gitleaks'
 
-missing_taps=$(printf '%s\n' "$brew_taps" | grep -v '^stripe/stripe-cli$')
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$missing_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" \
-  DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/tap.out"; then
+if STUB_TAPS=$(printf '%s\n' "$brew_taps" | grep -v '^stripe/stripe-cli$') \
+  run_doctor > "$tmp/tap.out"; then
   fail 'doctor must fail when a required tap is missing'
 fi
 assert_file_contains "$tmp/tap.out" 'missing tap stripe/stripe-cli'
 
 printf 'v22.23.1\n' > "$target_home/.nvm/alias/default"
-if BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-  BREW_STUB_TAPS="$brew_taps" UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" \
-  DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/node.out"; then
+if run_doctor > "$tmp/node.out"; then
   fail 'doctor must fail when the NVM default does not match the exact pin'
 fi
 assert_file_contains "$tmp/node.out" 'missing node-default v24.18.0'
@@ -207,12 +177,7 @@ mkdir -p "$target_home/.config/dotfiles"
 printf 'verified\n' > "$target_home/.config/dotfiles/bootstrap-complete"
 # The completion marker used to switch on a second `brew bundle check` pass
 # that re-failed every present-manual cask. It must stay gone.
-BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-BREW_STUB_TAPS="$brew_taps" \
-UV_STUB_TOOLS='mcp-telegram v0.1.2
-specify-cli v0.8.4' PATH="$doctor_path" \
-DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \
-  "$TEST_ROOT/scripts/doctor.sh" > "$tmp/marked.out" || \
+run_doctor > "$tmp/marked.out" || \
   fail 'the completion marker must not make a hand-installed cask fail doctor'
 assert_file_contains "$tmp/marked.out" 'present-manual cask obsidian'
 assert_file_excludes "$tmp/marked.out" 'brew-bundle'

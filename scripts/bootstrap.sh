@@ -29,67 +29,15 @@ check_platform() {
   fi
 }
 
+# The character class is the validation: an unsafe or malformed value simply
+# does not match, leaving NVM_VERSION empty.
 load_tool_versions() {
-  local line key value versions_file
-  versions_file=$DOTFILES_ROOT/setup/tool-versions.env
-  NVM_VERSION=
-
-  while IFS= read -r line || [ -n "$line" ]; do
-    case "$line" in
-      ''|'#'*) continue ;;
-    esac
-    key=${line%%=*}
-    value=${line#*=}
-    if [ "$key" = "$line" ] || [ -z "$value" ]; then
-      dotfiles_die "invalid tool version record: $key"
-      return 1
-    fi
-    case "$value" in
-      *[!A-Za-z0-9._-]*)
-        dotfiles_die "unsafe tool version value for $key"
-        return 1
-        ;;
-    esac
-    case "$key" in
-      NVM_VERSION) NVM_VERSION=$value ;;
-      *)
-        dotfiles_die "unknown tool version key: $key"
-        return 1
-        ;;
-    esac
-  done < "$versions_file"
-
+  NVM_VERSION=$(sed -n 's/^NVM_VERSION=\([A-Za-z0-9._-]*\)$/\1/p' \
+    "$DOTFILES_ROOT/setup/tool-versions.env")
   if [ -z "$NVM_VERSION" ]; then
-    dotfiles_die 'tool version manifest is incomplete'
+    dotfiles_die 'setup/tool-versions.env has no usable NVM_VERSION'
     return 1
   fi
-}
-
-install_git_checkout() {
-  local name url destination revision existing_origin
-  name=$1
-  url=$2
-  destination=$3
-  revision=$4
-
-  if [ -e "$destination" ] && [ ! -d "$destination/.git" ]; then
-    dotfiles_die "$name destination exists but is not a Git checkout: $destination"
-    return 1
-  fi
-  if [ -d "$destination/.git" ]; then
-    if ! existing_origin=$(git -C "$destination" remote get-url origin 2>/dev/null) || \
-      [ "$existing_origin" != "$url" ]; then
-      dotfiles_die "$name checkout has an unexpected origin"
-      return 1
-    fi
-  fi
-
-  if [ ! -e "$destination" ]; then
-    dotfiles_run git clone "$url" "$destination"
-  else
-    dotfiles_run git -C "$destination" fetch --tags --force origin
-  fi
-  dotfiles_run git -C "$destination" checkout --detach "$revision"
 }
 
 install_homebrew() {
@@ -329,6 +277,9 @@ install_config() {
 }
 
 install_tools() {
+  local nvm_dir nvm_url existing_origin
+  nvm_dir=$DOTFILES_TARGET_HOME/.nvm
+  nvm_url=https://github.com/nvm-sh/nvm.git
   load_tool_versions
 
   if [ "${DRY_RUN:-0}" != 1 ] && ! command -v git >/dev/null 2>&1; then
@@ -336,11 +287,21 @@ install_tools() {
     return 1
   fi
 
-  install_git_checkout \
-    'NVM' \
-    'https://github.com/nvm-sh/nvm.git' \
-    "$DOTFILES_TARGET_HOME/.nvm" \
-    "$NVM_VERSION"
+  if [ -e "$nvm_dir" ] && [ ! -d "$nvm_dir/.git" ]; then
+    dotfiles_die "NVM destination exists but is not a Git checkout: $nvm_dir"
+    return 1
+  fi
+  if [ -d "$nvm_dir/.git" ]; then
+    if ! existing_origin=$(git -C "$nvm_dir" remote get-url origin 2>/dev/null) || \
+      [ "$existing_origin" != "$nvm_url" ]; then
+      dotfiles_die 'NVM checkout has an unexpected origin'
+      return 1
+    fi
+    dotfiles_run git -C "$nvm_dir" fetch --tags --force origin
+  else
+    dotfiles_run git clone "$nvm_url" "$nvm_dir"
+  fi
+  dotfiles_run git -C "$nvm_dir" checkout --detach "$NVM_VERSION"
   install_node_versions
   install_uv_tools
   print_manual_command_checks

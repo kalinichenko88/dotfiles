@@ -15,8 +15,6 @@ export LC_ALL
 DOCTOR_FAILURES=0
 DOCTOR_APPLICATIONS_ROOT=${DOTFILES_APPLICATIONS_ROOT:-}
 DOCTOR_AUTH_TIMEOUT_SECONDS=${DOCTOR_AUTH_TIMEOUT_SECONDS:-3}
-DOCTOR_COMMAND_TIMEOUT_SECONDS=${DOCTOR_COMMAND_TIMEOUT_SECONDS:-5}
-DOCTOR_BREW_TIMEOUT_SECONDS=${DOCTOR_BREW_TIMEOUT_SECONDS:-15}
 
 trap dotfiles_cleanup_tmp EXIT
 trap 'exit 130' HUP INT TERM
@@ -30,37 +28,21 @@ doctor_missing() {
   doctor_status missing "$1" "$2"
 }
 
+# macOS ships no timeout(1). Callers only care whether the probe succeeded, so
+# a killed command reporting failure is all the resolution needed.
 run_with_timeout() {
-  local timeout_seconds timeout_flag command_pid timer_pid command_status
+  local timeout_seconds command_pid timer_pid command_status
   timeout_seconds=$1
   shift
-  timeout_flag=$doctor_tmp/timeout.$$.$RANDOM
 
   "$@" &
   command_pid=$!
-  (
-    sleep "$timeout_seconds"
-    if kill -0 "$command_pid" >/dev/null 2>&1; then
-      printf 'timed-out\n' > "$timeout_flag"
-      kill -TERM "$command_pid" >/dev/null 2>&1 || :
-      sleep 1
-      kill -KILL "$command_pid" >/dev/null 2>&1 || :
-    fi
-  ) &
+  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) &
   timer_pid=$!
 
-  if wait "$command_pid"; then
-    command_status=0
-  else
-    command_status=$?
-  fi
-  kill "$timer_pid" >/dev/null 2>&1 || :
+  wait "$command_pid" && command_status=0 || command_status=$?
+  kill "$timer_pid" 2>/dev/null || :
   wait "$timer_pid" 2>/dev/null || :
-
-  if [ -f "$timeout_flag" ]; then
-    rm -f "$timeout_flag"
-    return 124
-  fi
   return "$command_status"
 }
 
@@ -76,10 +58,6 @@ brewfile_tokens() {
   '
 }
 
-package_basename() {
-  printf '%s\n' "${1##*/}"
-}
-
 load_brew_state() {
   dotfiles_resolve_homebrew
 
@@ -88,6 +66,8 @@ load_brew_state() {
   "$DOTFILES_BREW_COMMAND" list --cask | sort -u > "$doctor_tmp/casks"
 }
 
+# Not merged with check_formulae: a tap is owner/name and keeps its prefix,
+# while a formula from a tap is matched by basename.
 check_taps() {
   local tap_name
   while IFS= read -r tap_name; do
@@ -106,7 +86,7 @@ check_formulae() {
   local formula_name installed_name
   while IFS= read -r formula_name; do
     [ -n "$formula_name" ] || continue
-    installed_name=$(package_basename "$formula_name")
+    installed_name=${formula_name##*/}
     if grep -Fx "$installed_name" "$doctor_tmp/formulae" >/dev/null 2>&1; then
       doctor_status present formula "$installed_name"
     else
@@ -126,7 +106,7 @@ check_casks() {
   local cask_name installed_name bundle_path effective_path
   while IFS= read -r cask_name; do
     [ -n "$cask_name" ] || continue
-    installed_name=$(package_basename "$cask_name")
+    installed_name=${cask_name##*/}
     if grep -Fx "$installed_name" "$doctor_tmp/casks" >/dev/null 2>&1; then
       doctor_status present cask "$installed_name"
       continue
@@ -146,16 +126,6 @@ $(brewfile_tokens cask)
 EOF
 }
 
-node_version_output_matches() {
-  local expected output_file expected_file
-  expected=$1
-  output_file=$2
-  expected_file=$doctor_tmp/node-version-expected.$RANDOM
-
-  printf '%s\n' "$expected" > "$expected_file"
-  cmp -s "$expected_file" "$output_file"
-}
-
 check_node() {
   local node_version default_alias expected_default node_path node_version_output
   expected_default=
@@ -168,9 +138,9 @@ check_node() {
     node_path=$DOTFILES_TARGET_HOME/.nvm/versions/node/$node_version/bin/node
     node_version_output=$doctor_tmp/node-version.$RANDOM
     if [ -x "$node_path" ] && \
-      run_with_timeout "$DOCTOR_COMMAND_TIMEOUT_SECONDS" \
+      run_with_timeout 5 \
         "$node_path" --version > "$node_version_output" 2>/dev/null && \
-      node_version_output_matches "$node_version" "$node_version_output"; then
+      cmp -s <(printf '%s\n' "$node_version") "$node_version_output"; then
       doctor_status present node "$node_version"
     else
       doctor_missing node "$node_version"
@@ -297,7 +267,7 @@ check_manual_state() {
         # bootstrap only prints the checklist. Installed but broken is a failure.
         if ! command -v "$probe_command" >/dev/null 2>&1; then
           doctor_status warning manual-command "$name"
-        elif run_with_timeout "$DOCTOR_COMMAND_TIMEOUT_SECONDS" \
+        elif run_with_timeout 5 \
           /bin/bash -c "exec $probe" >/dev/null 2>&1; then
           doctor_status present manual-command "$name"
         else
@@ -329,7 +299,7 @@ check_manual_state() {
 
 check_outdated() {
   local package_name
-  if run_with_timeout "$DOCTOR_BREW_TIMEOUT_SECONDS" \
+  if run_with_timeout 15 \
     "$DOTFILES_BREW_COMMAND" outdated --quiet \
     > "$doctor_tmp/outdated" 2>/dev/null; then
     while IFS= read -r package_name; do
@@ -348,16 +318,12 @@ check_outdated() {
 # formula and cask checks above already cover the same manifests.
 
 main() {
-  local timeout_value
-  for timeout_value in "$DOCTOR_AUTH_TIMEOUT_SECONDS" \
-    "$DOCTOR_COMMAND_TIMEOUT_SECONDS" "$DOCTOR_BREW_TIMEOUT_SECONDS"; do
-    case "$timeout_value" in
-      ''|*[!0-9]*|0)
-        dotfiles_die 'doctor timeout values must be positive integers'
-        return 1
-        ;;
-    esac
-  done
+  case "$DOCTOR_AUTH_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*|0)
+      dotfiles_die 'DOCTOR_AUTH_TIMEOUT_SECONDS must be a positive integer'
+      return 1
+      ;;
+  esac
   dotfiles_make_tmp dotfiles-doctor
   doctor_tmp=$DOTFILES_TMP
 

@@ -27,25 +27,16 @@ dotfiles_die() {
 
 # Streams a tracked manifest followed by its optional gitignored machine-local
 # sibling, so machine-specific software never lands in the shared baseline.
-# Creates a private scratch directory and arms its cleanup. The caller passes a
-# name prefix; the guard refuses to remove anything that does not carry it, so a
-# clobbered variable cannot turn the trap into an arbitrary delete.
+# Private scratch directory plus its cleanup. An unset DOTFILES_TMP makes the
+# removal a no-op on its own, so the trap needs no further guarding.
 dotfiles_make_tmp() {
-  local prefix base
-  prefix=$1
+  local base
   base=${TMPDIR:-/tmp}
-  base=${base%/}
-  DOTFILES_TMP_BASE=$base
-  DOTFILES_TMP_PREFIX=$prefix
-  DOTFILES_TMP=$(mktemp -d "$base/$prefix.XXXXXX") || return 1
+  DOTFILES_TMP=$(mktemp -d "${base%/}/$1.XXXXXX") || return 1
 }
 
 dotfiles_cleanup_tmp() {
-  [ -n "${DOTFILES_TMP:-}" ] || return 0
-  case "$DOTFILES_TMP" in
-    "$DOTFILES_TMP_BASE/$DOTFILES_TMP_PREFIX".*) /bin/rm -rf "$DOTFILES_TMP" ;;
-    *) dotfiles_warn "refusing to remove unexpected path: $DOTFILES_TMP" ;;
-  esac
+  [ -n "${DOTFILES_TMP:-}" ] && /bin/rm -rf "$DOTFILES_TMP"
   DOTFILES_TMP=
 }
 

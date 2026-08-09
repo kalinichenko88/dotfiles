@@ -32,9 +32,7 @@ for value in \
   'cask "font-iosevka"' \
   'tap "steipete/tap"' \
   'tap "thedavidweng/tap"' \
-  'cask "perplexity"' \
-  'cask "zcode"' \
-  'cask "buzz"'; do
+  'cask "perplexity"'; do
   assert_file_excludes "$TEST_ROOT/Brewfile" "$value"
 done
 

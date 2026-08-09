@@ -27,6 +27,15 @@ for unit in dev-dirs git zsh nvim wezterm gh starship docker claude; do
   assert_make_target "config-$unit" "./scripts/bootstrap.sh config $unit"
 done
 
+# preinstall runs before the repository exists locally, so it must clone over
+# HTTPS and point at the same destination the README documents.
+[ -x "$TEST_ROOT/scripts/preinstall.sh" ] || fail 'preinstall.sh is not executable'
+assert_file_contains "$TEST_ROOT/scripts/preinstall.sh" \
+  'https://github.com/kalinichenko88/dotfiles.git'
+assert_file_excludes "$TEST_ROOT/scripts/preinstall.sh" \
+  'git clone git@'
+assert_file_contains "$TEST_ROOT/README.md" 'scripts/preinstall.sh | bash'
+
 for removed_target in brew-dump cleanup-candidates security-audit; do
   if make -s -n -C "$TEST_ROOT" "$removed_target" >/dev/null 2>&1; then
     fail "$removed_target must not be part of the Make interface"
