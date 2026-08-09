@@ -79,10 +79,10 @@ git pull
 make update
 ```
 
-`make update` refreshes Homebrew, reapplies both Brewfiles, reapplies the pinned
-Node and UV manifests, upgrades packages, and finishes with a `doctor` pass — it
-installs everything doctor then checks, so a manifest bump needs no second
-command. Casks that update themselves are left alone — Homebrew skips them by
+`make update` refreshes Homebrew, reapplies both Brewfiles, the pinned Node and
+UV manifests and every configuration unit, upgrades packages, and finishes with
+a `doctor` pass. It applies everything that pass then verifies, so a pull that
+bumps any manifest needs no second command. Casks that update themselves are left alone — Homebrew skips them by
 design, and this repository does not use `--greedy`.
 
 Then look at what this machine has that no manifest declares:

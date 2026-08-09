@@ -150,9 +150,10 @@ update_workstation() {
   dotfiles_run "$DOTFILES_BREW_COMMAND" update
   install_brew_bundles "$DOTFILES_BREW_COMMAND"
   dotfiles_run "$DOTFILES_BREW_COMMAND" upgrade
-  # Doctor checks the Node and UV manifests too, so update has to apply them
-  # or it reports drift it just declined to fix.
+  # Doctor checks the runtime and configuration manifests too, so update has to
+  # apply everything it then verifies, or it reports drift it declined to fix.
   install_tools
+  install_config
   dotfiles_run "$SCRIPT_DIR/doctor.sh"
 }
 
@@ -209,7 +210,7 @@ print_manual_command_checks() {
     case "$kind" in
       command) printf '  - %s: %s\n' "$name" "$probe" ;;
     esac
-  done < "$DOTFILES_ROOT/setup/manual-checks.tsv"
+  done < <(dotfiles_manifest setup/manual-checks.tsv setup/manual-checks.local.tsv)
 }
 
 copy_git_template_if_missing() {

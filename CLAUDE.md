@@ -147,8 +147,10 @@ Do not look for them here.
 
 - Lua is formatted by stylua on save, single quotes
 - `.editorconfig` sets 2-space indentation and line endings for everything else
-- Shell scripts must pass `shellcheck` with no suppressions beyond the existing
-  `SC1091` source-path ones
+- Shell scripts must pass `shellcheck`. Two suppressions are legitimate and
+  already used: `SC1091` for runtime-resolved `source` paths, and `SC2016` for
+  single-quoted jq programs, where `$source` is a jq variable rather than a
+  shell one. Anything else means fixing the code, not silencing the check.
 
 ## Gitignored files
 

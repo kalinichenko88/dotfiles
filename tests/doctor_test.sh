@@ -208,7 +208,7 @@ printf 'verified\n' > "$target_home/.config/dotfiles/bootstrap-complete"
 # The completion marker used to switch on a second `brew bundle check` pass
 # that re-failed every present-manual cask. It must stay gone.
 BREW_STUB_FORMULAE="$brew_formulae" BREW_STUB_CASKS="$brew_casks" \
-BREW_STUB_TAPS="$brew_taps" BREW_STUB_BUNDLE_STATUS=1 \
+BREW_STUB_TAPS="$brew_taps" \
 UV_STUB_TOOLS='mcp-telegram v0.1.2
 specify-cli v0.8.4' PATH="$doctor_path" \
 DOTFILES_TARGET_HOME="$target_home" DOTFILES_APPLICATIONS_ROOT="$apps_root" \

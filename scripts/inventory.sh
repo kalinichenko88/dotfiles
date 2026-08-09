@@ -15,20 +15,7 @@ SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 LC_ALL=C
 export LC_ALL
 
-inventory_tmp=
-inventory_tmp_base=${TMPDIR:-/tmp}
-inventory_tmp_base=${inventory_tmp_base%/}
-
-cleanup_inventory_tmp() {
-  [ -n "$inventory_tmp" ] || return 0
-  case "$inventory_tmp" in
-    "$inventory_tmp_base"/dotfiles-inventory.*) /bin/rm -rf "$inventory_tmp" ;;
-    *) dotfiles_warn "refusing to remove unexpected inventory path: $inventory_tmp" ;;
-  esac
-  inventory_tmp=
-}
-
-trap cleanup_inventory_tmp EXIT
+trap dotfiles_cleanup_tmp EXIT
 trap 'exit 130' HUP INT TERM
 
 normalize_brewfile() {
@@ -43,7 +30,8 @@ create_brew_snapshot() {
   local snapshot
   dotfiles_resolve_homebrew
 
-  inventory_tmp=$(mktemp -d "$inventory_tmp_base/dotfiles-inventory.XXXXXX")
+  dotfiles_make_tmp dotfiles-inventory
+  inventory_tmp=$DOTFILES_TMP
   snapshot=$inventory_tmp/Brewfile.source
   if ! "$DOTFILES_BREW_COMMAND" bundle dump --force --no-mas --file "$snapshot"; then
     dotfiles_die 'Homebrew inventory failed; no comparison was produced'

@@ -128,4 +128,15 @@ done <<EOF
 $project_dirs
 EOF
 
+# bootstrap.sh and doctor.sh keep two hand-maintained tables of the same
+# source→target pairs. Rather than merge them, fail when they drift: anything
+# bootstrap links must be something doctor checks.
+grep -oE 'dotfiles_link [^ ]+' "$TEST_ROOT/scripts/bootstrap.sh" \
+  | awk '{ print $2 }' | sort -u > "$tmp/linked-sources"
+grep -oE 'check_link [^ ]+' "$TEST_ROOT/scripts/doctor.sh" \
+  | awk '{ print $2 }' | sort -u > "$tmp/checked-sources"
+unchecked=$(comm -23 "$tmp/linked-sources" "$tmp/checked-sources")
+[ -z "$unchecked" ] || \
+  fail "bootstrap links these but doctor never checks them: $unchecked"
+
 pass 'configuration installation is complete, safe, and idempotent'

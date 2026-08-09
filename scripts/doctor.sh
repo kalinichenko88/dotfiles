@@ -17,20 +17,8 @@ DOCTOR_APPLICATIONS_ROOT=${DOTFILES_APPLICATIONS_ROOT:-}
 DOCTOR_AUTH_TIMEOUT_SECONDS=${DOCTOR_AUTH_TIMEOUT_SECONDS:-3}
 DOCTOR_COMMAND_TIMEOUT_SECONDS=${DOCTOR_COMMAND_TIMEOUT_SECONDS:-5}
 DOCTOR_BREW_TIMEOUT_SECONDS=${DOCTOR_BREW_TIMEOUT_SECONDS:-15}
-doctor_tmp=
-doctor_tmp_base=${TMPDIR:-/tmp}
-doctor_tmp_base=${doctor_tmp_base%/}
 
-cleanup_doctor_tmp() {
-  [ -n "$doctor_tmp" ] || return 0
-  case "$doctor_tmp" in
-    "$doctor_tmp_base"/dotfiles-doctor.*) /bin/rm -rf "$doctor_tmp" ;;
-    *) dotfiles_warn "refusing to remove unexpected doctor path: $doctor_tmp" ;;
-  esac
-  doctor_tmp=
-}
-
-trap cleanup_doctor_tmp EXIT
+trap dotfiles_cleanup_tmp EXIT
 trap 'exit 130' HUP INT TERM
 
 doctor_status() {
@@ -169,11 +157,14 @@ node_version_output_matches() {
 }
 
 check_node() {
-  local node_version default_alias node_path node_version_output
+  local node_version default_alias expected_default node_path node_version_output
+  expected_default=
   while IFS= read -r node_version; do
     case "$node_version" in
       ''|'#'*) continue ;;
     esac
+    # There is one NVM default alias, so only the first pin can claim it.
+    [ -n "$expected_default" ] || expected_default=$node_version
     node_path=$DOTFILES_TARGET_HOME/.nvm/versions/node/$node_version/bin/node
     node_version_output=$doctor_tmp/node-version.$RANDOM
     if [ -x "$node_path" ] && \
@@ -184,17 +175,18 @@ check_node() {
     else
       doctor_missing node "$node_version"
     fi
-
-    default_alias=
-    if [ -f "$DOTFILES_TARGET_HOME/.nvm/alias/default" ]; then
-      default_alias=$(sed -n '1p' "$DOTFILES_TARGET_HOME/.nvm/alias/default")
-    fi
-    if [ "$default_alias" = "$node_version" ]; then
-      doctor_status present node-default "$node_version"
-    else
-      doctor_missing node-default "$node_version"
-    fi
   done < "$DOTFILES_ROOT/setup/node-versions.txt"
+
+  [ -n "$expected_default" ] || return 0
+  default_alias=
+  if [ -f "$DOTFILES_TARGET_HOME/.nvm/alias/default" ]; then
+    default_alias=$(sed -n '1p' "$DOTFILES_TARGET_HOME/.nvm/alias/default")
+  fi
+  if [ "$default_alias" = "$expected_default" ]; then
+    doctor_status present node-default "$expected_default"
+  else
+    doctor_missing node-default "$expected_default"
+  fi
 }
 
 check_uv_tools() {
@@ -366,7 +358,8 @@ main() {
         ;;
     esac
   done
-  doctor_tmp=$(mktemp -d "$doctor_tmp_base/dotfiles-doctor.XXXXXX")
+  dotfiles_make_tmp dotfiles-doctor
+  doctor_tmp=$DOTFILES_TMP
 
   load_brew_state
   check_taps
