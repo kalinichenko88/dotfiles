@@ -1,0 +1,6 @@
+user root
+sessiontype default
+requesttty auto
+proxyjump jump-host
+remotecommand none
+permitlocalcommand no

@@ -1,0 +1,5 @@
+user root
+sessiontype default
+requesttty auto
+remotecommand tmux attach
+permitlocalcommand no

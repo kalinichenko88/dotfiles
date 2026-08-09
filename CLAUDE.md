@@ -146,11 +146,11 @@ showing the basename of the pane's working directory.
 
 ### ssh-remote
 
-On this branch `ssh-remote/` holds **only** the vendored bundle
-(`ssh-remote/bundle/xdg/…`, mini.nvim). The `ssh()` wrapper,
-`zsh/ssh-remote.zsh`, `plugins.txt`, the `make ssh-remote-*` targets, and the
-WezTerm `ssh_host` tab title live on the unmerged `feat/ssh-remote-nvim` branch.
-Do not look for them here.
+`zsh/ssh-remote.zsh` defines an `ssh()` wrapper that ships a self-contained
+Neovim to the remote host. `ssh-remote/bundle/` is the payload (vendored
+mini.nvim, pinned in `ssh-remote/plugins.txt`), `make ssh-remote-*` vendors and
+tests it, and WezTerm reads `ssh_host` for the tab title. `make test` does not
+cover it — `make ssh-remote-test` runs its own suite under `ssh-remote/tests/`.
 
 ## Conventions
 
@@ -176,6 +176,7 @@ Never track any of these, and never suggest adding one to a commit:
 | `setup/manual-checks.local.tsv` | Personal application inventory |
 | `docs/superpowers/`, `.superpowers/` | Agent specs, plans, review diffs |
 | `.claude/` | Local Claude state |
+| `ssh-remote/bundle/xdg/config/nvim/pack/` | Vendored upstream plugins, rebuilt by `make ssh-remote-vendor` from the SHA in `ssh-remote/plugins.txt` |
 
 The two `git/` files are created from `*.example` templates during installation
 and then preserved. The `.local` manifests are read automatically by bootstrap,

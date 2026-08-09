@@ -1,0 +1,6 @@
+user root
+sessiontype default
+requesttty auto
+localforward 8080 127.0.0.1:80
+remotecommand none
+permitlocalcommand no

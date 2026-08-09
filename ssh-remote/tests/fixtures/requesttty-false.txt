@@ -1,0 +1,5 @@
+user root
+sessiontype default
+requesttty false
+remotecommand none
+permitlocalcommand no

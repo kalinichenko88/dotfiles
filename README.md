@@ -237,6 +237,45 @@ If a credential ever lands in a commit, rotate it first. Deleting it from the
 working tree does not remove it from history, and rewriting published history
 is a separate, deliberate decision.
 
+### SSH Remote (`ssh-remote/`)
+
+Typing `ssh <host>` in an interactive terminal automatically ships a self-contained Neovim + custom shell prompt to the remote host, sets the WezTerm tab title to the host name, and restores everything on exit.
+
+```bash
+make ssh-remote-install   # vendor plugins + make bootstrap executable
+```
+
+#### How it works
+
+`zsh/ssh-remote.zsh` is auto-sourced by `zshrc` and defines an `ssh()` wrapper. The wrapper intercepts only the bare form — `ssh [user@]<host>` with no flags or remote command. Everything else (port forwarding, remote commands, non-TTY) passes straight through to `command ssh`.
+
+For intercepted connections, the bundle is rsynced to `~/.dotfiles-remote/bundle/` on the server via a shared ControlMaster (so password/MFA hosts prompt only once). State files are isolated under `~/.dotfiles-remote/state/`; the server's own rc files are never touched — prompt and aliases are injected only for the session via `ZDOTDIR` / `bash --init-file`.
+
+On the server, `v` / `vim` / `vi` open the portable Neovim (mini.nvim, no LSP). If the server has no Neovim, a pinned, checksum-verified official build is downloaded once into `~/.dotfiles-remote/state/` (needs internet + `curl`/`wget`; cached for later connects); if that fails (offline, unsupported arch, old glibc) the aliases fall back to the system `vim` or `vi`. Yanking (`y`) copies to your **local** clipboard over SSH via OSC 52 (paste reads the remote nvim's own register).
+
+#### Usage
+
+```bash
+ssh <host>                  # intercepted: ships bundle, opens remote shell
+SSH_NO_BUNDLE=1 ssh <host>  # bypass wrapper entirely (plain ssh)
+command ssh <host>          # also bypasses wrapper
+
+# on the remote host:
+v file.ts                   # open in portable nvim
+vim file.ts                 # same
+```
+
+#### Make targets
+
+| Target | Description |
+|--------|-------------|
+| `make ssh-remote-vendor` | Vendor plugins listed in `ssh-remote/plugins.txt` |
+| `make ssh-remote-install` | Vendor plugins + ensure `bootstrap.sh` is executable |
+| `make ssh-remote-test` | Run guard / profile-select / nvim-install / nvim smoke tests |
+| `make ssh-remote-clean-host HOST=<host>` | Remove `~/.dotfiles-remote` from a server |
+
+> **Public-repo rule:** no hostnames, IPs, or per-host data belong in tracked files. Put per-host tweaks in the gitignored `zsh/local.zsh`.
+
 ## License
 
 MIT

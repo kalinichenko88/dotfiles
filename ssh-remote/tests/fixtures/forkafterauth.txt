@@ -1,0 +1,6 @@
+user root
+sessiontype default
+requesttty auto
+remotecommand none
+forkafterauthentication yes
+permitlocalcommand no

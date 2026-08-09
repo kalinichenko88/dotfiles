@@ -1,0 +1,8 @@
+user root
+hostname 203.0.113.10
+port 22
+sessiontype default
+requesttty auto
+forkafterauthentication no
+permitlocalcommand no
+remotecommand none

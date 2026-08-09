@@ -132,9 +132,14 @@ config.keys = {
   },
 }
 
--- Tab title: always show current directory name
+-- Tab title: SSH host (set by the ssh() wrapper's user-var) when present,
+-- otherwise the current directory name.
 wezterm.on('format-tab-title', function(tab)
   local pane = tab.active_pane
+  local ssh_host = pane.user_vars and pane.user_vars.ssh_host
+  if ssh_host and #ssh_host > 0 then
+    return '  ' .. ssh_host .. ' ' -- nerd-font server glyph + host
+  end
   local cwd = pane.current_working_dir
   if cwd then
     local path = cwd.file_path or tostring(cwd)

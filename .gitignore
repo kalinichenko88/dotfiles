@@ -5,6 +5,9 @@ git/gitconfig-local
 
 zsh/local.zsh
 
+# Vendored remote nvim plugins (populated by `make ssh-remote-vendor`)
+ssh-remote/bundle/xdg/config/nvim/pack/
+
 .claude/
 
 # Agent planning artefacts. Never publish specs, plans or review diffs.
