@@ -16,11 +16,16 @@ DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/home" \
 for value in \
   'v0.40.3' \
   'nvm install v24.18.0' \
-  'nvm alias default v24.18.0' \
-  'uv tool install --force mcp-telegram==0.1.2' \
-  'uv tool install --force specify-cli==0.8.4'; do
+  'nvm alias default v24.18.0'; do
   assert_file_contains "$tmp/tools.out" "$value"
 done
+
+# Whatever the UV manifest holds — including nothing — is what gets installed,
+# pinned. An unpinned spec would drift the machine on the next run.
+while IFS= read -r tool_spec; do
+  [ -n "$tool_spec" ] || continue
+  assert_file_contains "$tmp/tools.out" "uv tool install --force $tool_spec"
+done < <(grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/uv-tools.txt" || :)
 assert_file_excludes "$tmp/tools.out" 'v20.20.0'
 assert_file_excludes "$tmp/tools.out" 'v22.23.1'
 assert_file_excludes "$tmp/tools.out" '.bun'
