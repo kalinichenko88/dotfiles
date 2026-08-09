@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: shellcheck
+        run: shellcheck scripts/*.sh scripts/lib/*.sh claude/hooks/*.sh tests/*.sh tests/fixtures/bin/*
+
+  test:
+    # The scripts target Apple Silicon macOS, so the tests run there too.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: make test
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # gitleaks scans the whole history, not just the tip.
+          fetch-depth: 0
+      # No license key needed: gitleaks-action is free for personal accounts.
+      # The token is required on pull_request events, where the action reads
+      # the PR's commits through the API.
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

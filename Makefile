@@ -1,117 +1,62 @@
-GIT_CONFIG_DIR := $(HOME)/.config/git
-DOTFILES_GIT_DIR := $(PWD)/git
-STARSHIP_CONFIG_DIR := $(HOME)/.config
-NVIM_CONFIG_DIR := $(HOME)/.config/nvim
-GH_CONFIG_DIR := $(HOME)/.config/gh
-CLAUDE_SKILLS_DIR := $(HOME)/.claude/skills
-CLAUDE_HOOKS_DIR := $(HOME)/.claude/hooks
-CLAUDE_SETTINGS := $(HOME)/.claude/settings.json
+CONFIG_UNITS := dev-dirs git ssh zsh nvim wezterm gh starship docker claude
+CONFIG_TARGETS := $(addprefix config-,$(CONFIG_UNITS))
 
-.PHONY: git git-install git-local git-check wezterm-config-install docker-config-install nvim-config-install gh-config-install starship-config-install zsh-install brew-install brew-dump claude-skills-install claude-hooks-install ssh-remote-vendor ssh-remote-install ssh-remote-test ssh-remote-clean-host
+# A bare `make` must not provision the machine: bootstrap is the first target
+# and would otherwise run on a stray keystroke.
+.DEFAULT_GOAL := help
 
-git-install: git-local git
-	@echo "⚠ Don't forget to edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"
+.PHONY: help bootstrap bootstrap-brew bootstrap-tools config-install update \
+	doctor inventory test git-check $(CONFIG_TARGETS) \
+	ssh-remote-vendor ssh-remote-install ssh-remote-test ssh-remote-clean-host
 
-git:
-	@echo "→ Installing git config"
-	mkdir -p $(GIT_CONFIG_DIR)
-	ln -sf $(DOTFILES_GIT_DIR)/gitconfig $(GIT_CONFIG_DIR)/config
-	ln -sf $(DOTFILES_GIT_DIR)/gitconfig-personal $(GIT_CONFIG_DIR)/gitconfig-personal
-	ln -sf $(DOTFILES_GIT_DIR)/gitconfig-work $(GIT_CONFIG_DIR)/gitconfig-work
-	ln -sf $(DOTFILES_GIT_DIR)/gitconfig-local $(GIT_CONFIG_DIR)/gitconfig-local
-	@echo "✓ git config installed"
+help:
+	@printf 'make bootstrap   provision a new machine (INSTALL_HOMEBREW=1 if brew is absent)\n'
+	@printf 'make update      refresh this machine, then verify it\n'
+	@printf 'make doctor      what the manifests declare and this machine lacks\n'
+	@printf 'make inventory   what this machine has and no manifest declares\n'
+	@printf 'make test        run the test suite\n'
+	@printf '\nSee README.md for the rest.\n'
 
-git-local:
-	@if [ ! -f $(DOTFILES_GIT_DIR)/gitconfig-work ]; then \
-		echo "→ Creating gitconfig-work from example"; \
-		cp $(DOTFILES_GIT_DIR)/gitconfig-work.example $(DOTFILES_GIT_DIR)/gitconfig-work; \
-		echo "⚠ Edit $(DOTFILES_GIT_DIR)/gitconfig-work with your work email"; \
-	else \
-		echo "✓ gitconfig-work already exists"; \
-	fi
-	@if [ ! -f $(DOTFILES_GIT_DIR)/gitconfig-local ]; then \
-		echo "→ Creating gitconfig-local from example"; \
-		cp $(DOTFILES_GIT_DIR)/gitconfig-local.example $(DOTFILES_GIT_DIR)/gitconfig-local; \
-		echo "✓ gitconfig-local created"; \
-	else \
-		echo "✓ gitconfig-local already exists"; \
-	fi
+# Full provisioning of a new machine: Homebrew, user-space tools, configs, doctor.
+bootstrap:
+	@./scripts/bootstrap.sh all
+
+bootstrap-brew:
+	@./scripts/bootstrap.sh brew
+
+bootstrap-tools:
+	@./scripts/bootstrap.sh tools
+
+# Install every configuration unit. Idempotent; safe to rerun.
+config-install:
+	@./scripts/bootstrap.sh config
+
+# Install a single unit, e.g. make config-nvim
+$(CONFIG_TARGETS): config-%:
+	@./scripts/bootstrap.sh config $*
+
+# Refresh an existing machine: brew update, reinstall manifests, upgrade, verify.
+update:
+	@./scripts/bootstrap.sh update
+
+# Report manifest entries that are missing on this machine.
+doctor:
+	@./scripts/doctor.sh
+
+# Report software installed on this machine that no manifest declares.
+inventory:
+	@./scripts/inventory.sh compare
+
+test:
+	@for test_file in tests/*_test.sh; do bash "$$test_file" || exit $$?; done
 
 git-check:
-	@echo "→ Git user.name:"
+	@printf '%s\n' 'Git user.name:'
 	@git config user.name
-	@echo "→ Git user.email:"
+	@printf '%s\n' 'Git user.email:'
 	@git config user.email
-	@echo "→ Config sources:"
-	@git config --list --show-origin | grep user.
-
-wezterm-config-install:
-	@echo "→ Installing wezterm config"
-	ln -sf $(PWD)/wezterm.lua $(HOME)/.wezterm.lua
-	@echo "✓ wezterm config installed"
-
-docker-config-install:
-	@echo "→ Installing docker config"
-	mkdir -p $(HOME)/.docker
-	cp $(PWD)/docker/config.json $(HOME)/.docker/config.json
-	@echo "✓ docker config installed"
-
-nvim-config-install:
-	@echo "→ Installing nvim config"
-	mkdir -p $(HOME)/.config
-	ln -sf $(PWD)/nvim $(NVIM_CONFIG_DIR)
-	@echo "✓ nvim config installed"
-
-gh-config-install:
-	@echo "→ Installing gh config"
-	mkdir -p $(GH_CONFIG_DIR)
-	ln -sf $(PWD)/gh/config.yml $(GH_CONFIG_DIR)/config.yml
-	@echo "✓ gh config installed"
-
-starship-config-install:
-	@echo "→ Installing starship config"
-	mkdir -p $(STARSHIP_CONFIG_DIR)
-	ln -sf $(PWD)/starship/starship.toml $(STARSHIP_CONFIG_DIR)/starship.toml
-	@echo "✓ starship config installed"
-
-zsh-install:
-	@echo "→ Installing zsh config"
-	ln -sf $(PWD)/zsh/zshrc $(HOME)/.zshrc
-	@echo "✓ zsh config installed"
-
-brew-install:
-	@echo "→ Installing packages from Brewfile"
-	brew bundle --file=$(PWD)/Brewfile
-	@echo "✓ Homebrew packages installed"
-
-brew-dump:
-	@echo "→ Dumping installed packages to Brewfile"
-	brew bundle dump --file=$(PWD)/Brewfile --force
-	@echo "✓ Brewfile updated"
-
-claude-skills-install:
-	@echo "→ Installing Claude Code skills"
-	mkdir -p $(CLAUDE_SKILLS_DIR)
-	@for skill in $(PWD)/claude/skills/*/; do \
-		skill_name=$$(basename "$$skill"); \
-		ln -sfn "$$skill" "$(CLAUDE_SKILLS_DIR)/$$skill_name"; \
-		echo "  ✓ $$skill_name"; \
-	done
-	@echo "✓ Claude Code skills installed"
-
-claude-hooks-install:
-	@echo "→ Installing Claude Code hooks"
-	mkdir -p $(CLAUDE_HOOKS_DIR)
-	@for hook in $(PWD)/claude/hooks/*.sh; do \
-		[ -f "$$hook" ] || continue; \
-		hook_name=$$(basename "$$hook"); \
-		ln -sf "$$hook" "$(CLAUDE_HOOKS_DIR)/$$hook_name"; \
-		echo "  ✓ $$hook_name"; \
-	done
-	@test -f $(CLAUDE_SETTINGS) || echo '{}' > $(CLAUDE_SETTINGS)
-	@jq --slurpfile hooks $(PWD)/claude/hooks-config.json '.hooks = $$hooks[0]' $(CLAUDE_SETTINGS) > $(CLAUDE_SETTINGS).tmp && \
-		mv $(CLAUDE_SETTINGS).tmp $(CLAUDE_SETTINGS)
-	@echo "✓ Claude Code hooks installed"
+	@printf '%s\n' 'Config sources:'
+	@git config --list --show-origin | grep 'user\.'
 
 ssh-remote-vendor:
 	@echo "→ Vendoring remote nvim plugins from ssh-remote/plugins.txt"

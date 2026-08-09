@@ -1,0 +1,2 @@
+# Exact NVM versions installed by the workstation bootstrap.
+v24.18.0

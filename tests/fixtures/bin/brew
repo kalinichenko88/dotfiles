@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -eu
+
+if [ "${1:-}" = --prefix ] && [ "$#" -eq 1 ]; then
+  printf '%s\n' "${BREW_STUB_PREFIX:-/opt/homebrew}"
+  exit 0
+fi
+
+if [ "${1:-}" = bundle ] && [ "${2:-}" = dump ]; then
+  output_file=
+  shift 2
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --file)
+        output_file=$2
+        shift 2
+        ;;
+      --file=*)
+        output_file=${1#--file=}
+        shift
+        ;;
+      *) shift ;;
+    esac
+  done
+  [ -n "$output_file" ] || exit 2
+  printf '%s\n' "${BREW_STUB_SNAPSHOT:-}" > "$output_file"
+  exit 0
+fi
+
+if [ "${1:-}" = tap ] && [ "$#" -eq 1 ]; then
+  printf '%s\n' "${BREW_STUB_TAPS:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = list ] && [ "${2:-}" = --formula ]; then
+  printf '%s\n' "${BREW_STUB_FORMULAE:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = list ] && [ "${2:-}" = --cask ]; then
+  printf '%s\n' "${BREW_STUB_CASKS:-}"
+  exit 0
+fi
+
+if [ "${1:-}" = outdated ]; then
+  if [ "${2:-}" != --quiet ] || [ "$#" -ne 2 ]; then
+    exit 2
+  fi
+  printf '%s\n' "${BREW_STUB_OUTDATED:-}"
+  exit "${BREW_STUB_OUTDATED_STATUS:-0}"
+fi
+
