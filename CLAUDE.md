@@ -21,8 +21,9 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   that writes anything
 - `scripts/doctor.sh` — read-only verification, exit 1 on required failures
 - `scripts/inventory.sh compare` — read-only drift report, the reverse of doctor
-- `scripts/lib/common.sh` — link/copy/backup primitives, plus
-  `dotfiles_manifest` which merges a tracked manifest with its `.local` sibling
+- `scripts/lib/common.sh` — link/copy/backup primitives, `dotfiles_manifest`
+  (tracked manifest plus its `.local` sibling), `dotfiles_merge_json` (tracked
+  JSON into a file other tools also write), `dotfiles_make_tmp`
 - `tests/*_test.sh` — plain bash, fixtures in `tests/fixtures/bin`, run by
   `make test`
 
