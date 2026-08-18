@@ -42,6 +42,8 @@ brew "umputun/apps/revdiff"
 
 # Media, documents, and integrations
 brew "ffmpeg"
+brew "imagemagick"
+brew "librsvg"
 brew "poppler"
 brew "sox"
 brew "stripe/stripe-cli/stripe"

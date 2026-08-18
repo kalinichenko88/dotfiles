@@ -5,6 +5,7 @@ Modern Neovim 0.11+ configuration using [lazy.nvim](https://github.com/folke/laz
 ## Prerequisites
 
 - `tree-sitter` CLI - required for compiling TreeSitter parsers (included in Brewfile)
+- `imagemagick` + `librsvg` - required for inline image preview (included in Brewfile)
 
 ## Installation
 
@@ -65,6 +66,7 @@ nvim/
     │   ├── lualine.lua   # Statusline with breadcrumbs
     │   ├── yanky.lua     # Clipboard history with yank ring
     │   ├── mdx.lua       # MDX syntax highlighting (via mdx.nvim)
+    │   ├── snacks.lua    # Inline images (png, svg, …) in WezTerm
     │   ├── copilot-chat/ # Copilot commit + translation workflow
     │   │   ├── init.lua        # Plugin spec
     │   │   ├── commands.lua    # GitCommit + translation commands
