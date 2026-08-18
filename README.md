@@ -209,6 +209,7 @@ Docker registry credentials and Claude hooks you added yourself survive.
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
 | `claude/hooks-config.json` | `~/.claude/settings.json` (merge) |
+| `imagemagick/delegates.xml` | read in place, via `MAGICK_CONFIGURE_PATH` |
 | — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
 
 Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use

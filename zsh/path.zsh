@@ -10,6 +10,9 @@ fi
 # Homebrew's libpq is keg-only.
 [[ -d /opt/homebrew/opt/libpq/bin ]] && path=(/opt/homebrew/opt/libpq/bin $path)
 
+# So is imagemagick-full, the build that links librsvg and so renders SVG text.
+[[ -d /opt/homebrew/opt/imagemagick-full/bin ]] && path=(/opt/homebrew/opt/imagemagick-full/bin $path)
+
 # Homebrew's python formulae link only python3/pip3 into bin; the unversioned
 # python and pip live in libexec. Globbed rather than pinned so a version bump
 # in the Brewfile needs no edit here; numeric sort leaves the newest first.
