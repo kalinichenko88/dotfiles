@@ -5,7 +5,10 @@ Modern Neovim 0.11+ configuration using [lazy.nvim](https://github.com/folke/laz
 ## Prerequisites
 
 - `tree-sitter` CLI - required for compiling TreeSitter parsers (included in Brewfile)
-- `imagemagick` + `librsvg` - required for inline image preview (included in Brewfile)
+- `imagemagick` + `librsvg` - required for inline image preview (included in
+  Brewfile). SVG only renders through `librsvg` because `imagemagick/delegates.xml`
+  in this repository re-points ImageMagick at it; without that, files containing
+  text fail to convert at all.
 
 ## Installation
 

@@ -27,6 +27,11 @@ path=("$PNPM_HOME" $path)
 export NVM_DIR="$HOME/.nvm"
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
+# ImageMagick reads SVG through a delegate, and only a configure directory
+# searched ahead of Homebrew's can replace the one it ships. See the comment in
+# imagemagick/delegates.xml for what is broken without this.
+export MAGICK_CONFIGURE_PATH="${DOTFILES_ZSH:h}/imagemagick"
+
 # Optional application-bundled CLIs.
 [[ -d "$HOME/.opencode/bin" ]] && path=("$HOME/.opencode/bin" $path)
 [[ -d "$HOME/.lmstudio/bin" ]] && path=("$HOME/.lmstudio/bin" $path)

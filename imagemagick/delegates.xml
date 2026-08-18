@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Homebrew's imagemagick is built without librsvg, so its SVG coder shells out
+  to the svg:decode delegate instead. Upstream points that at inkscape, which
+  is not installed here, and when it fails ImageMagick falls back to its own
+  SVG renderer: no fontconfig, so any font-family at all aborts the read with
+  "unable to read font `'" and no output file is written.
+
+  Re-point svg:decode at rsvg-convert (brew "librsvg"). ImageMagick expands
+  this command with five positional arguments, in order: input, output,
+  density, background, opacity. Background is passed as opaque white even for
+  a transparent source, so it is left out and rsvg keeps the alpha channel.
+
+  Only entries loaded before Homebrew's own delegates.xml win, which is why
+  zsh/path.zsh exports MAGICK_CONFIGURE_PATH at this directory; dropping this
+  file into ~/.config/ImageMagick/ is searched too late to override anything.
+-->
+<delegatemap>
+  <delegate decode="svg:decode" stealth="True" command="&apos;rsvg-convert&apos; --dpi-x %3$s --dpi-y %3$s -o &apos;%2$s&apos; &apos;%1$s&apos;"/>
+</delegatemap>

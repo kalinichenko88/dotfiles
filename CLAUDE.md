@@ -60,7 +60,14 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 - A failing config unit must not stop the units after it: `ssh` precedes `zsh`,
   and stopping there leaves a new machine with no shell configuration.
 
-Two rules that look like redundancy but are not:
+Three rules that look like redundancy but are not:
+
+- `imagemagick/delegates.xml` is **not** a config unit and must not be symlinked
+  into `~/.config/ImageMagick/`. ImageMagick keeps the first delegate it finds,
+  and it reads Homebrew's copy before that directory, so a symlink there is
+  loaded and then ignored. `MAGICK_CONFIGURE_PATH` in `zsh/path.zsh` is the only
+  thing that puts this file ahead of it, which is why the export is load-bearing
+  rather than decorative.
 
 - `~/.docker/config.json` and `~/.claude/settings.json` are **merged**
   (`dotfiles_merge_json`), never copied. `~/.config/gh/config.yml` is applied
