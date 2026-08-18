@@ -7,26 +7,8 @@ return {
     image = {
       enabled = true,
       -- snacks leaves svg out and replaces this list instead of merging it, so
-      -- its defaults have to be repeated. pdf is dropped: magick converts it
-      -- through ghostscript, which nothing else here needs.
-      formats = {
-        'png',
-        'jpg',
-        'jpeg',
-        'gif',
-        'bmp',
-        'webp',
-        'tiff',
-        'heic',
-        'avif',
-        'svg',
-        'mp4',
-        'mov',
-        'avi',
-        'mkv',
-        'webm',
-        'icns',
-      },
+      -- its defaults have to be repeated.
+      formats = vim.split('png jpg jpeg gif bmp webp tiff heic avif svg pdf mp4 mov avi mkv webm icns', ' '),
     },
   },
   init = function()
@@ -41,11 +23,8 @@ return {
       return
     end
     vim.api.nvim_create_autocmd('BufWinLeave', {
-      group = vim.api.nvim_create_augroup('snacks-image-wezterm-clear', { clear = true }),
       callback = function()
-        pcall(function()
-          require('snacks.image').terminal.request({ a = 'd', d = 'a' })
-        end)
+        require('snacks.image').terminal.request({ a = 'd', d = 'a' })
       end,
     })
   end,
