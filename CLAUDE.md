@@ -155,10 +155,9 @@ showing the basename of the pane's working directory.
 
 ### ssh-remote
 
-On this branch `ssh-remote/` holds **only** the vendored bundle
-(`ssh-remote/bundle/xdg/…`, mini.nvim). The `ssh()` wrapper,
-`zsh/ssh-remote.zsh`, `plugins.txt`, the `make ssh-remote-*` targets, and the
-WezTerm `ssh_host` tab title live on the unmerged `feat/ssh-remote-nvim` branch.
+Nothing of it is on `main`. The `ssh()` wrapper, `zsh/ssh-remote.zsh`, the
+vendored mini.nvim bundle, the `make ssh-remote-*` targets, and the WezTerm
+`ssh_host` tab title all live on the unmerged `feat/ssh-remote-nvim` branch.
 Do not look for them here.
 
 ## Conventions
@@ -176,8 +175,8 @@ Never track any of these, and never suggest adding one to a commit:
 
 | File | Why |
 | --- | --- |
-| `git/gitconfig-work` | Work email address |
-| `git/gitconfig-local` | GPG and signing keys |
+| `git/gitconfig-work` | Work email address — belt and braces; nothing writes it |
+| `git/gitconfig-local` | GPG and signing keys — same |
 | `zsh/local.zsh` | Per-host tweaks, hostnames |
 | `~/.ssh/config.local` | SSH hosts, addresses, jump paths (outside the repo) |
 | `Brewfile.local` | Software for this machine only |
@@ -186,9 +185,13 @@ Never track any of these, and never suggest adding one to a commit:
 | `docs/superpowers/`, `.superpowers/` | Agent specs, plans, review diffs |
 | `.claude/` | Local Claude state |
 
-The two `git/` files are created from `*.example` templates during installation
-and then preserved. The `.local` manifests are read automatically by bootstrap,
-update, and doctor — see `dotfiles_manifest` in `scripts/lib/common.sh`.
+The two `git/` paths are never written by anything: the real files live at
+`~/.config/git/gitconfig-work` and `~/.config/git/gitconfig-local`, hand-written
+from the `*.example` templates. The ignore rules stay because an older bootstrap
+did symlink them into this public repository, and `check_private_git_file` in
+`scripts/doctor.sh` now fails on exactly that state. The `.local` manifests are
+read automatically by bootstrap, update, and doctor — see `dotfiles_manifest` in
+`scripts/lib/common.sh`.
 
 ## Troubleshooting
 

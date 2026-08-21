@@ -129,6 +129,20 @@ fi
 assert_file_contains "$tmp/placeholder-work.out" 'missing config git-work-email'
 mv "$tmp/work-identity" "$target_home/.config/git/gitconfig-work"
 
+# An older bootstrap symlinked the work identity and the signing keys into this
+# repository, which is public. Doctor has to fail on that, not accept it because
+# -f happens to follow the link.
+mv "$target_home/.config/git/gitconfig-work" "$tmp/work-identity"
+ln -s "$TEST_ROOT/git/gitconfig-personal" \
+  "$target_home/.config/git/gitconfig-work"
+if run_doctor > "$tmp/work-in-repo.out"; then
+  fail 'a work identity symlinked into the repository must fail doctor'
+fi
+assert_file_contains "$tmp/work-in-repo.out" \
+  'missing config git-work-email-in-repository'
+rm "$target_home/.config/git/gitconfig-work"
+mv "$tmp/work-identity" "$target_home/.config/git/gitconfig-work"
+
 # A CLI with its own installer is not present right after bootstrap, so its
 # absence must stay a warning — otherwise a first run can never finish.
 unlink "$stub_bin/lms"

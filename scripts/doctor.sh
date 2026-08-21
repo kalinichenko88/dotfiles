@@ -213,6 +213,21 @@ check_gh_preferences() {
   done < "$DOTFILES_ROOT/gh/config.yml"
 }
 
+# gitconfig-work holds a work address and gitconfig-local the signing keys. An
+# older bootstrap symlinked both into this repository, which is public, so the
+# private data ended up inside a published checkout. They have to be real files
+# under the home directory.
+check_private_git_file() {
+  local target label link
+  target=$1
+  label=$2
+  [ -L "$target" ] || return 0
+  link=$(readlink "$target" 2>/dev/null || :)
+  case "$link" in
+    "$DOTFILES_ROOT"/*) doctor_missing config "$label-in-repository" ;;
+  esac
+}
+
 check_config() {
   local item item_name
   check_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config" git
@@ -249,6 +264,11 @@ check_config() {
     check_link "claude/hooks/$item_name" \
       "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name" "claude-hook-$item_name"
   done
+
+  check_private_git_file \
+    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work" git-work-email
+  check_private_git_file \
+    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local" git-local
 
   # Absent is fine and expected on a new machine: useConfigOnly then refuses
   # commits under ~/Dev/Work, which is the safe outcome. A copied-but-unedited

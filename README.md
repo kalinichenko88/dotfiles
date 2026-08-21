@@ -180,7 +180,9 @@ reappear in the tracked manifests.
 
 Required failures: missing taps, formulae, or casks; a wrong Node or UV version;
 missing tracked configuration; a work Git identity still holding the template's
-placeholder address. Warnings: available upgrades, unsupported manual
+placeholder address, or one symlinked into this repository instead of living in
+`~/.config/git` — that would put a work address and the signing keys inside a
+public checkout. Warnings: available upgrades, unsupported manual
 applications, authentication state, and a manual CLI that is not installed yet —
 those ship their own installers, so their absence must not fail a first run. A
 manual CLI that *is* installed but fails its probe stays a required failure.
