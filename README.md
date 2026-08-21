@@ -211,8 +211,10 @@ Docker registry credentials and Claude hooks you added yourself survive.
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
 | `claude/hooks-config.json` | `~/.claude/settings.json` (merge) |
-| `imagemagick/delegates.xml` | read in place, via `MAGICK_CONFIGURE_PATH` |
 | — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
+
+The plain symlinks in that table are rows in `setup/links.tsv`, which is what
+both `make config-install` and `make doctor` read.
 
 Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use
 the tracked personal profile, `~/Dev/Work/` uses a gitignored work file created

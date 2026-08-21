@@ -10,7 +10,7 @@ SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 . "$SCRIPT_DIR/lib/common.sh"
 
 usage() {
-  printf 'Usage: %s {all|brew|tools|config [unit]|update}\n' "$0" >&2
+  printf 'Usage: %s {all|brew|tools|config [unit]|update|units}\n' "$0" >&2
 }
 
 # A first run trips on things bootstrap cannot fix for the machine: a cask
@@ -120,10 +120,10 @@ trust_brewfile_taps() {
   while IFS= read -r tap; do
     [ -n "$tap" ] || continue
     dotfiles_run "$brew_command" trust --tap "$tap"
-  done < <(sed -n -E \
-    -e 's/^tap "([^"]+)".*/\1/p' \
-    -e 's/^(brew|cask) "([^"\/]+\/[^"\/]+)\/[^"]+".*/\2/p' \
-    "$brewfile" | sort -u)
+  done < <(dotfiles_brewfile_records "$brewfile" | awk -F '\t' '
+    $1 == "tap" { print $2; next }
+    $2 ~ /\// { sub(/\/[^\/]*$/, "", $2); print $2 }
+  ' | sort -u)
 }
 
 # Brewfile holds the shared baseline; the gitignored Brewfile.local holds
@@ -245,26 +245,21 @@ config_dev_dirs() {
   done
 }
 
+# Installs every symlink setup/links.tsv declares for one unit. A unit whose
+# whole definition is symlinks needs no function of its own.
+config_links() {
+  local source target
+  while IFS=$'\t' read -r _ source target; do
+    dotfiles_link "$source" "$DOTFILES_TARGET_HOME/$target"
+  done < <(dotfiles_links "$1")
+}
+
 config_git() {
-  dotfiles_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config"
-  dotfiles_link git/gitconfig-personal \
-    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-personal"
+  config_links git
   announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work"
   announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local"
-}
-
-config_zsh() {
-  dotfiles_link zsh/zshrc "$DOTFILES_TARGET_HOME/.zshrc"
-}
-
-config_nvim() {
-  dotfiles_link nvim "$DOTFILES_TARGET_HOME/.config/nvim"
-}
-
-config_wezterm() {
-  dotfiles_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua"
 }
 
 # Only the 1Password agent wiring is tracked. Hosts live in the untracked
@@ -272,7 +267,7 @@ config_wezterm() {
 config_ssh() {
   dotfiles_run mkdir -p "$DOTFILES_TARGET_HOME/.ssh"
   dotfiles_run chmod 700 "$DOTFILES_TARGET_HOME/.ssh"
-  dotfiles_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config"
+  config_links ssh
 }
 
 # Applied through `gh config set`, never symlinked: gh writes its own state
@@ -289,11 +284,6 @@ config_gh() {
     case "$key" in '#'*) continue ;; esac
     dotfiles_run gh config set "$key" "$value"
   done < "$DOTFILES_ROOT/gh/config.yml"
-}
-
-config_starship() {
-  dotfiles_link starship/starship.toml \
-    "$DOTFILES_TARGET_HOME/.config/starship.toml"
 }
 
 # Merged, never copied: `docker login` writes registry credentials into the
@@ -322,6 +312,19 @@ config_claude() {
 
 CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm gh starship docker claude'
 
+# A unit with a function runs it; anything else is defined entirely by its rows
+# in setup/links.tsv.
+install_config_unit() {
+  local unit function_name
+  unit=$1
+  function_name=config_${unit//-/_}
+  if declare -F "$function_name" >/dev/null; then
+    "$function_name"
+  else
+    config_links "$unit"
+  fi
+}
+
 install_config() {
   local requested unit matched
   requested=${1:-all}
@@ -330,7 +333,7 @@ install_config() {
   for unit in $CONFIG_UNITS; do
     case "$requested" in
       all|"$unit")
-        run_step "config $unit" "config_${unit//-/_}"
+        run_step "config $unit" install_config_unit "$unit"
         matched=1
         ;;
     esac
@@ -390,6 +393,14 @@ verify_target() {
 main() {
   local command
   command=${1:-}
+
+  # Answered before the platform check: the Makefile asks for this list on every
+  # invocation, including `make help`, and must not depend on the host.
+  if [ "$command" = units ]; then
+    printf '%s\n' "$CONFIG_UNITS"
+    return 0
+  fi
+
   check_platform
 
   case "$command" in

@@ -30,13 +30,21 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 - `scripts/doctor.sh` — read-only verification, exit 1 on required failures
 - `scripts/inventory.sh compare` — read-only drift report, the reverse of doctor
 - `scripts/lib/common.sh` — link/copy/backup primitives, `dotfiles_manifest`
-  (tracked manifest plus its `.local` sibling), `dotfiles_merge_json` (tracked
-  JSON into a file other tools also write), `dotfiles_make_tmp`
+  (tracked manifest plus its `.local` sibling), `dotfiles_links` (the symlink
+  table), `dotfiles_brewfile_records` (the one Brewfile parser),
+  `dotfiles_merge_json` (tracked JSON into a file other tools also write),
+  `dotfiles_make_tmp`
+- `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
+  installs these rows, doctor verifies the same rows. A new symlinked config is
+  a line here, not an edit in two scripts.
 - `tests/*_test.sh` — plain bash, fixtures in `tests/fixtures/bin`, run by
   `make test`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
-`wezterm`, `gh`, `starship`, `docker`, `claude`.
+`wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
+`CONFIG_UNITS` in `scripts/bootstrap.sh`; the Makefile and the tests ask for it
+with `./scripts/bootstrap.sh units`. A unit with a `config_<unit>` function runs
+it; anything else is defined entirely by its rows in `setup/links.tsv`.
 
 CI (`.github/workflows/ci.yml`) runs shellcheck, `make test` on macOS, and
 gitleaks over the working tree and the full history.

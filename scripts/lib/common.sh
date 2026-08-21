@@ -51,6 +51,31 @@ dotfiles_manifest() {
   fi
 }
 
+# Streams `label<TAB>source<TAB>target` for the symlinked configuration, for one
+# unit or, with no argument, all of them. bootstrap installs from this table and
+# doctor verifies from it, so the two can no longer drift apart.
+dotfiles_links() {
+  awk -F '\t' -v unit="${1:-}" '
+    NF && $1 !~ /^#/ && (unit == "" || $1 == unit) { print $2 "\t" $3 "\t" $4 }
+  ' "$DOTFILES_ROOT/setup/links.tsv"
+}
+
+# Emits `kind<TAB>token` for every tap/brew/cask record on stdin or in the named
+# files. Trusting taps, doctor and inventory each want something different out
+# of a Brewfile, but all three were parsing it themselves; only the parse is
+# shared here.
+dotfiles_brewfile_records() {
+  awk '
+    match($0, /^(tap|brew|cask)[[:space:]]+"[^"]+"/) {
+      record = substr($0, RSTART, RLENGTH)
+      kind = record
+      sub(/[[:space:]].*$/, "", kind)
+      split(record, parts, "\"")
+      print kind "\t" parts[2]
+    }
+  ' "$@"
+}
+
 # A broken uv must leave the caller with an empty list, not kill it: this
 # pipeline's status would otherwise propagate under `set -o pipefail`.
 dotfiles_uv_tool_specs() {

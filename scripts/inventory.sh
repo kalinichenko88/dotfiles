@@ -19,11 +19,9 @@ trap dotfiles_cleanup_tmp EXIT
 trap 'exit 130' HUP INT TERM
 
 normalize_brewfile() {
-  awk '
-    match($0, /^(tap|brew|cask)[[:space:]]+"[^"]+"/) {
-      print substr($0, RSTART, RLENGTH)
-    }
-  ' | sort -u
+  dotfiles_brewfile_records \
+    | awk -F '\t' '{ printf "%s \"%s\"\n", $1, $2 }' \
+    | sort -u
 }
 
 create_brew_snapshot() {

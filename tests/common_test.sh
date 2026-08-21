@@ -16,8 +16,11 @@ mkdir -p "$tmp/repo/zsh" "$tmp/repo/docker" "$tmp/home"
 printf 'source\n' > "$tmp/repo/zsh/zshrc"
 printf '{"context":"colima"}\n' > "$tmp/repo/docker/config.json"
 
-DOTFILES_ROOT=$tmp/repo
-DOTFILES_TARGET_HOME=$tmp/home
+# Exported because the sourced library reads them, and because shellcheck 0.11
+# calls a bare assignment unused — the CI image ships an older build that does
+# not, so the lint gate was stricter locally than in CI.
+export DOTFILES_ROOT=$tmp/repo
+export DOTFILES_TARGET_HOME=$tmp/home
 
 dotfiles_link zsh/zshrc "$tmp/home/.zshrc"
 assert_equals "$tmp/repo/zsh/zshrc" "$(readlink "$tmp/home/.zshrc")"

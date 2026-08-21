@@ -75,5 +75,17 @@ awk -F '\t' 'NF && $1 !~ /^#/ && NF != 2 { exit 1 }' \
   "$TEST_ROOT/setup/cask-apps.tsv" || fail 'invalid cask-apps.tsv'
 awk -F '\t' 'NF && $1 !~ /^#/ && NF != 3 { exit 1 }' \
   "$TEST_ROOT/setup/manual-checks.tsv" || fail 'invalid manual-checks.tsv'
+awk -F '\t' 'NF && $1 !~ /^#/ && NF != 4 { exit 1 }' \
+  "$TEST_ROOT/setup/links.tsv" || fail 'invalid links.tsv'
+
+# A row naming a unit the dispatcher does not know would never be installed.
+units=$("$TEST_ROOT/scripts/bootstrap.sh" units)
+while IFS= read -r unit; do
+  case " $units " in
+    *" $unit "*) ;;
+    *) fail "links.tsv names an unknown config unit: $unit" ;;
+  esac
+done < <(awk -F '\t' 'NF && $1 !~ /^#/ && !seen[$1]++ { print $1 }' \
+  "$TEST_ROOT/setup/links.tsv")
 
 pass 'curated manifests match the approved baseline'

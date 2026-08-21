@@ -48,15 +48,9 @@ run_with_timeout() {
 }
 
 brewfile_tokens() {
-  local record_type
-  record_type=$1
-  dotfiles_manifest Brewfile Brewfile.local | awk -v record_type="$record_type" '
-    match($0, "^" record_type " \\\"[^\\\"]+\\\"") {
-      value=substr($0, RSTART + length(record_type) + 2,
-        RLENGTH - length(record_type) - 3)
-      print value
-    }
-  '
+  dotfiles_manifest Brewfile Brewfile.local \
+    | dotfiles_brewfile_records \
+    | awk -F '\t' -v record_type="$1" '$1 == record_type { print $2 }'
 }
 
 load_brew_state() {
@@ -229,17 +223,12 @@ check_private_git_file() {
 }
 
 check_config() {
-  local item item_name
-  check_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config" git
-  check_link git/gitconfig-personal \
-    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-personal" git-personal
-  check_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config" ssh
-  check_link zsh/zshrc "$DOTFILES_TARGET_HOME/.zshrc" zsh
-  check_link nvim "$DOTFILES_TARGET_HOME/.config/nvim" nvim
-  check_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua" wezterm
+  local item item_name label source target
+  # The same table bootstrap installs from, so the two cannot drift.
+  while IFS=$'\t' read -r label source target; do
+    check_link "$source" "$DOTFILES_TARGET_HOME/$target" "$label"
+  done < <(dotfiles_links)
   check_gh_preferences
-  check_link starship/starship.toml \
-    "$DOTFILES_TARGET_HOME/.config/starship.toml" starship
 
   # Containment, not equality: docker login adds registry credentials to the
   # same file, and the merge deliberately leaves them alone.

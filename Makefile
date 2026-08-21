@@ -1,4 +1,5 @@
-CONFIG_UNITS := dev-dirs git ssh zsh nvim wezterm gh starship docker claude
+# One ordered list, owned by bootstrap.sh, which is what actually dispatches.
+CONFIG_UNITS := $(shell ./scripts/bootstrap.sh units)
 CONFIG_TARGETS := $(addprefix config-,$(CONFIG_UNITS))
 
 # A bare `make` must not provision the machine: bootstrap is the first target
