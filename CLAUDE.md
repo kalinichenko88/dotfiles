@@ -195,7 +195,7 @@ Never track any of these, and never suggest adding one to a commit:
 | `Brewfile.local` | Software for this machine only |
 | `setup/cask-apps.local.tsv` | Bundle paths for machine-local casks |
 | `setup/manual-checks.local.tsv` | Personal application inventory |
-| `docs/superpowers/`, `.superpowers/` | Agent specs, plans, review diffs |
+| `docs/superpowers/`, `.superpowers/`, `.ralphex/` | Agent specs, plans, review diffs |
 | `.claude/` | Local Claude state |
 
 The two `git/` paths are never written by anything: the real files live at
