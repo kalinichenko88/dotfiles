@@ -55,6 +55,17 @@ if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
 fi
 [ -L "$tmp/home/.broken" ] || fail 'broken symlink was changed without force'
 
+# macOS ships no timeout(1), so this is hand-rolled; a broken version would hang
+# doctor on the first auth probe that never returns. Measured on its own rather
+# than across a whole doctor run, which made the old assertion flaky.
+started_at=$SECONDS
+if dotfiles_run_with_timeout 1 sleep 30; then
+  fail 'a command killed by the timeout must report failure'
+fi
+elapsed=$((SECONDS - started_at))
+[ "$elapsed" -lt 15 ] || fail "the 1s timeout took ${elapsed}s"
+dotfiles_run_with_timeout 5 true || fail 'a command inside the budget must succeed'
+
 DRY_RUN=1 dotfiles_link zsh/zshrc "$tmp/home/dry/.zshrc" >/dev/null
 [ ! -e "$tmp/home/dry/.zshrc" ] || fail 'dry run mutated the target home'
 

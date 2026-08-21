@@ -83,11 +83,12 @@ printf '#!/bin/sh\nprintf "v24.18.0\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 chmod +x "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 
-started_at=$SECONDS
+# The hanging npm probe is still here so doctor is exercised with one, but
+# whether the timeout works is measured in common_test against the helper
+# itself: timing a whole doctor run made this assertion flaky.
 STUB_OUTDATED=fd STUB_NPM_SLEEP=5 STUB_AUTH_TIMEOUT=1 \
   run_doctor > "$tmp/ready.out"
-elapsed=$((SECONDS - started_at))
-[ "$elapsed" -lt 4 ] || fail 'doctor did not time out a hanging auth probe'
+assert_file_contains "$tmp/ready.out" 'needs-login auth npm'
 
 assert_file_contains "$tmp/ready.out" 'present-manual cask obsidian'
 # A cask installed by hand must not be re-failed by a second, stricter pass.

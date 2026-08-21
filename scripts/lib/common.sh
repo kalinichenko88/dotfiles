@@ -76,6 +76,25 @@ dotfiles_brewfile_records() {
   ' "$@"
 }
 
+# macOS ships no timeout(1). Callers only care whether the probe succeeded, so
+# a killed command reporting failure is all the resolution needed.
+dotfiles_run_with_timeout() {
+  local timeout_seconds command_pid timer_pid command_status
+  timeout_seconds=$1
+  shift
+
+  "$@" &
+  command_pid=$!
+  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) \
+    </dev/null >/dev/null 2>&1 &
+  timer_pid=$!
+
+  wait "$command_pid" && command_status=0 || command_status=$?
+  kill "$timer_pid" 2>/dev/null || :
+  wait "$timer_pid" 2>/dev/null || :
+  return "$command_status"
+}
+
 dotfiles_resolve_homebrew() {
   local brew_command expected_prefix actual_prefix
   brew_command=${DOTFILES_HOMEBREW_BIN:-/opt/homebrew/bin/brew}

@@ -33,7 +33,8 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   (tracked manifest plus its `.local` sibling), `dotfiles_links` (the symlink
   table), `dotfiles_brewfile_records` (the one Brewfile parser),
   `dotfiles_merge_json` (tracked JSON into a file other tools also write),
-  `dotfiles_make_tmp`
+  `dotfiles_make_tmp`, `dotfiles_run_with_timeout` (macOS ships no `timeout(1)`;
+  without it a hanging auth probe hangs doctor)
 - `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
   installs these rows, doctor verifies the same rows. A new symlinked config is
   a line here, not an edit in two scripts.

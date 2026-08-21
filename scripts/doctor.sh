@@ -28,25 +28,6 @@ doctor_missing() {
   doctor_status missing "$1" "$2"
 }
 
-# macOS ships no timeout(1). Callers only care whether the probe succeeded, so
-# a killed command reporting failure is all the resolution needed.
-run_with_timeout() {
-  local timeout_seconds command_pid timer_pid command_status
-  timeout_seconds=$1
-  shift
-
-  "$@" &
-  command_pid=$!
-  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) \
-    </dev/null >/dev/null 2>&1 &
-  timer_pid=$!
-
-  wait "$command_pid" && command_status=0 || command_status=$?
-  kill "$timer_pid" 2>/dev/null || :
-  wait "$timer_pid" 2>/dev/null || :
-  return "$command_status"
-}
-
 brewfile_tokens() {
   dotfiles_manifest Brewfile Brewfile.local \
     | dotfiles_brewfile_records \
@@ -133,7 +114,7 @@ check_node() {
     node_path=$DOTFILES_TARGET_HOME/.nvm/versions/node/$node_version/bin/node
     node_version_output=$doctor_tmp/node-version.$RANDOM
     if [ -x "$node_path" ] && \
-      run_with_timeout 5 \
+      dotfiles_run_with_timeout 5 \
         "$node_path" --version > "$node_version_output" 2>/dev/null && \
       cmp -s <(printf '%s\n' "$node_version") "$node_version_output"; then
       doctor_status present node "$node_version"
@@ -276,7 +257,7 @@ check_manual_state() {
         # bootstrap only prints the checklist. Installed but broken is a failure.
         if ! command -v "$probe_command" >/dev/null 2>&1; then
           doctor_status warning manual-command "$name"
-        elif run_with_timeout 5 \
+        elif dotfiles_run_with_timeout 5 \
           /bin/bash -c "exec $probe" </dev/null >/dev/null 2>&1; then
           doctor_status present manual-command "$name"
         else
@@ -295,7 +276,7 @@ check_manual_state() {
       auth)
         probe_command=${probe%% *}
         if command -v "$probe_command" >/dev/null 2>&1 && \
-          run_with_timeout "$DOCTOR_AUTH_TIMEOUT_SECONDS" \
+          dotfiles_run_with_timeout "$DOCTOR_AUTH_TIMEOUT_SECONDS" \
             /bin/bash -c "exec $probe" </dev/null >/dev/null 2>&1; then
           doctor_status ready auth "$name"
         else
@@ -308,7 +289,7 @@ check_manual_state() {
 
 check_outdated() {
   local package_name
-  if run_with_timeout 15 \
+  if dotfiles_run_with_timeout 15 \
     "$DOTFILES_BREW_COMMAND" outdated --quiet \
     > "$doctor_tmp/outdated" 2>/dev/null; then
     while IFS= read -r package_name; do
