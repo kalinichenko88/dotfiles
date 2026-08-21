@@ -21,12 +21,16 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   from raw.githubusercontent. Command Line Tools, then an **HTTPS** clone: the
   SSH key comes from 1Password, which the bootstrap installs from the Brewfile
   in here, so requiring SSH to clone would be a loop. Never change it to `git@`.
-- `scripts/bootstrap.sh {all|brew|tools|config [unit]|update}` — the only thing
-  that writes anything. Steps run through `run_step`: a failure is recorded,
+- `scripts/bootstrap.sh {all|brew|tools|config [unit]|update|cleanup|units}` —
+  the only thing that writes anything. Steps run through `run_step`: a failure is recorded,
   the run continues, and `report_failed_steps` exits non-zero at the end. Note
   that `run_step` suspends `set -e` inside the function it calls, so a function
   invoked that way must return non-zero explicitly where it matters (see
   `verify_target`, which would otherwise write its marker after doctor failed).
+  `cleanup` is the only subcommand that uninstalls; it feeds `brew bundle
+  cleanup` the tracked and `.local` manifests concatenated, because pointing it
+  at the tracked file alone would remove everything the machine declares for
+  itself, and it refuses outright if that combined manifest is empty.
 - `scripts/doctor.sh` — read-only verification, exit 1 on required failures
 - `scripts/inventory.sh compare` — read-only drift report, the reverse of doctor
 - `scripts/lib/common.sh` — link/copy/backup primitives, `dotfiles_manifest`

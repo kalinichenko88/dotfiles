@@ -4,8 +4,8 @@ Reproducible macOS workstation setup for Apple Silicon: Homebrew packages,
 pinned runtimes, and the configuration for Git, Zsh, Neovim, WezTerm, GitHub
 CLI, Starship, Docker, and Claude Code.
 
-Nothing here ever uninstalls software. Every command is idempotent and refuses
-to overwrite a file it does not manage.
+Every command is idempotent and refuses to overwrite a file it does not manage.
+Only `make cleanup` ever uninstalls anything, and only when asked.
 
 ## Install on a new Mac
 
@@ -102,13 +102,14 @@ git remote set-url origin git@github.com:kalinichenko88/dotfiles.git
 ## Update an existing Mac
 
 ```bash
-git pull
 make update
 ```
 
-`make update` refreshes Homebrew, reapplies both Brewfiles, the pinned Node
-manifest and every configuration unit, upgrades packages, and finishes with a
-`doctor` pass. It applies everything that pass then verifies, so a pull that
+`make update` fast-forwards this checkout, refreshes Homebrew, reapplies both
+Brewfiles, the pinned Node manifest and every configuration unit, upgrades
+packages, and finishes with a `doctor` pass. A step that fails is recorded and
+the run continues, the same way bootstrap behaves: an offline `brew update` must
+not cost this machine the configuration it was about to apply. It applies everything that pass then verifies, so a pull that
 bumps any manifest needs no second command. Casks that update themselves are left alone — Homebrew skips them by
 design, and this repository does not use `--greedy`.
 
@@ -119,7 +120,16 @@ make inventory
 ```
 
 For each entry decide where it belongs: `Brewfile` if every machine should get
-it, `Brewfile.local` if only this one. Removing software is always manual.
+it, `Brewfile.local` if only this one — or nowhere, in which case:
+
+```bash
+make cleanup                     # Homebrew lists what it would remove and asks
+FORCE=1 make cleanup             # skip the question
+```
+
+It reads `Brewfile` and `Brewfile.local` together, so software declared for this
+machine only is safe. It is never part of `make update`: a package missing from
+a manifest is far more often an oversight than a decision.
 
 To reinstall configuration without touching packages:
 
@@ -140,6 +150,7 @@ make config-nvim                 # one unit
 | `make update` | Refresh, reapply manifests, upgrade, then doctor |
 | `make doctor` | What the manifests declare and this machine lacks |
 | `make inventory` | What this machine has and no manifest declares |
+| `make cleanup` | Uninstall what no manifest declares (`FORCE=1` skips the prompt) |
 | `make git-check` | Active `user.name`/`user.email` and their sources |
 | `make test` | Shell integration and regression tests |
 
@@ -151,7 +162,10 @@ Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
 - `DRY_RUN=1` prints mutation commands instead of running them.
 - Existing configuration is never replaced by default; a conflict fails its own
   step and the whole run, but not the steps after it.
-- `FORCE=1` backs the conflicting file up to a timestamped sibling first.
+- `FORCE=1` backs the conflicting file up to a timestamped sibling first, and
+  for `make cleanup` it skips Homebrew's confirmation.
+- `make cleanup` is the only command that uninstalls. It refuses to run if the
+  combined manifest comes out empty, which would otherwise strip the machine.
 - The work Git identity is never created from the example: a placeholder
   address would satisfy `useConfigOnly` and author commits as itself. Until you
   write `~/.config/git/gitconfig-work`, Git refuses commits under `~/Dev/Work`

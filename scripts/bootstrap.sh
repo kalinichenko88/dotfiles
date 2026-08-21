@@ -9,8 +9,10 @@ SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/common.sh"
 
+trap dotfiles_cleanup_tmp EXIT
+
 usage() {
-  printf 'Usage: %s {all|brew|tools|config [unit]|update|units}\n' "$0" >&2
+  printf 'Usage: %s {all|brew|tools|config [unit]|update|cleanup|units}\n' "$0" >&2
 }
 
 # A first run trips on things bootstrap cannot fix for the machine: a cask
@@ -143,16 +145,46 @@ install_brew_bundles() {
   done
 }
 
+# Guarded the same way `all` is, and for the same reason: this is the command a
+# second machine runs to catch up, and an offline `brew update` must not cost it
+# the configuration it was going to apply afterwards.
 update_workstation() {
   dotfiles_resolve_homebrew
-  dotfiles_run "$DOTFILES_BREW_COMMAND" update
+  run_step 'brew update' dotfiles_run "$DOTFILES_BREW_COMMAND" update
   install_brew_bundles "$DOTFILES_BREW_COMMAND"
-  dotfiles_run "$DOTFILES_BREW_COMMAND" upgrade
+  run_step 'brew upgrade' dotfiles_run "$DOTFILES_BREW_COMMAND" upgrade
   # Doctor checks the runtime and configuration manifests too, so update has to
   # apply everything it then verifies, or it reports drift it declined to fix.
-  install_tools
+  run_step 'user-space tools' install_tools
   install_config
-  dotfiles_run "$SCRIPT_DIR/doctor.sh"
+  run_step verification dotfiles_run "$SCRIPT_DIR/doctor.sh"
+}
+
+# `brew bundle cleanup` reads one Brewfile, and the shared baseline plus this
+# machine's own manifest are two, so it gets both concatenated — pointing it at
+# the tracked file alone would uninstall everything Brewfile.local declares.
+#
+# Never part of update: a package missing from a manifest is far more often an
+# oversight than a decision. Without FORCE=1 Homebrew lists what it would remove
+# and asks; FORCE=1 is what skips the question.
+cleanup_workstation() {
+  local combined
+  dotfiles_resolve_homebrew
+  dotfiles_make_tmp dotfiles-cleanup
+  combined=$DOTFILES_TMP/Brewfile
+  dotfiles_manifest Brewfile Brewfile.local > "$combined"
+  # A manifest that came out empty would uninstall the entire machine.
+  if ! grep -qE '^(brew|cask) "' "$combined"; then
+    dotfiles_die 'refusing to clean up: the combined manifest declares nothing'
+    return 1
+  fi
+
+  if [ "${FORCE:-0}" = 1 ]; then
+    dotfiles_run "$DOTFILES_BREW_COMMAND" bundle cleanup --force --file "$combined"
+    return 0
+  fi
+  dotfiles_info 'rerun with FORCE=1 to skip the confirmation'
+  dotfiles_run "$DOTFILES_BREW_COMMAND" bundle cleanup --file "$combined"
 }
 
 install_node_versions() {
@@ -391,6 +423,7 @@ main() {
       ;;
     config) install_config "${2:-all}" ;;
     update) update_workstation ;;
+    cleanup) cleanup_workstation ;;
     *)
       usage
       return 1
