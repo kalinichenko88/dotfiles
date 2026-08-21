@@ -43,7 +43,7 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 
 1. platform check — Apple Silicon macOS with Command Line Tools;
 2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
-3. pinned NVM, the exact Node version, UV tools;
+3. pinned NVM and the exact Node version;
 4. the `~/Dev` project directories, then all configuration;
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1-5 pass.
@@ -106,9 +106,9 @@ git pull
 make update
 ```
 
-`make update` refreshes Homebrew, reapplies both Brewfiles, the pinned Node and
-UV manifests and every configuration unit, upgrades packages, and finishes with
-a `doctor` pass. It applies everything that pass then verifies, so a pull that
+`make update` refreshes Homebrew, reapplies both Brewfiles, the pinned Node
+manifest and every configuration unit, upgrades packages, and finishes with a
+`doctor` pass. It applies everything that pass then verifies, so a pull that
 bumps any manifest needs no second command. Casks that update themselves are left alone — Homebrew skips them by
 design, and this repository does not use `--greedy`.
 
@@ -134,7 +134,7 @@ make config-nvim                 # one unit
 | --- | --- |
 | `make bootstrap` | Full provisioning: brew, tools, config, doctor, marker |
 | `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
-| `make bootstrap-tools` | Pinned NVM/Node and UV tools |
+| `make bootstrap-tools` | Pinned NVM and Node |
 | `make config-install` | Install every configuration unit |
 | `make config-<unit>` | Install one unit |
 | `make update` | Refresh, reapply manifests, upgrade, then doctor |
@@ -178,7 +178,7 @@ reappear in the tracked manifests.
 
 ## What doctor reports
 
-Required failures: missing taps, formulae, or casks; a wrong Node or UV version;
+Required failures: missing taps, formulae, or casks; a wrong Node version;
 missing tracked configuration; a work Git identity still holding the template's
 placeholder address, or one symlinked into this repository instead of living in
 `~/.config/git` — that would put a work address and the signing keys inside a

@@ -68,8 +68,6 @@ run_doctor() {
   GH_STUB_CONFIG="${STUB_GH_CONFIG-$gh_preferences}" \
   NPM_STUB_SLEEP="${STUB_NPM_SLEEP-0}" \
   DOCTOR_AUTH_TIMEOUT_SECONDS="${STUB_AUTH_TIMEOUT-3}" \
-  UV_STUB_TOOLS="$(grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/uv-tools.txt" \
-    | sed 's/==/ v/' || :)" \
   PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
   DOTFILES_APPLICATIONS_ROOT="$apps_root" \
   "$TEST_ROOT/scripts/doctor.sh"

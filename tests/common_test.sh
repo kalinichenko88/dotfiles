@@ -55,20 +55,6 @@ if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
 fi
 [ -L "$tmp/home/.broken" ] || fail 'broken symlink was changed without force'
 
-dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"
-assert_equals '{"context":"colima"}' "$(cat "$tmp/home/.docker/config.json")"
-dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"
-
-printf 'local docker\n' > "$tmp/home/.docker/config.json"
-if dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"; then
-  fail 'a conflicting copy must fail without FORCE=1'
-fi
-FORCE=1 dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"
-assert_equals '{"context":"colima"}' "$(cat "$tmp/home/.docker/config.json")"
-copy_backup=$(find "$tmp/home/.docker" -maxdepth 1 -name 'config.json.backup.*' -print | head -n 1)
-[ -n "$copy_backup" ] || fail 'forced copy backup is missing'
-assert_equals 'local docker' "$(cat "$copy_backup")"
-
 DRY_RUN=1 dotfiles_link zsh/zshrc "$tmp/home/dry/.zshrc" >/dev/null
 [ ! -e "$tmp/home/dry/.zshrc" ] || fail 'dry run mutated the target home'
 

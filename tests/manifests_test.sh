@@ -6,22 +6,8 @@ set -eu
 # shellcheck disable=SC1091
 . "$(dirname "$0")/test_helper.sh"
 
-for value in \
-  'cask "1password-cli"' \
-  'brew "yt-dlp"' \
-  'cask "codexbar"' \
-  'cask "wezterm@nightly"' \
-  'cask "umputun/apps/agterm"' \
-  'brew "bun"' \
-  'cask "handy"' \
-  'brew "poppler"' \
-  'brew "sox"' \
-  'brew "tree-sitter-cli"' \
-  'brew "gitleaks"' \
-  'brew "jq"'; do
-  assert_file_contains "$TEST_ROOT/Brewfile" "$value"
-done
-
+# A denylist, not a copy of the Brewfile: these were deliberately dropped or
+# belong to one machine only, and must not creep back into the public baseline.
 for value in \
   'brew "whisper-cpp"' \
   'brew "tree-sitter"' \
@@ -65,12 +51,6 @@ done
 
 node_versions=$(grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/node-versions.txt")
 assert_equals 'v24.18.0' "$node_versions"
-# The manifest may be empty; what it must never hold is an unpinned spec,
-# which would install a different version on every machine and every rerun.
-grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/uv-tools.txt" \
-  | grep -Ev '^[A-Za-z0-9._-]+==[0-9][A-Za-z0-9._-]*$' \
-  && fail 'uv-tools.txt entries must be pinned as name==version'
-
 awk -F '\t' 'NF && $1 !~ /^#/ && NF != 2 { exit 1 }' \
   "$TEST_ROOT/setup/cask-apps.tsv" || fail 'invalid cask-apps.tsv'
 awk -F '\t' 'NF && $1 !~ /^#/ && NF != 3 { exit 1 }' \

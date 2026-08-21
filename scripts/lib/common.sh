@@ -76,16 +76,6 @@ dotfiles_brewfile_records() {
   ' "$@"
 }
 
-# A broken uv must leave the caller with an empty list, not kill it: this
-# pipeline's status would otherwise propagate under `set -o pipefail`.
-dotfiles_uv_tool_specs() {
-  uv tool list 2>/dev/null | awk '/^[^[:space:]]+[[:space:]]+v?[0-9]/ {
-    version=$2
-    sub(/^v/, "", version)
-    print $1 "==" version
-  }' | sort -u || return 0
-}
-
 dotfiles_resolve_homebrew() {
   local brew_command expected_prefix actual_prefix
   brew_command=${DOTFILES_HOMEBREW_BIN:-/opt/homebrew/bin/brew}
@@ -186,8 +176,8 @@ dotfiles_link() {
 
 # Merges tracked JSON into a target that other tools also write to, so their
 # keys survive. The jq program gets the target as input and the tracked file as
-# $source; a missing target is treated as {}. Unlike dotfiles_copy this needs no
-# FORCE, because nothing outside the tracked keys is replaced.
+# $source; a missing target is treated as {}. No FORCE is needed, because
+# nothing outside the tracked keys is replaced.
 dotfiles_merge_json() {
   local relative_source target program source_path target_dir temp_file
   relative_source=$1
@@ -233,33 +223,4 @@ dotfiles_merge_json() {
 
   mv "$temp_file" "$target"
   dotfiles_info "merged $relative_source into $target"
-}
-
-dotfiles_copy() {
-  local relative_source target source_path
-  relative_source=$1
-  target=$2
-  source_path=$DOTFILES_ROOT/$relative_source
-
-  if [ ! -f "$source_path" ]; then
-    dotfiles_die "copy source is not a file: $source_path"
-    return 1
-  fi
-
-  if [ -f "$target" ] && cmp -s "$source_path" "$target"; then
-    dotfiles_info "copy already installed: $target"
-    return 0
-  fi
-
-  if dotfiles_path_exists "$target"; then
-    if [ "${FORCE:-0}" != 1 ]; then
-      dotfiles_die "target exists; rerun with FORCE=1 to back it up: $target"
-      return 1
-    fi
-    dotfiles_backup_target "$target" || return 1
-  fi
-
-  dotfiles_prepare_parent "$target"
-  dotfiles_run cp "$source_path" "$target"
-  dotfiles_info "copied $target"
 }

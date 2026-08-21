@@ -154,25 +154,6 @@ check_node() {
   fi
 }
 
-check_uv_tools() {
-  local tool_spec
-  : > "$doctor_tmp/uv-tools"
-  if command -v uv >/dev/null 2>&1; then
-    dotfiles_uv_tool_specs > "$doctor_tmp/uv-tools"
-  fi
-
-  while IFS= read -r tool_spec; do
-    case "$tool_spec" in
-      ''|'#'*) continue ;;
-    esac
-    if grep -Fx "$tool_spec" "$doctor_tmp/uv-tools" >/dev/null 2>&1; then
-      doctor_status present uv-tool "$tool_spec"
-    else
-      doctor_missing uv-tool "$tool_spec"
-    fi
-  done < "$DOTFILES_ROOT/setup/uv-tools.txt"
-}
-
 check_link() {
   local relative_source target label expected_source
   relative_source=$1
@@ -360,7 +341,6 @@ main() {
   check_formulae
   check_casks
   check_node
-  check_uv_tools
   check_config
   check_manual_state
   check_outdated

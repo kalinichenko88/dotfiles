@@ -162,43 +162,19 @@ install_node_versions() {
 
   if [ "${DRY_RUN:-0}" = 1 ]; then
     dotfiles_print_command source "$NVM_DIR/nvm.sh"
-    while IFS= read -r node_version || [ -n "$node_version" ]; do
-      case "$node_version" in
-        ''|'#'*) continue ;;
-      esac
-      dotfiles_print_command nvm install "$node_version"
-      dotfiles_print_command nvm alias default "$node_version"
-    done < "$node_versions_file"
-    return 0
+  else
+    # NVM is installed into the selected target home.
+    # shellcheck disable=SC1091
+    . "$NVM_DIR/nvm.sh"
   fi
 
-  # NVM is installed into the selected target home.
-  # shellcheck disable=SC1091
-  . "$NVM_DIR/nvm.sh"
   while IFS= read -r node_version || [ -n "$node_version" ]; do
     case "$node_version" in
       ''|'#'*) continue ;;
     esac
-    nvm install "$node_version"
-    nvm alias default "$node_version"
+    dotfiles_run nvm install "$node_version"
+    dotfiles_run nvm alias default "$node_version"
   done < "$node_versions_file"
-}
-
-install_uv_tools() {
-  local tool_spec tools_file
-  tools_file=$DOTFILES_ROOT/setup/uv-tools.txt
-
-  if [ "${DRY_RUN:-0}" != 1 ] && ! command -v uv >/dev/null 2>&1; then
-    dotfiles_die 'uv is required to install UV-managed tools; run the Brew layer first'
-    return 1
-  fi
-
-  while IFS= read -r tool_spec || [ -n "$tool_spec" ]; do
-    case "$tool_spec" in
-      ''|'#'*) continue ;;
-    esac
-    dotfiles_run uv tool install --force "$tool_spec"
-  done < "$tools_file"
 }
 
 print_manual_command_checks() {
@@ -372,7 +348,6 @@ install_tools() {
   fi
   dotfiles_run git -C "$nvm_dir" checkout --detach "$NVM_VERSION"
   install_node_versions
-  install_uv_tools
   print_manual_command_checks
 }
 
