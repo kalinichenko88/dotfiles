@@ -171,6 +171,7 @@ behind on every other machine; links pointing outside this repository are the
 user's own and are never touched.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
+- Skill `typescript-conventions` — house TypeScript style, grown one rule at a time
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
   until CLAUDE.md and README.md have been reviewed, using a session-scoped temp
   flag so the retry passes
