@@ -184,6 +184,9 @@ Do not look for them here.
   already used: `SC1091` for runtime-resolved `source` paths, and `SC2016` for
   single-quoted jq programs, where `$source` is a jq variable rather than a
   shell one. Anything else means fixing the code, not silencing the check.
+- Tests are POSIX `[ ]` everywhere except the prefix match in
+  `dotfiles_prune_orphan_links`, where `[[ ]]` replaces a four-line `case`.
+  Every script here is `#!/bin/bash`, so that is a style choice, not a rule.
 
 ## Gitignored files
 

@@ -198,16 +198,12 @@ dotfiles_link() {
 # a dangling link behind, and nothing else ever prunes it. Links pointing
 # anywhere else are the user's own and are left alone.
 dotfiles_prune_orphan_links() {
-  local dir item
-  dir=$1
+  local dir=$1 item
 
   for item in "$dir"/*; do
     [ -L "$item" ] || continue
     [ -e "$item" ] && continue
-    case "$(readlink "$item")" in
-      "$DOTFILES_ROOT"/*) ;;
-      *) continue ;;
-    esac
+    [[ $(readlink "$item") == "$DOTFILES_ROOT"/* ]] || continue
     dotfiles_run rm -f "$item"
     dotfiles_info "removed orphaned link: $item"
   done
