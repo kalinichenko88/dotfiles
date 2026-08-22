@@ -27,8 +27,8 @@ assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
 assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"
-assert_link "$TEST_ROOT/claude/hooks/check-docs-before-commit.sh" \
-  "$target_home/.claude/hooks/check-docs-before-commit.sh"
+assert_link "$TEST_ROOT/claude/hooks/check-docs-before-push.sh" \
+  "$target_home/.claude/hooks/check-docs-before-push.sh"
 
 # Containment, not equality: docker login writes credentials into this file.
 jq -e --slurpfile source "$TEST_ROOT/docker/config.json" 'contains($source[0])' \

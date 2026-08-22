@@ -156,7 +156,7 @@ keybindings, Mason/LSP, and formatters.
 existing file requires `FORCE=1`.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
-- Hook `check-docs-before-commit` — PreToolUse hook that blocks `git commit`
+- Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
   until CLAUDE.md and README.md have been reviewed, using a session-scoped temp
   flag so the retry passes
 

@@ -5,7 +5,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "$HOME/.claude/hooks/check-docs-before-commit.sh",
+          "command": "$HOME/.claude/hooks/check-docs-before-push.sh",
           "timeout": 10
         }
       ]

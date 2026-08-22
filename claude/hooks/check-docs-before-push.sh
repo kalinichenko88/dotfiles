@@ -1,20 +1,20 @@
 #!/bin/bash
-# Hook: check-docs-before-commit
-# PreToolUse hook that blocks git commit and asks Claude to review
-# documentation files (CLAUDE.md, README.md) before committing.
+# Hook: check-docs-before-push
+# PreToolUse hook that blocks git push and asks Claude to review
+# documentation files (CLAUDE.md, README.md) before pushing.
 #
 # Uses a temp flag file keyed by session ID:
-# - First commit attempt: blocked with doc review reminder
+# - First push attempt: blocked with doc review reminder
 # - Second attempt (after review): allowed, flag consumed
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 
-# Only intercept git commit commands. The command may sit anywhere in a
+# Only intercept git push commands. The command may sit anywhere in a
 # compound line, so match at a command boundary rather than at the start:
-# "git add . && git commit" is by far the common form.
+# "git commit && git push" is by far the common form.
 if ! echo "$COMMAND" | grep -qE \
-  '(^[[:space:]]*|[;&|][[:space:]]*)git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+)?commit([[:space:]]|$)'; then
+  '(^[[:space:]]*|[;&|][[:space:]]*)git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+)?push([[:space:]]|$)'; then
   exit 0
 fi
 
@@ -31,7 +31,7 @@ REPO_ROOT=$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null) || exit 0
 
 CHECK_FILE="/tmp/claude-docs-checked-${SESSION_ID}"
 
-# If already checked in this commit cycle, allow and consume the flag
+# If already checked in this push cycle, allow and consume the flag
 if [ -f "$CHECK_FILE" ]; then
   rm -f "$CHECK_FILE"
   exit 0
@@ -54,15 +54,15 @@ if [ -z "$DOC_FILES" ]; then
   exit 0
 fi
 
-# Create flag so the next commit attempt passes through
+# Create flag so the next push attempt passes through
 touch "$CHECK_FILE"
 
 # Format file list relative to repo root
 DOC_LIST=$(echo "$DOC_FILES" | while read -r f; do echo "  - ${f#"${REPO_ROOT}"/}"; done)
 
-REASON="Review documentation before committing. Check if these files need updating based on your staged changes:
+REASON="Review documentation before pushing. Check if these files need updating based on the commits you are about to push:
 ${DOC_LIST}
-After reviewing (and updating if needed), re-run the commit command."
+After reviewing (and updating if needed), re-run the push command."
 
 jq -n --arg reason "$REASON" \
 '{
