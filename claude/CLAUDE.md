@@ -1,5 +1,35 @@
 # Global instructions
 
+## The repository's own gate (always)
+
+Before claiming a task done, run the repository's own check command — the single
+target that chains lint, typecheck and tests (`make check`, `bun run check`, the
+`check`/`ci` script in `package.json`, whatever CI calls). If there is none, run
+the closest equivalent and say so. Report the actual outcome — "should pass" is
+not a result.
+
+## A bug fix ships with its test (always)
+
+Every bug fix carries the test that would have caught it: written before the
+fix, seen failing against the unfixed code, passing after. It asserts the
+behaviour that was reported, not the internals of the fix.
+
+If the bug shows on several surfaces, guard each one. Fixing the surface the
+report named and leaving its siblings is how the bug comes back under a new
+name.
+
+## Docs move with the change (always)
+
+A change that alters user-visible behaviour, a public contract, or how the thing
+is installed updates the documents that describe it — in the same change, not a
+follow-up. README, the project's instruction file, API docs, ADRs: whichever
+ones now say something false.
+
+- Before finishing, name the docs the change touched, or say "docs impact: none"
+  with a one-line why. Saying nothing is not an answer.
+- A follow-up is allowed only for a broader sweep the change merely brushes
+  against — never for the document that describes the very behaviour changed.
+
 ## CI / GitHub Actions hygiene (always)
 
 When creating or editing CI workflows (GitHub Actions, any project):
