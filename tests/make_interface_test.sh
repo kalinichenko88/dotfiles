@@ -41,6 +41,16 @@ assert_file_excludes "$TEST_ROOT/scripts/preinstall.sh" \
   'git clone git@'
 assert_file_contains "$TEST_ROOT/README.md" 'scripts/preinstall.sh | bash'
 
+# A target nobody can discover is a target nobody calls. The list comes from the
+# Makefile itself, so adding an entry point without its `##` comment fails here.
+help_output=$(make -s -C "$TEST_ROOT" help) || fail 'make help failed'
+for target in $(grep -oE '^[a-z][a-z-]*:' "$TEST_ROOT/Makefile" | tr -d ':'); do
+  printf '%s\n' "$help_output" | grep -F -- "make $target " >/dev/null || \
+    fail "make help does not list $target"
+done
+printf '%s\n' "$help_output" | grep -F -- 'config-<unit>' >/dev/null || \
+  fail 'make help does not offer the per-unit targets'
+
 for removed_target in brew-dump cleanup-candidates security-audit; do
   if make -s -n -C "$TEST_ROOT" "$removed_target" >/dev/null 2>&1; then
     fail "$removed_target must not be part of the Make interface"

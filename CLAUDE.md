@@ -48,7 +48,9 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
 `wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
 `CONFIG_UNITS` in `scripts/bootstrap.sh`; the Makefile and the tests ask for it
-with `./scripts/bootstrap.sh units`. A unit with a `config_<unit>` function runs
+with `./scripts/bootstrap.sh units`. `make help` is generated the same way — from
+the `## description` on each target — and `tests/make_interface_test.sh` fails on
+a target that carries none, so an entry point cannot ship undiscoverable. A unit with a `config_<unit>` function runs
 it; anything else is defined entirely by its rows in `setup/links.tsv`.
 
 CI (`.github/workflows/ci.yml`) runs shellcheck, `make test` on macOS, and
