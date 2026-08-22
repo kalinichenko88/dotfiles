@@ -233,11 +233,13 @@ announce_missing_git_identity() {
 # Per-event merge, not a wholesale replace: a user's hooks on events this
 # repository does not declare have to keep firing.
 install_claude_settings() {
-  # $source is a jq variable, not a shell one.
-  # shellcheck disable=SC2016
-  dotfiles_merge_json claude/hooks-config.json \
-    "$DOTFILES_TARGET_HOME/.claude/settings.json" \
-    '.hooks = ((.hooks // {}) + $source[0])'
+  # One merge for the whole fragment: a second write into the same file would
+  # back up the state the first one just produced, on a machine that had no
+  # settings at all. The default program merges hooks and the status line
+  # alike, and Claude Code expands the $HOME the fragment spells out, so a
+  # public repository carries nobody's home directory.
+  dotfiles_merge_json claude/settings-fragment.json \
+    "$DOTFILES_TARGET_HOME/.claude/settings.json"
 }
 
 config_dev_dirs() {
@@ -303,6 +305,7 @@ config_docker() {
 
 config_claude() {
   local item item_name
+  config_links claude
   for item in "$DOTFILES_ROOT"/claude/skills/*; do
     [ -d "$item" ] || continue
     item_name=$(basename -- "$item")

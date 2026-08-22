@@ -148,15 +148,25 @@ To add a plugin: create `nvim/lua/plugins/<name>.lua` returning a lazy.nvim
 spec, then restart. See [nvim/README.md](nvim/README.md) for plugins,
 keybindings, Mason/LSP, and formatters.
 
-### Claude Code skills and hooks
+### Claude Code prompt, skills, and hooks
+
+`claude/CLAUDE.md` is the global prompt, symlinked to `~/.claude/CLAUDE.md`:
+nothing but the user writes that file, so it is a link rather than a merge and
+edits on either side are the same file. `config_claude` installs it by calling
+`config_links claude`, so the row lives in `setup/links.tsv` like every other
+symlink and doctor verifies it from the same table.
 
 `claude/skills/*` symlink to `~/.claude/skills/`, `claude/hooks/*.sh` to
-`~/.claude/hooks/`, and `claude/hooks-config.json` is merged into
-`~/.claude/settings.json` with `jq` — unrelated keys survive, and changing an
-existing file requires `FORCE=1`. Installing then prunes dangling links in
-those two directories with `dotfiles_prune_orphan_links`, so renaming a hook
-does not leave the old one behind on every other machine; links pointing
-outside this repository are the user's own and are never touched.
+`~/.claude/hooks/`, and `claude/statusline-command.sh` to `~/.claude/`.
+`claude/settings-fragment.json` holds everything merged into
+`~/.claude/settings.json` — hooks and the status line together — in one `jq`
+pass, because a second merge into the same file backs up what the first just
+wrote. Unrelated keys survive, and changing an existing file requires `FORCE=1`.
+
+Installing then prunes dangling links in the skills and hooks directories with
+`dotfiles_prune_orphan_links`, so renaming a hook does not leave the old one
+behind on every other machine; links pointing outside this repository are the
+user's own and are never touched.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
