@@ -153,10 +153,13 @@ keybindings, Mason/LSP, and formatters.
 `claude/skills/*` symlink to `~/.claude/skills/`, `claude/hooks/*.sh` to
 `~/.claude/hooks/`, and `claude/hooks-config.json` is merged into
 `~/.claude/settings.json` with `jq` — unrelated keys survive, and changing an
-existing file requires `FORCE=1`.
+existing file requires `FORCE=1`. Installing then prunes dangling links in
+those two directories with `dotfiles_prune_orphan_links`, so renaming a hook
+does not leave the old one behind on every other machine; links pointing
+outside this repository are the user's own and are never touched.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
-- Hook `check-docs-before-commit` — PreToolUse hook that blocks `git commit`
+- Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
   until CLAUDE.md and README.md have been reviewed, using a session-scoped temp
   flag so the retry passes
 
@@ -181,6 +184,9 @@ Do not look for them here.
   already used: `SC1091` for runtime-resolved `source` paths, and `SC2016` for
   single-quoted jq programs, where `$source` is a jq variable rather than a
   shell one. Anything else means fixing the code, not silencing the check.
+- Tests are POSIX `[ ]` everywhere except the prefix match in
+  `dotfiles_prune_orphan_links`, where `[[ ]]` replaces a four-line `case`.
+  Every script here is `#!/bin/bash`, so that is a style choice, not a rule.
 
 ## Gitignored files
 

@@ -27,8 +27,20 @@ assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
 assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"
-assert_link "$TEST_ROOT/claude/hooks/check-docs-before-commit.sh" \
-  "$target_home/.claude/hooks/check-docs-before-commit.sh"
+assert_link "$TEST_ROOT/claude/hooks/check-docs-before-push.sh" \
+  "$target_home/.claude/hooks/check-docs-before-push.sh"
+
+# A renamed or deleted hook leaves a dangling link that nothing else prunes, but
+# only links into this repository are ours to remove.
+ln -s "$TEST_ROOT/claude/hooks/gone.sh" "$target_home/.claude/hooks/gone.sh"
+ln -s "$tmp/elsewhere.sh" "$target_home/.claude/hooks/mine.sh"
+DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config claude
+[ ! -L "$target_home/.claude/hooks/gone.sh" ] || \
+  fail 'a dangling link into this repository survived the install'
+[ -L "$target_home/.claude/hooks/mine.sh" ] || \
+  fail 'the prune removed a link this repository does not own'
+assert_link "$TEST_ROOT/claude/hooks/check-docs-before-push.sh" \
+  "$target_home/.claude/hooks/check-docs-before-push.sh"
 
 # Containment, not equality: docker login writes credentials into this file.
 jq -e --slurpfile source "$TEST_ROOT/docker/config.json" 'contains($source[0])' \
