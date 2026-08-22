@@ -65,13 +65,8 @@ assert_equals 'token' \
   fail 'bootstrap must not invent a local Git config'
 
 jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
-  '.hooks | contains($fragment[0].hooks)' "$target_home/.claude/settings.json" \
-  >/dev/null || fail 'Claude hook settings were not merged'
-
-# The tracked fragment says $HOME; what lands in settings.json must be the real
-# path, or the status line silently renders nothing.
-assert_equals "/bin/bash $target_home/.claude/statusline-command.sh" \
-  "$(jq -r '.statusLine.command' "$target_home/.claude/settings.json")"
+  'contains($fragment[0])' "$target_home/.claude/settings.json" \
+  >/dev/null || fail 'Claude hook or status line settings were not merged'
 
 # Add a non-hook key, then verify a second install preserves it without backups.
 jq '. + {theme: "dark"}' "$target_home/.claude/settings.json" > "$tmp/settings-with-theme.json"

@@ -159,13 +159,9 @@ symlink and doctor verifies it from the same table.
 `claude/skills/*` symlink to `~/.claude/skills/`, `claude/hooks/*.sh` to
 `~/.claude/hooks/`, and `claude/statusline-command.sh` to `~/.claude/`.
 `claude/settings-fragment.json` holds everything merged into
-`~/.claude/settings.json` — hooks and the status line together — and
-`install_claude_settings` applies it in one `jq` pass, because a second merge
-into the same file backs up the state the first one just wrote. Unrelated keys
-survive, and changing an existing file requires `FORCE=1`. The fragment spells
-paths as `$HOME` and bootstrap expands them: hook commands run through a shell,
-the status line command does not, and neither belongs in a public repository
-with a home directory baked in.
+`~/.claude/settings.json` — hooks and the status line together — in one `jq`
+pass, because a second merge into the same file backs up what the first just
+wrote. Unrelated keys survive, and changing an existing file requires `FORCE=1`.
 
 Installing then prunes dangling links in the skills and hooks directories with
 `dotfiles_prune_orphan_links`, so renaming a hook does not leave the old one
