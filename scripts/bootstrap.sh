@@ -9,8 +9,10 @@ SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/lib/common.sh"
 
+trap dotfiles_cleanup_tmp EXIT
+
 usage() {
-  printf 'Usage: %s {all|brew|tools|config [unit]|update}\n' "$0" >&2
+  printf 'Usage: %s {all|brew|tools|config [unit]|update|cleanup|units}\n' "$0" >&2
 }
 
 # A first run trips on things bootstrap cannot fix for the machine: a cask
@@ -120,10 +122,10 @@ trust_brewfile_taps() {
   while IFS= read -r tap; do
     [ -n "$tap" ] || continue
     dotfiles_run "$brew_command" trust --tap "$tap"
-  done < <(sed -n -E \
-    -e 's/^tap "([^"]+)".*/\1/p' \
-    -e 's/^(brew|cask) "([^"\/]+\/[^"\/]+)\/[^"]+".*/\2/p' \
-    "$brewfile" | sort -u)
+  done < <(dotfiles_brewfile_records "$brewfile" | awk -F '\t' '
+    $1 == "tap" { print $2; next }
+    $2 ~ /\// { sub(/\/[^\/]*$/, "", $2); print $2 }
+  ' | sort -u)
 }
 
 # Brewfile holds the shared baseline; the gitignored Brewfile.local holds
@@ -143,16 +145,46 @@ install_brew_bundles() {
   done
 }
 
+# Guarded the same way `all` is, and for the same reason: this is the command a
+# second machine runs to catch up, and an offline `brew update` must not cost it
+# the configuration it was going to apply afterwards.
 update_workstation() {
   dotfiles_resolve_homebrew
-  dotfiles_run "$DOTFILES_BREW_COMMAND" update
+  run_step 'brew update' dotfiles_run "$DOTFILES_BREW_COMMAND" update
   install_brew_bundles "$DOTFILES_BREW_COMMAND"
-  dotfiles_run "$DOTFILES_BREW_COMMAND" upgrade
+  run_step 'brew upgrade' dotfiles_run "$DOTFILES_BREW_COMMAND" upgrade
   # Doctor checks the runtime and configuration manifests too, so update has to
   # apply everything it then verifies, or it reports drift it declined to fix.
-  install_tools
+  run_step 'user-space tools' install_tools
   install_config
-  dotfiles_run "$SCRIPT_DIR/doctor.sh"
+  run_step verification dotfiles_run "$SCRIPT_DIR/doctor.sh"
+}
+
+# `brew bundle cleanup` reads one Brewfile, and the shared baseline plus this
+# machine's own manifest are two, so it gets both concatenated — pointing it at
+# the tracked file alone would uninstall everything Brewfile.local declares.
+#
+# Never part of update: a package missing from a manifest is far more often an
+# oversight than a decision. Without FORCE=1 Homebrew lists what it would remove
+# and asks; FORCE=1 is what skips the question.
+cleanup_workstation() {
+  local combined
+  dotfiles_resolve_homebrew
+  dotfiles_make_tmp dotfiles-cleanup
+  combined=$DOTFILES_TMP/Brewfile
+  dotfiles_manifest Brewfile Brewfile.local > "$combined"
+  # A manifest that came out empty would uninstall the entire machine.
+  if ! grep -qE '^(brew|cask) "' "$combined"; then
+    dotfiles_die 'refusing to clean up: the combined manifest declares nothing'
+    return 1
+  fi
+
+  if [ "${FORCE:-0}" = 1 ]; then
+    dotfiles_run "$DOTFILES_BREW_COMMAND" bundle cleanup --force --file "$combined"
+    return 0
+  fi
+  dotfiles_info 'rerun with FORCE=1 to skip the confirmation'
+  dotfiles_run "$DOTFILES_BREW_COMMAND" bundle cleanup --file "$combined"
 }
 
 install_node_versions() {
@@ -162,43 +194,19 @@ install_node_versions() {
 
   if [ "${DRY_RUN:-0}" = 1 ]; then
     dotfiles_print_command source "$NVM_DIR/nvm.sh"
-    while IFS= read -r node_version || [ -n "$node_version" ]; do
-      case "$node_version" in
-        ''|'#'*) continue ;;
-      esac
-      dotfiles_print_command nvm install "$node_version"
-      dotfiles_print_command nvm alias default "$node_version"
-    done < "$node_versions_file"
-    return 0
+  else
+    # NVM is installed into the selected target home.
+    # shellcheck disable=SC1091
+    . "$NVM_DIR/nvm.sh"
   fi
 
-  # NVM is installed into the selected target home.
-  # shellcheck disable=SC1091
-  . "$NVM_DIR/nvm.sh"
   while IFS= read -r node_version || [ -n "$node_version" ]; do
     case "$node_version" in
       ''|'#'*) continue ;;
     esac
-    nvm install "$node_version"
-    nvm alias default "$node_version"
+    dotfiles_run nvm install "$node_version"
+    dotfiles_run nvm alias default "$node_version"
   done < "$node_versions_file"
-}
-
-install_uv_tools() {
-  local tool_spec tools_file
-  tools_file=$DOTFILES_ROOT/setup/uv-tools.txt
-
-  if [ "${DRY_RUN:-0}" != 1 ] && ! command -v uv >/dev/null 2>&1; then
-    dotfiles_die 'uv is required to install UV-managed tools; run the Brew layer first'
-    return 1
-  fi
-
-  while IFS= read -r tool_spec || [ -n "$tool_spec" ]; do
-    case "$tool_spec" in
-      ''|'#'*) continue ;;
-    esac
-    dotfiles_run uv tool install --force "$tool_spec"
-  done < "$tools_file"
 }
 
 print_manual_command_checks() {
@@ -245,26 +253,21 @@ config_dev_dirs() {
   done
 }
 
+# Installs every symlink setup/links.tsv declares for one unit. A unit whose
+# whole definition is symlinks needs no function of its own.
+config_links() {
+  local source target
+  while IFS=$'\t' read -r _ source target; do
+    dotfiles_link "$source" "$DOTFILES_TARGET_HOME/$target"
+  done < <(dotfiles_links "$1")
+}
+
 config_git() {
-  dotfiles_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config"
-  dotfiles_link git/gitconfig-personal \
-    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-personal"
+  config_links git
   announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work"
   announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local"
-}
-
-config_zsh() {
-  dotfiles_link zsh/zshrc "$DOTFILES_TARGET_HOME/.zshrc"
-}
-
-config_nvim() {
-  dotfiles_link nvim "$DOTFILES_TARGET_HOME/.config/nvim"
-}
-
-config_wezterm() {
-  dotfiles_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua"
 }
 
 # Only the 1Password agent wiring is tracked. Hosts live in the untracked
@@ -272,7 +275,7 @@ config_wezterm() {
 config_ssh() {
   dotfiles_run mkdir -p "$DOTFILES_TARGET_HOME/.ssh"
   dotfiles_run chmod 700 "$DOTFILES_TARGET_HOME/.ssh"
-  dotfiles_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config"
+  config_links ssh
 }
 
 # Applied through `gh config set`, never symlinked: gh writes its own state
@@ -289,11 +292,6 @@ config_gh() {
     case "$key" in '#'*) continue ;; esac
     dotfiles_run gh config set "$key" "$value"
   done < "$DOTFILES_ROOT/gh/config.yml"
-}
-
-config_starship() {
-  dotfiles_link starship/starship.toml \
-    "$DOTFILES_TARGET_HOME/.config/starship.toml"
 }
 
 # Merged, never copied: `docker login` writes registry credentials into the
@@ -322,6 +320,19 @@ config_claude() {
 
 CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm gh starship docker claude'
 
+# A unit with a function runs it; anything else is defined entirely by its rows
+# in setup/links.tsv.
+install_config_unit() {
+  local unit function_name
+  unit=$1
+  function_name=config_${unit//-/_}
+  if declare -F "$function_name" >/dev/null; then
+    "$function_name"
+  else
+    config_links "$unit"
+  fi
+}
+
 install_config() {
   local requested unit matched
   requested=${1:-all}
@@ -330,7 +341,7 @@ install_config() {
   for unit in $CONFIG_UNITS; do
     case "$requested" in
       all|"$unit")
-        run_step "config $unit" "config_${unit//-/_}"
+        run_step "config $unit" install_config_unit "$unit"
         matched=1
         ;;
     esac
@@ -369,7 +380,6 @@ install_tools() {
   fi
   dotfiles_run git -C "$nvm_dir" checkout --detach "$NVM_VERSION"
   install_node_versions
-  install_uv_tools
   print_manual_command_checks
 }
 
@@ -390,6 +400,14 @@ verify_target() {
 main() {
   local command
   command=${1:-}
+
+  # Answered before the platform check: the Makefile asks for this list on every
+  # invocation, including `make help`, and must not depend on the host.
+  if [ "$command" = units ]; then
+    printf '%s\n' "$CONFIG_UNITS"
+    return 0
+  fi
+
   check_platform
 
   case "$command" in
@@ -405,6 +423,7 @@ main() {
       ;;
     config) install_config "${2:-all}" ;;
     update) update_workstation ;;
+    cleanup) cleanup_workstation ;;
     *)
       usage
       return 1

@@ -20,12 +20,6 @@ for value in \
   assert_file_contains "$tmp/tools.out" "$value"
 done
 
-# Whatever the UV manifest holds — including nothing — is what gets installed,
-# pinned. An unpinned spec would drift the machine on the next run.
-while IFS= read -r tool_spec; do
-  [ -n "$tool_spec" ] || continue
-  assert_file_contains "$tmp/tools.out" "uv tool install --force $tool_spec"
-done < <(grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/uv-tools.txt" || :)
 assert_file_excludes "$tmp/tools.out" 'v20.20.0'
 assert_file_excludes "$tmp/tools.out" 'v22.23.1'
 assert_file_excludes "$tmp/tools.out" '.bun'
@@ -81,5 +75,31 @@ if DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/wrong-origin-home" \
   fail 'bootstrap must reject a checkout with an unexpected origin'
 fi
 assert_file_contains "$tmp/origin.err" 'unexpected origin'
+
+# Cleanup uninstalls, so it reads the shared baseline and this machine's own
+# manifest together — pointed at the tracked Brewfile alone it would remove
+# everything Brewfile.local declares — and it does not pass --force unasked.
+cleanup_env() {
+  DRY_RUN=1 DOTFILES_HOMEBREW_BIN="$TEST_ROOT/tests/fixtures/bin/brew" \
+    DOTFILES_TARGET_HOME="$tmp/home" "$@"
+}
+
+cleanup_env "$TEST_ROOT/scripts/bootstrap.sh" cleanup > "$tmp/cleanup.out"
+assert_file_contains "$tmp/cleanup.out" 'bundle cleanup --file'
+assert_file_excludes "$tmp/cleanup.out" '--force'
+
+FORCE=1 cleanup_env "$TEST_ROOT/scripts/bootstrap.sh" cleanup \
+  > "$tmp/cleanup-force.out"
+assert_file_contains "$tmp/cleanup-force.out" 'bundle cleanup --force --file'
+
+# An empty manifest must stop the run, not uninstall the whole machine.
+mkdir -p "$tmp/empty-root"
+: > "$tmp/empty-root/Brewfile"
+if DOTFILES_ROOT="$tmp/empty-root" cleanup_env \
+  "$TEST_ROOT/scripts/bootstrap.sh" cleanup \
+  > "$tmp/cleanup-empty.out" 2> "$tmp/cleanup-empty.err"; then
+  fail 'cleanup must refuse an empty manifest'
+fi
+assert_file_contains "$tmp/cleanup-empty.err" 'declares nothing'
 
 pass 'bootstrap layers enforce pins, dry run, and the Homebrew boundary'

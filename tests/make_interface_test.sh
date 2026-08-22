@@ -21,9 +21,14 @@ assert_make_target config-install './scripts/bootstrap.sh config'
 assert_make_target update './scripts/bootstrap.sh update'
 assert_make_target doctor './scripts/doctor.sh'
 assert_make_target inventory './scripts/inventory.sh compare'
+assert_make_target cleanup './scripts/bootstrap.sh cleanup'
+# The second machine's catch-up command has to refresh the checkout first, and
+# the pull belongs here rather than inside a script bash is still reading.
+assert_make_target update 'git pull --ff-only'
 
 # Every unit installable on its own, and named after what it actually installs.
-for unit in dev-dirs git ssh zsh nvim wezterm gh starship docker claude; do
+# The list comes from bootstrap.sh, so Make and the dispatcher cannot disagree.
+for unit in $("$TEST_ROOT/scripts/bootstrap.sh" units); do
   assert_make_target "config-$unit" "./scripts/bootstrap.sh config $unit"
 done
 

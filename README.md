@@ -4,8 +4,8 @@ Reproducible macOS workstation setup for Apple Silicon: Homebrew packages,
 pinned runtimes, and the configuration for Git, Zsh, Neovim, WezTerm, GitHub
 CLI, Starship, Docker, and Claude Code.
 
-Nothing here ever uninstalls software. Every command is idempotent and refuses
-to overwrite a file it does not manage.
+Every command is idempotent and refuses to overwrite a file it does not manage.
+Only `make cleanup` ever uninstalls anything, and only when asked.
 
 ## Install on a new Mac
 
@@ -43,7 +43,7 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 
 1. platform check — Apple Silicon macOS with Command Line Tools;
 2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
-3. pinned NVM, the exact Node version, UV tools;
+3. pinned NVM and the exact Node version;
 4. the `~/Dev` project directories, then all configuration;
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1-5 pass.
@@ -102,13 +102,14 @@ git remote set-url origin git@github.com:kalinichenko88/dotfiles.git
 ## Update an existing Mac
 
 ```bash
-git pull
 make update
 ```
 
-`make update` refreshes Homebrew, reapplies both Brewfiles, the pinned Node and
-UV manifests and every configuration unit, upgrades packages, and finishes with
-a `doctor` pass. It applies everything that pass then verifies, so a pull that
+`make update` fast-forwards this checkout, refreshes Homebrew, reapplies both
+Brewfiles, the pinned Node manifest and every configuration unit, upgrades
+packages, and finishes with a `doctor` pass. A step that fails is recorded and
+the run continues, the same way bootstrap behaves: an offline `brew update` must
+not cost this machine the configuration it was about to apply. It applies everything that pass then verifies, so a pull that
 bumps any manifest needs no second command. Casks that update themselves are left alone — Homebrew skips them by
 design, and this repository does not use `--greedy`.
 
@@ -119,7 +120,16 @@ make inventory
 ```
 
 For each entry decide where it belongs: `Brewfile` if every machine should get
-it, `Brewfile.local` if only this one. Removing software is always manual.
+it, `Brewfile.local` if only this one — or nowhere, in which case:
+
+```bash
+make cleanup                     # Homebrew lists what it would remove and asks
+FORCE=1 make cleanup             # skip the question
+```
+
+It reads `Brewfile` and `Brewfile.local` together, so software declared for this
+machine only is safe. It is never part of `make update`: a package missing from
+a manifest is far more often an oversight than a decision.
 
 To reinstall configuration without touching packages:
 
@@ -134,12 +144,13 @@ make config-nvim                 # one unit
 | --- | --- |
 | `make bootstrap` | Full provisioning: brew, tools, config, doctor, marker |
 | `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
-| `make bootstrap-tools` | Pinned NVM/Node and UV tools |
+| `make bootstrap-tools` | Pinned NVM and Node |
 | `make config-install` | Install every configuration unit |
 | `make config-<unit>` | Install one unit |
 | `make update` | Refresh, reapply manifests, upgrade, then doctor |
 | `make doctor` | What the manifests declare and this machine lacks |
 | `make inventory` | What this machine has and no manifest declares |
+| `make cleanup` | Uninstall what no manifest declares (`FORCE=1` skips the prompt) |
 | `make git-check` | Active `user.name`/`user.email` and their sources |
 | `make test` | Shell integration and regression tests |
 
@@ -151,7 +162,10 @@ Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
 - `DRY_RUN=1` prints mutation commands instead of running them.
 - Existing configuration is never replaced by default; a conflict fails its own
   step and the whole run, but not the steps after it.
-- `FORCE=1` backs the conflicting file up to a timestamped sibling first.
+- `FORCE=1` backs the conflicting file up to a timestamped sibling first, and
+  for `make cleanup` it skips Homebrew's confirmation.
+- `make cleanup` is the only command that uninstalls. It refuses to run if the
+  combined manifest comes out empty, which would otherwise strip the machine.
 - The work Git identity is never created from the example: a placeholder
   address would satisfy `useConfigOnly` and author commits as itself. Until you
   write `~/.config/git/gitconfig-work`, Git refuses commits under `~/Dev/Work`
@@ -178,9 +192,11 @@ reappear in the tracked manifests.
 
 ## What doctor reports
 
-Required failures: missing taps, formulae, or casks; a wrong Node or UV version;
+Required failures: missing taps, formulae, or casks; a wrong Node version;
 missing tracked configuration; a work Git identity still holding the template's
-placeholder address. Warnings: available upgrades, unsupported manual
+placeholder address, or one symlinked into this repository instead of living in
+`~/.config/git` — that would put a work address and the signing keys inside a
+public checkout. Warnings: available upgrades, unsupported manual
 applications, authentication state, and a manual CLI that is not installed yet —
 those ship their own installers, so their absence must not fail a first run. A
 manual CLI that *is* installed but fails its probe stays a required failure.
@@ -209,8 +225,10 @@ Docker registry credentials and Claude hooks you added yourself survive.
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
 | `claude/hooks-config.json` | `~/.claude/settings.json` (merge) |
-| `imagemagick/delegates.xml` | read in place, via `MAGICK_CONFIGURE_PATH` |
 | — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
+
+The plain symlinks in that table are rows in `setup/links.tsv`, which is what
+both `make config-install` and `make doctor` read.
 
 Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use
 the tracked personal profile, `~/Dev/Work/` uses a gitignored work file created

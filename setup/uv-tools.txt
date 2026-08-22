@@ -1,2 +1,0 @@
-# Exact UV-managed command-line tools. Empty is a valid state: bootstrap,
-# doctor, and inventory all handle a manifest with no entries.

@@ -51,14 +51,48 @@ dotfiles_manifest() {
   fi
 }
 
-# A broken uv must leave the caller with an empty list, not kill it: this
-# pipeline's status would otherwise propagate under `set -o pipefail`.
-dotfiles_uv_tool_specs() {
-  uv tool list 2>/dev/null | awk '/^[^[:space:]]+[[:space:]]+v?[0-9]/ {
-    version=$2
-    sub(/^v/, "", version)
-    print $1 "==" version
-  }' | sort -u || return 0
+# Streams `label<TAB>source<TAB>target` for the symlinked configuration, for one
+# unit or, with no argument, all of them. bootstrap installs from this table and
+# doctor verifies from it, so the two can no longer drift apart.
+dotfiles_links() {
+  awk -F '\t' -v unit="${1:-}" '
+    NF && $1 !~ /^#/ && (unit == "" || $1 == unit) { print $2 "\t" $3 "\t" $4 }
+  ' "$DOTFILES_ROOT/setup/links.tsv"
+}
+
+# Emits `kind<TAB>token` for every tap/brew/cask record on stdin or in the named
+# files. Trusting taps, doctor and inventory each want something different out
+# of a Brewfile, but all three were parsing it themselves; only the parse is
+# shared here.
+dotfiles_brewfile_records() {
+  awk '
+    match($0, /^(tap|brew|cask)[[:space:]]+"[^"]+"/) {
+      record = substr($0, RSTART, RLENGTH)
+      kind = record
+      sub(/[[:space:]].*$/, "", kind)
+      split(record, parts, "\"")
+      print kind "\t" parts[2]
+    }
+  ' "$@"
+}
+
+# macOS ships no timeout(1). Callers only care whether the probe succeeded, so
+# a killed command reporting failure is all the resolution needed.
+dotfiles_run_with_timeout() {
+  local timeout_seconds command_pid timer_pid command_status
+  timeout_seconds=$1
+  shift
+
+  "$@" &
+  command_pid=$!
+  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) \
+    </dev/null >/dev/null 2>&1 &
+  timer_pid=$!
+
+  wait "$command_pid" && command_status=0 || command_status=$?
+  kill "$timer_pid" 2>/dev/null || :
+  wait "$timer_pid" 2>/dev/null || :
+  return "$command_status"
 }
 
 dotfiles_resolve_homebrew() {
@@ -161,8 +195,8 @@ dotfiles_link() {
 
 # Merges tracked JSON into a target that other tools also write to, so their
 # keys survive. The jq program gets the target as input and the tracked file as
-# $source; a missing target is treated as {}. Unlike dotfiles_copy this needs no
-# FORCE, because nothing outside the tracked keys is replaced.
+# $source; a missing target is treated as {}. No FORCE is needed, because
+# nothing outside the tracked keys is replaced.
 dotfiles_merge_json() {
   local relative_source target program source_path target_dir temp_file
   relative_source=$1
@@ -208,33 +242,4 @@ dotfiles_merge_json() {
 
   mv "$temp_file" "$target"
   dotfiles_info "merged $relative_source into $target"
-}
-
-dotfiles_copy() {
-  local relative_source target source_path
-  relative_source=$1
-  target=$2
-  source_path=$DOTFILES_ROOT/$relative_source
-
-  if [ ! -f "$source_path" ]; then
-    dotfiles_die "copy source is not a file: $source_path"
-    return 1
-  fi
-
-  if [ -f "$target" ] && cmp -s "$source_path" "$target"; then
-    dotfiles_info "copy already installed: $target"
-    return 0
-  fi
-
-  if dotfiles_path_exists "$target"; then
-    if [ "${FORCE:-0}" != 1 ]; then
-      dotfiles_die "target exists; rerun with FORCE=1 to back it up: $target"
-      return 1
-    fi
-    dotfiles_backup_target "$target" || return 1
-  fi
-
-  dotfiles_prepare_parent "$target"
-  dotfiles_run cp "$source_path" "$target"
-  dotfiles_info "copied $target"
 }

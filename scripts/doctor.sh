@@ -28,35 +28,10 @@ doctor_missing() {
   doctor_status missing "$1" "$2"
 }
 
-# macOS ships no timeout(1). Callers only care whether the probe succeeded, so
-# a killed command reporting failure is all the resolution needed.
-run_with_timeout() {
-  local timeout_seconds command_pid timer_pid command_status
-  timeout_seconds=$1
-  shift
-
-  "$@" &
-  command_pid=$!
-  (sleep "$timeout_seconds"; kill -KILL "$command_pid" 2>/dev/null) \
-    </dev/null >/dev/null 2>&1 &
-  timer_pid=$!
-
-  wait "$command_pid" && command_status=0 || command_status=$?
-  kill "$timer_pid" 2>/dev/null || :
-  wait "$timer_pid" 2>/dev/null || :
-  return "$command_status"
-}
-
 brewfile_tokens() {
-  local record_type
-  record_type=$1
-  dotfiles_manifest Brewfile Brewfile.local | awk -v record_type="$record_type" '
-    match($0, "^" record_type " \\\"[^\\\"]+\\\"") {
-      value=substr($0, RSTART + length(record_type) + 2,
-        RLENGTH - length(record_type) - 3)
-      print value
-    }
-  '
+  dotfiles_manifest Brewfile Brewfile.local \
+    | dotfiles_brewfile_records \
+    | awk -F '\t' -v record_type="$1" '$1 == record_type { print $2 }'
 }
 
 load_brew_state() {
@@ -139,7 +114,7 @@ check_node() {
     node_path=$DOTFILES_TARGET_HOME/.nvm/versions/node/$node_version/bin/node
     node_version_output=$doctor_tmp/node-version.$RANDOM
     if [ -x "$node_path" ] && \
-      run_with_timeout 5 \
+      dotfiles_run_with_timeout 5 \
         "$node_path" --version > "$node_version_output" 2>/dev/null && \
       cmp -s <(printf '%s\n' "$node_version") "$node_version_output"; then
       doctor_status present node "$node_version"
@@ -158,25 +133,6 @@ check_node() {
   else
     doctor_missing node-default "$expected_default"
   fi
-}
-
-check_uv_tools() {
-  local tool_spec
-  : > "$doctor_tmp/uv-tools"
-  if command -v uv >/dev/null 2>&1; then
-    dotfiles_uv_tool_specs > "$doctor_tmp/uv-tools"
-  fi
-
-  while IFS= read -r tool_spec; do
-    case "$tool_spec" in
-      ''|'#'*) continue ;;
-    esac
-    if grep -Fx "$tool_spec" "$doctor_tmp/uv-tools" >/dev/null 2>&1; then
-      doctor_status present uv-tool "$tool_spec"
-    else
-      doctor_missing uv-tool "$tool_spec"
-    fi
-  done < "$DOTFILES_ROOT/setup/uv-tools.txt"
 }
 
 check_link() {
@@ -213,18 +169,28 @@ check_gh_preferences() {
   done < "$DOTFILES_ROOT/gh/config.yml"
 }
 
+# gitconfig-work holds a work address and gitconfig-local the signing keys. An
+# older bootstrap symlinked both into this repository, which is public, so the
+# private data ended up inside a published checkout. They have to be real files
+# under the home directory.
+check_private_git_file() {
+  local target label link
+  target=$1
+  label=$2
+  [ -L "$target" ] || return 0
+  link=$(readlink "$target" 2>/dev/null || :)
+  case "$link" in
+    "$DOTFILES_ROOT"/*) doctor_missing config "$label-in-repository" ;;
+  esac
+}
+
 check_config() {
-  local item item_name
-  check_link git/gitconfig "$DOTFILES_TARGET_HOME/.config/git/config" git
-  check_link git/gitconfig-personal \
-    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-personal" git-personal
-  check_link ssh/config "$DOTFILES_TARGET_HOME/.ssh/config" ssh
-  check_link zsh/zshrc "$DOTFILES_TARGET_HOME/.zshrc" zsh
-  check_link nvim "$DOTFILES_TARGET_HOME/.config/nvim" nvim
-  check_link wezterm.lua "$DOTFILES_TARGET_HOME/.wezterm.lua" wezterm
+  local item item_name label source target
+  # The same table bootstrap installs from, so the two cannot drift.
+  while IFS=$'\t' read -r label source target; do
+    check_link "$source" "$DOTFILES_TARGET_HOME/$target" "$label"
+  done < <(dotfiles_links)
   check_gh_preferences
-  check_link starship/starship.toml \
-    "$DOTFILES_TARGET_HOME/.config/starship.toml" starship
 
   # Containment, not equality: docker login adds registry credentials to the
   # same file, and the merge deliberately leaves them alone.
@@ -249,6 +215,11 @@ check_config() {
     check_link "claude/hooks/$item_name" \
       "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name" "claude-hook-$item_name"
   done
+
+  check_private_git_file \
+    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work" git-work-email
+  check_private_git_file \
+    "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local" git-local
 
   # Absent is fine and expected on a new machine: useConfigOnly then refuses
   # commits under ~/Dev/Work, which is the safe outcome. A copied-but-unedited
@@ -286,7 +257,7 @@ check_manual_state() {
         # bootstrap only prints the checklist. Installed but broken is a failure.
         if ! command -v "$probe_command" >/dev/null 2>&1; then
           doctor_status warning manual-command "$name"
-        elif run_with_timeout 5 \
+        elif dotfiles_run_with_timeout 5 \
           /bin/bash -c "exec $probe" </dev/null >/dev/null 2>&1; then
           doctor_status present manual-command "$name"
         else
@@ -305,7 +276,7 @@ check_manual_state() {
       auth)
         probe_command=${probe%% *}
         if command -v "$probe_command" >/dev/null 2>&1 && \
-          run_with_timeout "$DOCTOR_AUTH_TIMEOUT_SECONDS" \
+          dotfiles_run_with_timeout "$DOCTOR_AUTH_TIMEOUT_SECONDS" \
             /bin/bash -c "exec $probe" </dev/null >/dev/null 2>&1; then
           doctor_status ready auth "$name"
         else
@@ -318,7 +289,7 @@ check_manual_state() {
 
 check_outdated() {
   local package_name
-  if run_with_timeout 15 \
+  if dotfiles_run_with_timeout 15 \
     "$DOTFILES_BREW_COMMAND" outdated --quiet \
     > "$doctor_tmp/outdated" 2>/dev/null; then
     while IFS= read -r package_name; do
@@ -351,7 +322,6 @@ main() {
   check_formulae
   check_casks
   check_node
-  check_uv_tools
   check_config
   check_manual_state
   check_outdated

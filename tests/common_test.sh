@@ -16,8 +16,11 @@ mkdir -p "$tmp/repo/zsh" "$tmp/repo/docker" "$tmp/home"
 printf 'source\n' > "$tmp/repo/zsh/zshrc"
 printf '{"context":"colima"}\n' > "$tmp/repo/docker/config.json"
 
-DOTFILES_ROOT=$tmp/repo
-DOTFILES_TARGET_HOME=$tmp/home
+# Exported because the sourced library reads them, and because shellcheck 0.11
+# calls a bare assignment unused — the CI image ships an older build that does
+# not, so the lint gate was stricter locally than in CI.
+export DOTFILES_ROOT=$tmp/repo
+export DOTFILES_TARGET_HOME=$tmp/home
 
 dotfiles_link zsh/zshrc "$tmp/home/.zshrc"
 assert_equals "$tmp/repo/zsh/zshrc" "$(readlink "$tmp/home/.zshrc")"
@@ -52,19 +55,16 @@ if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
 fi
 [ -L "$tmp/home/.broken" ] || fail 'broken symlink was changed without force'
 
-dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"
-assert_equals '{"context":"colima"}' "$(cat "$tmp/home/.docker/config.json")"
-dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"
-
-printf 'local docker\n' > "$tmp/home/.docker/config.json"
-if dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"; then
-  fail 'a conflicting copy must fail without FORCE=1'
+# macOS ships no timeout(1), so this is hand-rolled; a broken version would hang
+# doctor on the first auth probe that never returns. Measured on its own rather
+# than across a whole doctor run, which made the old assertion flaky.
+started_at=$SECONDS
+if dotfiles_run_with_timeout 1 sleep 30; then
+  fail 'a command killed by the timeout must report failure'
 fi
-FORCE=1 dotfiles_copy docker/config.json "$tmp/home/.docker/config.json"
-assert_equals '{"context":"colima"}' "$(cat "$tmp/home/.docker/config.json")"
-copy_backup=$(find "$tmp/home/.docker" -maxdepth 1 -name 'config.json.backup.*' -print | head -n 1)
-[ -n "$copy_backup" ] || fail 'forced copy backup is missing'
-assert_equals 'local docker' "$(cat "$copy_backup")"
+elapsed=$((SECONDS - started_at))
+[ "$elapsed" -lt 15 ] || fail "the 1s timeout took ${elapsed}s"
+dotfiles_run_with_timeout 5 true || fail 'a command inside the budget must succeed'
 
 DRY_RUN=1 dotfiles_link zsh/zshrc "$tmp/home/dry/.zshrc" >/dev/null
 [ ! -e "$tmp/home/dry/.zshrc" ] || fail 'dry run mutated the target home'

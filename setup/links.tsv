@@ -1,0 +1,13 @@
+# Symlinked configuration. bootstrap.sh installs these rows and doctor.sh
+# verifies the same rows, so a new symlinked config is one line here rather
+# than an edit in two scripts. Units needing more than a symlink — dev-dirs,
+# gh, docker, claude — stay as functions in bootstrap.sh.
+#
+# unit	label	source	target-under-home
+git	git	git/gitconfig	.config/git/config
+git	git-personal	git/gitconfig-personal	.config/git/gitconfig-personal
+ssh	ssh	ssh/config	.ssh/config
+zsh	zsh	zsh/zshrc	.zshrc
+nvim	nvim	nvim	.config/nvim
+wezterm	wezterm	wezterm.lua	.wezterm.lua
+starship	starship	starship/starship.toml	.config/starship.toml

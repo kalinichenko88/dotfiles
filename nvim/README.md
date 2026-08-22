@@ -12,7 +12,7 @@ Modern Neovim 0.11+ configuration using [lazy.nvim](https://github.com/folke/laz
 ## Installation
 
 ```bash
-make nvim-config-install
+make config-nvim
 ```
 
 Symlinks `nvim/` directory to `~/.config/nvim`.

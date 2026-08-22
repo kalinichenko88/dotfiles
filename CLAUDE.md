@@ -21,22 +21,35 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   from raw.githubusercontent. Command Line Tools, then an **HTTPS** clone: the
   SSH key comes from 1Password, which the bootstrap installs from the Brewfile
   in here, so requiring SSH to clone would be a loop. Never change it to `git@`.
-- `scripts/bootstrap.sh {all|brew|tools|config [unit]|update}` — the only thing
-  that writes anything. Steps run through `run_step`: a failure is recorded,
+- `scripts/bootstrap.sh {all|brew|tools|config [unit]|update|cleanup|units}` —
+  the only thing that writes anything. Steps run through `run_step`: a failure is recorded,
   the run continues, and `report_failed_steps` exits non-zero at the end. Note
   that `run_step` suspends `set -e` inside the function it calls, so a function
   invoked that way must return non-zero explicitly where it matters (see
   `verify_target`, which would otherwise write its marker after doctor failed).
+  `cleanup` is the only subcommand that uninstalls; it feeds `brew bundle
+  cleanup` the tracked and `.local` manifests concatenated, because pointing it
+  at the tracked file alone would remove everything the machine declares for
+  itself, and it refuses outright if that combined manifest is empty.
 - `scripts/doctor.sh` — read-only verification, exit 1 on required failures
 - `scripts/inventory.sh compare` — read-only drift report, the reverse of doctor
 - `scripts/lib/common.sh` — link/copy/backup primitives, `dotfiles_manifest`
-  (tracked manifest plus its `.local` sibling), `dotfiles_merge_json` (tracked
-  JSON into a file other tools also write), `dotfiles_make_tmp`
+  (tracked manifest plus its `.local` sibling), `dotfiles_links` (the symlink
+  table), `dotfiles_brewfile_records` (the one Brewfile parser),
+  `dotfiles_merge_json` (tracked JSON into a file other tools also write),
+  `dotfiles_make_tmp`, `dotfiles_run_with_timeout` (macOS ships no `timeout(1)`;
+  without it a hanging auth probe hangs doctor)
+- `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
+  installs these rows, doctor verifies the same rows. A new symlinked config is
+  a line here, not an edit in two scripts.
 - `tests/*_test.sh` — plain bash, fixtures in `tests/fixtures/bin`, run by
   `make test`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
-`wezterm`, `gh`, `starship`, `docker`, `claude`.
+`wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
+`CONFIG_UNITS` in `scripts/bootstrap.sh`; the Makefile and the tests ask for it
+with `./scripts/bootstrap.sh units`. A unit with a `config_<unit>` function runs
+it; anything else is defined entirely by its rows in `setup/links.tsv`.
 
 CI (`.github/workflows/ci.yml`) runs shellcheck, `make test` on macOS, and
 gitleaks over the working tree and the full history.
@@ -155,10 +168,9 @@ showing the basename of the pane's working directory.
 
 ### ssh-remote
 
-On this branch `ssh-remote/` holds **only** the vendored bundle
-(`ssh-remote/bundle/xdg/…`, mini.nvim). The `ssh()` wrapper,
-`zsh/ssh-remote.zsh`, `plugins.txt`, the `make ssh-remote-*` targets, and the
-WezTerm `ssh_host` tab title live on the unmerged `feat/ssh-remote-nvim` branch.
+Nothing of it is on `main`. The `ssh()` wrapper, `zsh/ssh-remote.zsh`, the
+vendored mini.nvim bundle, the `make ssh-remote-*` targets, and the WezTerm
+`ssh_host` tab title all live on the unmerged `feat/ssh-remote-nvim` branch.
 Do not look for them here.
 
 ## Conventions
@@ -176,19 +188,23 @@ Never track any of these, and never suggest adding one to a commit:
 
 | File | Why |
 | --- | --- |
-| `git/gitconfig-work` | Work email address |
-| `git/gitconfig-local` | GPG and signing keys |
+| `git/gitconfig-work` | Work email address — belt and braces; nothing writes it |
+| `git/gitconfig-local` | GPG and signing keys — same |
 | `zsh/local.zsh` | Per-host tweaks, hostnames |
 | `~/.ssh/config.local` | SSH hosts, addresses, jump paths (outside the repo) |
 | `Brewfile.local` | Software for this machine only |
 | `setup/cask-apps.local.tsv` | Bundle paths for machine-local casks |
 | `setup/manual-checks.local.tsv` | Personal application inventory |
-| `docs/superpowers/`, `.superpowers/` | Agent specs, plans, review diffs |
+| `docs/superpowers/`, `.superpowers/`, `.ralphex/` | Agent specs, plans, review diffs |
 | `.claude/` | Local Claude state |
 
-The two `git/` files are created from `*.example` templates during installation
-and then preserved. The `.local` manifests are read automatically by bootstrap,
-update, and doctor — see `dotfiles_manifest` in `scripts/lib/common.sh`.
+The two `git/` paths are never written by anything: the real files live at
+`~/.config/git/gitconfig-work` and `~/.config/git/gitconfig-local`, hand-written
+from the `*.example` templates. The ignore rules stay because an older bootstrap
+did symlink them into this public repository, and `check_private_git_file` in
+`scripts/doctor.sh` now fails on exactly that state. The `.local` manifests are
+read automatically by bootstrap, update, and doctor — see `dotfiles_manifest` in
+`scripts/lib/common.sh`.
 
 ## Troubleshooting
 

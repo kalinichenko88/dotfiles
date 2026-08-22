@@ -19,11 +19,9 @@ trap dotfiles_cleanup_tmp EXIT
 trap 'exit 130' HUP INT TERM
 
 normalize_brewfile() {
-  awk '
-    match($0, /^(tap|brew|cask)[[:space:]]+"[^"]+"/) {
-      print substr($0, RSTART, RLENGTH)
-    }
-  ' | sort -u
+  dotfiles_brewfile_records \
+    | awk -F '\t' '{ printf "%s \"%s\"\n", $1, $2 }' \
+    | sort -u
 }
 
 create_brew_snapshot() {
@@ -81,29 +79,6 @@ print_node_inventory() {
   done
 }
 
-print_uv_inventory() {
-  local desired_file installed_file tool_spec
-  desired_file=$inventory_tmp/uv-desired
-  installed_file=$inventory_tmp/uv-installed
-  # A manifest with no entries is a valid state, and grep calls that failure.
-  { grep -Ev '^[[:space:]]*(#|$)' "$DOTFILES_ROOT/setup/uv-tools.txt" || :; } \
-    | sort -u > "$desired_file"
-  : > "$installed_file"
-
-  if ! command -v uv >/dev/null 2>&1; then
-    dotfiles_warn 'uv is unavailable; run the Brew bootstrap layer'
-  else
-    dotfiles_uv_tool_specs > "$installed_file"
-  fi
-
-  comm -23 "$desired_file" "$installed_file" | while IFS= read -r tool_spec; do
-    [ -n "$tool_spec" ] && printf 'uv-manifest-only\t%s\n' "$tool_spec"
-  done
-  comm -13 "$desired_file" "$installed_file" | while IFS= read -r tool_spec; do
-    [ -n "$tool_spec" ] && printf 'uv-source-only\t%s\n' "$tool_spec"
-  done
-}
-
 compare_inventory() {
   create_brew_snapshot
 
@@ -111,7 +86,6 @@ compare_inventory() {
   print_brew_differences
   printf 'Runtime comparison\n'
   print_node_inventory
-  print_uv_inventory
 }
 
 main() {

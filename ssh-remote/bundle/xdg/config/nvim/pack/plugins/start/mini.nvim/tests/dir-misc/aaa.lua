@@ -1,1 +1,0 @@
--- Dummy file to open inside `MiniMisc.find_root()` tests

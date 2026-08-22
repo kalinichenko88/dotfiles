@@ -153,15 +153,11 @@ EOF
 grep -q 'gh config set' "$TEST_ROOT/scripts/bootstrap.sh" || \
   fail 'gh preferences are no longer applied'
 
-# bootstrap.sh and doctor.sh keep two hand-maintained tables of the same
-# source→target pairs. Rather than merge them, fail when they drift: anything
-# bootstrap links must be something doctor checks.
-grep -oE 'dotfiles_link [^ ]+' "$TEST_ROOT/scripts/bootstrap.sh" \
-  | awk '{ print $2 }' | sort -u > "$tmp/linked-sources"
-grep -oE 'check_link [^ ]+' "$TEST_ROOT/scripts/doctor.sh" \
-  | awk '{ print $2 }' | sort -u > "$tmp/checked-sources"
-unchecked=$(comm -23 "$tmp/linked-sources" "$tmp/checked-sources")
-[ -z "$unchecked" ] || \
-  fail "bootstrap links these but doctor never checks them: $unchecked"
+# Both scripts now read setup/links.tsv, so there is no second table to drift
+# against; what has to hold is that every row actually got installed.
+while IFS=$'\t' read -r _ source target; do
+  assert_link "$TEST_ROOT/$source" "$target_home/$target"
+done < <(awk -F '\t' 'NF && $1 !~ /^#/ { print $2 "\t" $3 "\t" $4 }' \
+  "$TEST_ROOT/setup/links.tsv")
 
 pass 'configuration installation is complete, safe, and idempotent'

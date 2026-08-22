@@ -68,8 +68,6 @@ run_doctor() {
   GH_STUB_CONFIG="${STUB_GH_CONFIG-$gh_preferences}" \
   NPM_STUB_SLEEP="${STUB_NPM_SLEEP-0}" \
   DOCTOR_AUTH_TIMEOUT_SECONDS="${STUB_AUTH_TIMEOUT-3}" \
-  UV_STUB_TOOLS="$(grep -Ev '^[[:space:]]*(#|$)' "$TEST_ROOT/setup/uv-tools.txt" \
-    | sed 's/==/ v/' || :)" \
   PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
   DOTFILES_APPLICATIONS_ROOT="$apps_root" \
   "$TEST_ROOT/scripts/doctor.sh"
@@ -85,11 +83,12 @@ printf '#!/bin/sh\nprintf "v24.18.0\\n"\n' > \
   "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 chmod +x "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 
-started_at=$SECONDS
+# The hanging npm probe is still here so doctor is exercised with one, but
+# whether the timeout works is measured in common_test against the helper
+# itself: timing a whole doctor run made this assertion flaky.
 STUB_OUTDATED=fd STUB_NPM_SLEEP=5 STUB_AUTH_TIMEOUT=1 \
   run_doctor > "$tmp/ready.out"
-elapsed=$((SECONDS - started_at))
-[ "$elapsed" -lt 4 ] || fail 'doctor did not time out a hanging auth probe'
+assert_file_contains "$tmp/ready.out" 'needs-login auth npm'
 
 assert_file_contains "$tmp/ready.out" 'present-manual cask obsidian'
 # A cask installed by hand must not be re-failed by a second, stricter pass.
@@ -127,6 +126,20 @@ if run_doctor > "$tmp/placeholder-work.out"; then
   fail 'an unedited work-email placeholder must fail doctor'
 fi
 assert_file_contains "$tmp/placeholder-work.out" 'missing config git-work-email'
+mv "$tmp/work-identity" "$target_home/.config/git/gitconfig-work"
+
+# An older bootstrap symlinked the work identity and the signing keys into this
+# repository, which is public. Doctor has to fail on that, not accept it because
+# -f happens to follow the link.
+mv "$target_home/.config/git/gitconfig-work" "$tmp/work-identity"
+ln -s "$TEST_ROOT/git/gitconfig-personal" \
+  "$target_home/.config/git/gitconfig-work"
+if run_doctor > "$tmp/work-in-repo.out"; then
+  fail 'a work identity symlinked into the repository must fail doctor'
+fi
+assert_file_contains "$tmp/work-in-repo.out" \
+  'missing config git-work-email-in-repository'
+rm "$target_home/.config/git/gitconfig-work"
 mv "$tmp/work-identity" "$target_home/.config/git/gitconfig-work"
 
 # A CLI with its own installer is not present right after bootstrap, so its
