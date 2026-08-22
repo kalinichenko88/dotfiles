@@ -153,7 +153,10 @@ keybindings, Mason/LSP, and formatters.
 `claude/skills/*` symlink to `~/.claude/skills/`, `claude/hooks/*.sh` to
 `~/.claude/hooks/`, and `claude/hooks-config.json` is merged into
 `~/.claude/settings.json` with `jq` — unrelated keys survive, and changing an
-existing file requires `FORCE=1`.
+existing file requires `FORCE=1`. Installing then prunes dangling links in
+those two directories with `dotfiles_prune_orphan_links`, so renaming a hook
+does not leave the old one behind on every other machine; links pointing
+outside this repository are the user's own and are never touched.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`

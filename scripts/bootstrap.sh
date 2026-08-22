@@ -315,6 +315,8 @@ config_claude() {
     dotfiles_link "claude/hooks/$item_name" \
       "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name"
   done
+  dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/skills"
+  dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/hooks"
   install_claude_settings
 }
 

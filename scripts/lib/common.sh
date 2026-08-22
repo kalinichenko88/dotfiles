@@ -193,6 +193,26 @@ dotfiles_link() {
   dotfiles_info "linked $target"
 }
 
+# Removes symlinks in a directory that point into this repository but whose
+# source is gone: renaming or deleting a tracked skill or hook otherwise leaves
+# a dangling link behind, and nothing else ever prunes it. Links pointing
+# anywhere else are the user's own and are left alone.
+dotfiles_prune_orphan_links() {
+  local dir item
+  dir=$1
+
+  for item in "$dir"/*; do
+    [ -L "$item" ] || continue
+    [ -e "$item" ] && continue
+    case "$(readlink "$item")" in
+      "$DOTFILES_ROOT"/*) ;;
+      *) continue ;;
+    esac
+    dotfiles_run rm -f "$item"
+    dotfiles_info "removed orphaned link: $item"
+  done
+}
+
 # Merges tracked JSON into a target that other tools also write to, so their
 # keys survive. The jq program gets the target as input and the tracked file as
 # $source; a missing target is treated as {}. No FORCE is needed, because
