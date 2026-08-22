@@ -54,4 +54,7 @@ task to fix it; do not ask first.
   filing if it is already there.
 - One issue per finding. Title states the problem, body says where it is
   (`path:line`), how it shows up, and why it was out of scope here.
+- Label it from the labels the repository already has — `gh label list` first,
+  then `--label` with the ones that fit. Never invent a new label; if nothing
+  fits, file it unlabelled.
 - List every issue you filed (with numbers) in the final report.
