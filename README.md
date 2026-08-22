@@ -142,6 +142,7 @@ make config-nvim                 # one unit
 
 | Command | Purpose |
 | --- | --- |
+| `make help` | Every target, with the units and the `FORCE`/`DRY_RUN` switches |
 | `make bootstrap` | Full provisioning: brew, tools, config, doctor, marker |
 | `make bootstrap-brew` | Apply `Brewfile` and, when present, `Brewfile.local` |
 | `make bootstrap-tools` | Pinned NVM and Node |
