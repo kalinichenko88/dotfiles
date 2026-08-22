@@ -1,13 +1,11 @@
 ---
 name: typescript-conventions
-description: Use when writing or reviewing TypeScript — declaring an object shape, naming a new file, writing a callback or a type-only import — or when setting up lint rules for a new TypeScript project.
+description: Use when writing or reviewing TypeScript — declaring an object shape, naming a new file, writing a callback — or when setting up lint rules for a new TypeScript project.
 ---
 
 # TypeScript conventions
 
-The house style. Each rule is enforceable by a linter; the list is here for the
-code that is written before the linter runs, and for projects that have none
-yet. A codebase that consistently does otherwise wins — match it and say so.
+A codebase that consistently does otherwise wins — match it and say so.
 
 ## Object shapes are `type`, never `interface`
 
@@ -37,24 +35,7 @@ review is a type hole, not a shortcut.
 No implicit arrow returns in callbacks and handlers, no one-line braced `if`.
 The body goes on its own line, even when it is one statement.
 
-```ts
-if (!ok) {
-  return;
-}
-```
-
 ## Files are kebab-case, one entity per file
 
 `create-vault.ts`, not `createVault.ts`. Intra-file order: imports → the primary
 export → private helpers below it.
-
-## Type-only imports say so
-
-Under `verbatimModuleSyntax`, `import type { Sig }` for pure type imports and the
-inline modifier for mixed ones: `import { type Sig, statSig }`.
-
----
-
-Adding a rule: one `##` section, the rule in a line, the lint rule that enforces
-it, and the exception if there is one. Keep it short — this file is read in full
-every time it loads.

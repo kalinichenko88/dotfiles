@@ -4,9 +4,9 @@
 
 Before claiming a task done, run the repository's own check command — the single
 target that chains lint, typecheck and tests (`make check`, `bun run check`, the
-`check`/`ci` script in `package.json`, whatever CI calls). Find it once at the
-start of the task; if there is none, run the closest equivalent and say so.
-Report the actual outcome — "should pass" is not a result.
+`check`/`ci` script in `package.json`, whatever CI calls). If there is none, run
+the closest equivalent and say so. Report the actual outcome — "should pass" is
+not a result.
 
 ## A bug fix ships with its test (always)
 
@@ -14,13 +14,9 @@ Every bug fix carries the test that would have caught it: written before the
 fix, seen failing against the unfixed code, passing after. It asserts the
 behaviour that was reported, not the internals of the fix.
 
-- The test lands in the same change as the fix. "Covered later" and "an existing
-  suite probably covers it" are not answers.
-- If the bug shows on several surfaces, guard each one. Fixing the surface the
-  report named and leaving its siblings is how the bug comes back under a new
-  name.
-- If a test is genuinely impossible here — no harness, a fixture someone else
-  owns — say so in the report instead of quietly skipping it.
+If the bug shows on several surfaces, guard each one. Fixing the surface the
+report named and leaving its siblings is how the bug comes back under a new
+name.
 
 ## Docs move with the change (always)
 
@@ -33,8 +29,6 @@ ones now say something false.
   with a one-line why. Saying nothing is not an answer.
 - A follow-up is allowed only for a broader sweep the change merely brushes
   against — never for the document that describes the very behaviour changed.
-- Docs say what the code does, not what it should do. Generated docs (TypeDoc,
-  OpenAPI, route trees) are regenerated, never hand-edited.
 
 ## CI / GitHub Actions hygiene (always)
 
