@@ -1,7 +1,8 @@
 # Symlinked configuration. bootstrap.sh installs these rows and doctor.sh
 # verifies the same rows, so a new symlinked config is one line here rather
 # than an edit in two scripts. Units needing more than a symlink — dev-dirs,
-# gh, docker, claude — stay as functions in bootstrap.sh.
+# gh, docker, claude — stay as functions in bootstrap.sh; config_claude calls
+# config_links itself, so its rows below are installed like any other.
 #
 # unit	label	source	target-under-home
 git	git	git/gitconfig	.config/git/config
@@ -11,3 +12,5 @@ zsh	zsh	zsh/zshrc	.zshrc
 nvim	nvim	nvim	.config/nvim
 wezterm	wezterm	wezterm.lua	.wezterm.lua
 starship	starship	starship/starship.toml	.config/starship.toml
+claude	claude-md	claude/CLAUDE.md	.claude/CLAUDE.md
+claude	claude-statusline	claude/statusline-command.sh	.claude/statusline-command.sh

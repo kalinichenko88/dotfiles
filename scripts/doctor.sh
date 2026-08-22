@@ -237,8 +237,11 @@ check_config() {
   # Containment, not equality: the merge preserves hooks this repository does
   # not declare, and demanding equality would delete them to stay green.
   if command -v jq >/dev/null 2>&1 && \
-    jq -e --slurpfile hooks "$DOTFILES_ROOT/claude/hooks-config.json" \
-      '.hooks | contains($hooks[0])' \
+    jq -e --slurpfile fragment "$DOTFILES_ROOT/claude/settings-fragment.json" \
+      --arg home "$DOTFILES_TARGET_HOME" \
+      '(.hooks | contains($fragment[0].hooks))
+         and .statusLine.command ==
+           ($fragment[0].statusLine.command | sub("[$]HOME"; $home))' \
       "$DOTFILES_TARGET_HOME/.claude/settings.json" \
       >/dev/null 2>&1; then
     doctor_status present config claude-settings

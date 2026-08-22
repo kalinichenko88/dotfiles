@@ -26,6 +26,9 @@ assert_link "$TEST_ROOT/zsh/zshrc" "$target_home/.zshrc"
 assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
+assert_link "$TEST_ROOT/claude/CLAUDE.md" "$target_home/.claude/CLAUDE.md"
+assert_link "$TEST_ROOT/claude/statusline-command.sh" \
+  "$target_home/.claude/statusline-command.sh"
 assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"
 assert_link "$TEST_ROOT/claude/hooks/check-docs-before-push.sh" \
   "$target_home/.claude/hooks/check-docs-before-push.sh"
@@ -61,9 +64,14 @@ assert_equals 'token' \
 [ ! -e "$target_home/.config/git/gitconfig-local" ] || \
   fail 'bootstrap must not invent a local Git config'
 
-jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
-  '.hooks | contains($hooks[0])' "$target_home/.claude/settings.json" \
+jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
+  '.hooks | contains($fragment[0].hooks)' "$target_home/.claude/settings.json" \
   >/dev/null || fail 'Claude hook settings were not merged'
+
+# The tracked fragment says $HOME; what lands in settings.json must be the real
+# path, or the status line silently renders nothing.
+assert_equals "/bin/bash $target_home/.claude/statusline-command.sh" \
+  "$(jq -r '.statusLine.command' "$target_home/.claude/settings.json")"
 
 # Add a non-hook key, then verify a second install preserves it without backups.
 jq '. + {theme: "dark"}' "$target_home/.claude/settings.json" > "$tmp/settings-with-theme.json"
@@ -112,8 +120,8 @@ DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
   > "$tmp/claude-user-hook.out"
 assert_equals 'mine' \
   "$(jq -r '.hooks.Stop[0].hooks[0].command' "$target_home/.claude/settings.json")"
-jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
-  '(.hooks | contains($hooks[0])) and .theme == "dark"' \
+jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
+  '(.hooks | contains($fragment[0].hooks)) and .theme == "dark"' \
   "$target_home/.claude/settings.json" >/dev/null || \
   fail 'Claude merge lost the tracked hooks or unrelated settings'
 
@@ -127,8 +135,8 @@ jq '.hooks.PreToolUse = [{matcher: "Bash", hooks: [{type: "command", command: "s
 mv "$tmp/settings-stale-hook.json" "$target_home/.claude/settings.json"
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
   > "$tmp/claude-stale-hook.out"
-jq -e --slurpfile hooks "$TEST_ROOT/claude/hooks-config.json" \
-  '(.hooks | contains($hooks[0])) and .hooks.Stop[0].hooks[0].command == "mine"' \
+jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
+  '(.hooks | contains($fragment[0].hooks)) and .hooks.Stop[0].hooks[0].command == "mine"' \
   "$target_home/.claude/settings.json" >/dev/null || \
   fail 'Claude merge did not restore the tracked hooks alongside the user hook'
 settings_backup=$(find "$target_home/.claude" -maxdepth 1 \

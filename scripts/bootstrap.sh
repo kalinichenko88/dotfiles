@@ -233,11 +233,20 @@ announce_missing_git_identity() {
 # Per-event merge, not a wholesale replace: a user's hooks on events this
 # repository does not declare have to keep firing.
 install_claude_settings() {
-  # $source is a jq variable, not a shell one.
+  local program
+  # One merge, not one per key: a second write would back up the state the
+  # first one just produced, on a machine that had no settings at all.
+  # $source is a jq variable, not a shell one; $HOME is spelled in the tracked
+  # fragment so a public repository holds no home directory of ours, and is
+  # expanded here because only hook commands are documented to run through a
+  # shell.
   # shellcheck disable=SC2016
-  dotfiles_merge_json claude/hooks-config.json \
+  program='.hooks = ((.hooks // {}) + $source[0].hooks)'
+  program+=" | .statusLine = (\$source[0].statusLine"
+  program+=" | .command |= sub(\"[\$]HOME\"; \"$DOTFILES_TARGET_HOME\"))"
+  dotfiles_merge_json claude/settings-fragment.json \
     "$DOTFILES_TARGET_HOME/.claude/settings.json" \
-    '.hooks = ((.hooks // {}) + $source[0])'
+    "$program"
 }
 
 config_dev_dirs() {
@@ -303,6 +312,7 @@ config_docker() {
 
 config_claude() {
   local item item_name
+  config_links claude
   for item in "$DOTFILES_ROOT"/claude/skills/*; do
     [ -d "$item" ] || continue
     item_name=$(basename -- "$item")

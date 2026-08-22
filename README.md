@@ -225,9 +225,11 @@ other machines. Links pointing anywhere else are yours and are left alone.
 | `wezterm.lua` | `~/.wezterm.lua` |
 | `starship/starship.toml` | `~/.config/starship.toml` |
 | `docker/config.json` | `~/.docker/config.json` (merge) |
+| `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` |
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
-| `claude/hooks-config.json` | `~/.claude/settings.json` (merge) |
+| `claude/statusline-command.sh` | `~/.claude/statusline-command.sh` |
+| `claude/settings-fragment.json` | `~/.claude/settings.json` (merge) |
 | — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
 
 The plain symlinks in that table are rows in `setup/links.tsv`, which is what
