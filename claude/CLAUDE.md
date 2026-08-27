@@ -43,8 +43,13 @@ catalogues, fixtures and seed data, and values that simply *are* text in that
 language. The key stays `greeting.ru`; the string it holds does not have to be
 English.
 
-Prose outside the code — README, docs, commit messages — is the project's own
-call, and this rule says nothing about it.
+Commit messages are English too, in every repository. They are the log of the
+code: `git log` and `git blame` are read long after the team that wrote them,
+and a history in two languages is as ungreppable as a codebase in two.
+
+The rest of the prose — README, docs, issues, PR titles and descriptions — is
+the project's own call. Match what the repository already does rather than
+imposing English on it.
 
 ## Docs move with the change (always)
 
@@ -96,6 +101,8 @@ comments — follow this order, without being asked:
 
 ## Commits (always)
 
+Commit messages are written in English — see *Code speaks English* above.
+
 Never add a `Co-Authored-By:` trailer to commit messages — no Claude, no
 model name, no `noreply@anthropic.com`.
 
@@ -109,6 +116,10 @@ If the PR closes an issue — `Closes #12`, `Fixes #12` — assign that issue th
 same way *before* the PR merges and closes it: `gh issue edit 12 --add-assignee
 @me`. Once GitHub closes an issue automatically, nothing goes back to record who
 did the work.
+
+The title and description follow the language the project already uses — read
+the recent merged PRs and issues before writing, and match them. English is the
+default only where there is nothing to match.
 
 Merging is always `gh pr merge --squash --delete-branch`. One commit per PR
 keeps `main` readable, and the branch has nothing left to say once it is in.
