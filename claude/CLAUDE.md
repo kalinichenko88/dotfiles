@@ -71,6 +71,23 @@ comments — follow this order, without being asked:
 Never add a `Co-Authored-By:` trailer to commit messages — no Claude, no
 model name, no `noreply@anthropic.com`.
 
+## Pull requests (always)
+
+Every PR opened with `gh pr create` carries an assignee — always pass
+`--assignee @me`, so the authenticated account owns it. An unassigned PR has
+nobody's name on it in the list view, which is how review requests get lost.
+
+If the PR closes an issue — `Closes #12`, `Fixes #12` — assign that issue the
+same way *before* the PR merges and closes it: `gh issue edit 12 --add-assignee
+@me`. Once GitHub closes an issue automatically, nothing goes back to record who
+did the work.
+
+Merging is always `gh pr merge --squash --delete-branch`. One commit per PR
+keeps `main` readable, and the branch has nothing left to say once it is in.
+
+- Already assigned to someone: leave it alone, say so, do not reassign.
+- `gh` not authenticated, or no GitHub remote: skip all of it and mention it.
+
 ## Out-of-scope findings become issues (always)
 
 Anything worth fixing that is **not** part of the current task — a bug, a
