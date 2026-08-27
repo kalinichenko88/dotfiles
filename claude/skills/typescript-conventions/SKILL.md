@@ -1,6 +1,6 @@
 ---
 name: typescript-conventions
-description: Use when writing or reviewing TypeScript — declaring an object shape, naming a new file, writing a callback — or when setting up lint rules for a new TypeScript project.
+description: Use when writing or reviewing TypeScript — declaring an object shape, naming a new file, writing a callback, reaching for a dependency — or when setting up lint rules for a new TypeScript project.
 ---
 
 # TypeScript conventions
@@ -34,6 +34,24 @@ review is a type hole, not a shortcut.
 
 No implicit arrow returns in callbacks and handlers, no one-line braced `if`.
 The body goes on its own line, even when it is one statement.
+
+## Reach for the runtime before a dependency
+
+Node and Bun ship most of what a utility library used to. Check the engine the
+project pins — `engines`, the Docker base image — before installing anything or
+writing a formatter by hand.
+
+| Instead of | Use |
+| --- | --- |
+| date-fns, moment, hand-rolled date strings | `Intl.DateTimeFormat`, `Intl.RelativeTimeFormat` |
+| a currency or percent helper | `Intl.NumberFormat` |
+| pluralize | `Intl.PluralRules` |
+| lodash `groupBy`, `cloneDeep` | `Object.groupBy`, `structuredClone` |
+| axios | `fetch` |
+| p-timeout, a manual `AbortController` timer | `AbortSignal.timeout` |
+
+`Intl` takes locale and time zone as arguments — pass them explicitly rather
+than inheriting whatever the host has.
 
 ## Files are kebab-case, one entity per file
 

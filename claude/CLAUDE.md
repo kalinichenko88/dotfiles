@@ -18,6 +18,19 @@ If the bug shows on several surfaces, guard each one. Fixing the surface the
 report named and leaving its siblings is how the bug comes back under a new
 name.
 
+## Use the platform before reaching past it (always)
+
+Whatever the project runs on — Node, Bun, Deno, Go, the browser — check what its
+standard library already does at the version the project pins, before writing a
+helper by hand or adding a dependency. Runtimes ship faster than training data:
+verify against current docs (context7, the release notes), not memory, and take
+the newest API the pinned version actually supports.
+
+`Intl.NumberFormat` instead of a hand-written currency formatter,
+`structuredClone` instead of a deep-clone package, `slices`/`maps` instead of a
+copied generic helper. A dependency earns its place only where the platform has
+no answer — name the API you checked before concluding that.
+
 ## Docs move with the change (always)
 
 A change that alters user-visible behaviour, a public contract, or how the thing
