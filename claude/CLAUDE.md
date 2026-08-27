@@ -31,6 +31,21 @@ the newest API the pinned version actually supports.
 copied generic helper. A dependency earns its place only where the platform has
 no answer — name the API you checked before concluding that.
 
+## Code speaks English (always)
+
+Inside the code everything is English: identifiers — variables, functions,
+types, files, branches — and every comment, docstring and TODO. This holds in
+every project, whatever language the team speaks. Mixed-language symbols are
+ungreppable and split a codebase into dialects.
+
+Another language appears only in the data layer: user-facing copy, translation
+catalogues, fixtures and seed data, and values that simply *are* text in that
+language. The key stays `greeting.ru`; the string it holds does not have to be
+English.
+
+Prose outside the code — README, docs, commit messages — is the project's own
+call, and this rule says nothing about it.
+
 ## Docs move with the change (always)
 
 A change that alters user-visible behaviour, a public contract, or how the thing
