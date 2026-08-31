@@ -1,6 +1,6 @@
 ---
 name: github
-description: Use when touching a repository's GitHub surface — writing a commit message, opening or merging a pull request, filing or updating an issue, picking an issue up to work on, or creating or editing a GitHub Actions workflow.
+description: Use when touching a repository's GitHub surface — writing a commit message, running `gh pr create` or merging a pull request, filing or updating an issue, picking an issue up to work on, checking whether a finding is already filed, or creating or editing a GitHub Actions workflow.
 ---
 
 # Working with GitHub
@@ -8,6 +8,16 @@ description: Use when touching a repository's GitHub surface — writing a commi
 Everything here needs `gh` authenticated against a GitHub remote. Where it is
 not — `gh auth status` fails, or the remote is elsewhere — skip the step and say
 so in the final report rather than inventing a substitute.
+
+| Moment | What must happen |
+| --- | --- |
+| Writing a commit message | English, no `Co-Authored-By:` trailer |
+| `gh pr create` | `--assignee @me`; assign the issue it closes too |
+| Merging | `gh pr merge --squash --delete-branch` |
+| Finding something out of scope | File an issue — search by identifier first |
+| Filing next to an existing issue | Name the relation, and correct the other side |
+| Picking an issue up | Read what it is wired to; re-check its `path:line` |
+| Editing a workflow | Pin `uses:` to the latest major; runtime ≥ host |
 
 ## Commits
 
@@ -36,7 +46,6 @@ Merging is always `gh pr merge --squash --delete-branch`. One commit per PR
 keeps `main` readable, and the branch has nothing left to say once it is in.
 
 - Already assigned to someone: leave it alone, say so, do not reassign.
-- `gh` not authenticated, or no GitHub remote: skip all of it and mention it.
 
 ## Filing an issue
 
@@ -45,9 +54,12 @@ defect, an improvement worth making later — gets filed as an issue instead of
 being fixed inline or dropped in the chat. Do not derail the task to fix it; do
 not ask first.
 
-- Search first — `gh issue list --search "<keywords>" --state all` — and skip
-  filing if it is already there. Closed counts: a finding that was filed and
-  rejected does not need filing again.
+**Search by identifier, not by your title.** `gh issue list --search "Parser"
+--state all` finds every issue that names the symbol; the prose you were about
+to write finds only issues someone happened to phrase your way — and on a
+tracker written in another language, nothing at all. Closed counts too: a
+finding already filed and rejected does not need filing again.
+
 - One issue per finding. Title states the problem, body says where it is
   (`path:line`), how it shows up, and why it was out of scope here.
 - Label it from the labels the repository already has — `gh label list` first,
@@ -68,27 +80,32 @@ one-line comment saying what moved and why. GitHub keeps the edit history, so
 nothing is lost by correcting the text in place. A duplicate is closed against
 the survivor, never left standing as a second opinion.
 
-**Taking one into work.** Read it, then list what it is wired to — the issues
-its body names, and the ones that name it:
+**Taking one into work.** Read it, then list what points at it — the timeline
+carries every cross-reference, including the ones its own body never mentions:
 
 ```bash
-gh api repos/{owner}/{repo}/issues/12/timeline \
+gh api repos/{owner}/{repo}/issues/12/timeline --paginate \
   --jq '.[] | select(.event == "cross-referenced")
-        | "\(.source.issue.number) \(.source.issue.state) \(.source.issue.title)"'
+        | "\(if .source.issue.pull_request then "PR" else "issue" end) \(.source.issue.number) \(.source.issue.state) \(.source.issue.title)"'
 ```
 
-Read in full the open ones, and any closed one whose outcome the task leans on;
-titles and state are enough for the rest. Then check the issue's own `path:line`
-citations against the current tree before believing them — a line number is the
-first thing to rot — and correct them in the issue as the first act of the work.
+`--paginate` is not optional: the timeline pages at 30 events, and on a
+well-linked issue the newest references are exactly the ones that fall off the
+first page. Read in full the open issues, the PRs that touched the same code,
+and any closed issue whose outcome the task leans on; titles and state are
+enough for the rest.
+
+Then check the issue's own `path:line` citations against the current tree before
+believing them — a line number is the first thing to rot — and correct them in
+the issue as the first act of the work.
 
 **Finishing.** The PR closes it (`Closes #12`), and the same pass updates every
 sibling issue whose text the change just falsified.
 
-Measured on a live tracker: of the 100 newest issues 4 bodies had ever been
-edited; five open issues still cited a file deleted three days earlier; one
+Measured on a live tracker: of the 100 newest issues, 4 bodies had ever been
+edited; 5 open issues still cited a file the schema migration had deleted; one
 pointed 23 lines away from the code it described, at a closing brace. Every one
-of those issues was correctly cross-linked — the graph was never the problem.
+of them was correctly cross-linked — the graph was never the problem.
 
 ## GitHub Actions
 
