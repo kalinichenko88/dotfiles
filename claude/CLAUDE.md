@@ -18,6 +18,22 @@ If the bug shows on several surfaces, guard each one. Fixing the surface the
 report named and leaving its siblings is how the bug comes back under a new
 name.
 
+**The input comes from the source, not from your head.** Red-then-green proves
+the test exercises the code. It does not prove the case exists. A guard built on
+an input the real source never emits goes green forever while the real shape
+stays unchecked — and the fix underneath it can be doing nothing, or harm.
+
+So before the report is even believed, count it: pull a sample of real payloads
+and say how many carry the shape. Zero means the fix does not need to exist, and
+that is the finding. Then write the case against a recorded payload — whitespace,
+pretty-printing and all — not a string typed to make the assertion pass.
+
+Measured, the one time this was skipped: a "list items run together" bug, filed
+off a hand-written `<li>a</li><li>b</li>`, tested green, shipped. The sources
+turned out never to emit two block tags without whitespace between them — 0 of
+100 bodies — so the fix changed no table it claimed to fix and put a blank line
+inside 6 of 10 real lists. The test was green over data that never moved.
+
 ## Use the platform before reaching past it (always)
 
 Whatever the project runs on — Node, Bun, Deno, Go, the browser — check what its
@@ -63,19 +79,6 @@ ones now say something false.
 - A follow-up is allowed only for a broader sweep the change merely brushes
   against — never for the document that describes the very behaviour changed.
 
-## CI / GitHub Actions hygiene (always)
-
-When creating or editing CI workflows (GitHub Actions, any project):
-
-1. **Pin every `uses:` to the latest available major.** Don't trust memory — verify against the GitHub API:
-   `gh api repos/<owner>/<repo>/releases/latest --jq .tag_name`, and confirm the floating major tag exists:
-   `gh api repos/<owner>/<repo>/git/matching-refs/tags/v --jq '[.[].ref|sub("refs/tags/";"")]|map(select(test("^v[0-9]+$")))'`.
-   Pin to the floating major (e.g. `actions/checkout@v7`), not an exact patch.
-
-2. **Never pin a CI language runtime below the host dev machine.** The CI version must be **>= the version installed on the current machine** (e.g. `node --version`, `bun --version`). Match the host major by default; never go lower. Re-check whenever touching workflow runtime versions.
-
-Apply both whenever adding or reviewing CI, even if not explicitly asked.
-
 ## Handling code-review findings (always)
 
 After any code review — `/code-review`, a review subagent, or a human's
@@ -99,48 +102,24 @@ comments — follow this order, without being asked:
 5. **Report honestly.** State what was fixed, what was deliberately skipped and
    why, and any side effect a fix introduced elsewhere.
 
-## Commits (always)
+## GitHub (always)
 
-Commit messages are written in English — see *Code speaks English* above.
+A commit message, a pull request, an issue, a workflow file — anything that
+touches a repository's GitHub surface goes through the `github` skill. Invoke it
+before the first `git commit`, `gh` call or workflow edit, not after: it carries
+commit trailers, PR ownership and merge style, issue filing, keeping issues true
+as the code moves, and action pinning.
 
-Never add a `Co-Authored-By:` trailer to commit messages — no Claude, no
+Two rules stay here in full, because they have to fire when nobody is thinking
+about GitHub at all.
+
+**Out-of-scope findings become issues.** Anything worth fixing that is **not**
+part of the current task — a bug, a latent defect, an improvement worth making
+later — gets filed as an issue instead of being fixed inline or dropped in the
+chat. Do not derail the task to fix it; do not ask first. The skill carries the
+how: searching for duplicates first, one issue per finding, existing labels
+only, and every number listed in the final report. Where there is no GitHub
+remote or `gh auth status` fails, name the finding in the final report instead.
+
+**Never add a `Co-Authored-By:` trailer** to a commit message — no Claude, no
 model name, no `noreply@anthropic.com`.
-
-## Pull requests (always)
-
-Every PR opened with `gh pr create` carries an assignee — always pass
-`--assignee @me`, so the authenticated account owns it. An unassigned PR has
-nobody's name on it in the list view, which is how review requests get lost.
-
-If the PR closes an issue — `Closes #12`, `Fixes #12` — assign that issue the
-same way *before* the PR merges and closes it: `gh issue edit 12 --add-assignee
-@me`. Once GitHub closes an issue automatically, nothing goes back to record who
-did the work.
-
-The title and description follow the language the project already uses — read
-the recent merged PRs and issues before writing, and match them. English is the
-default only where there is nothing to match.
-
-Merging is always `gh pr merge --squash --delete-branch`. One commit per PR
-keeps `main` readable, and the branch has nothing left to say once it is in.
-
-- Already assigned to someone: leave it alone, say so, do not reassign.
-- `gh` not authenticated, or no GitHub remote: skip all of it and mention it.
-
-## Out-of-scope findings become issues (always)
-
-Anything worth fixing that is **not** part of the current task — a bug, a
-latent defect, an improvement worth making later — gets filed as a GitHub
-issue instead of being fixed inline or dropped in the chat. Do not derail the
-task to fix it; do not ask first.
-
-- Only when the repository has a GitHub remote and `gh auth status` passes.
-  Otherwise mention the finding in the final report and move on.
-- Search first — `gh issue list --search "<keywords>" --state all` — and skip
-  filing if it is already there.
-- One issue per finding. Title states the problem, body says where it is
-  (`path:line`), how it shows up, and why it was out of scope here.
-- Label it from the labels the repository already has — `gh label list` first,
-  then `--label` with the ones that fit. Never invent a new label; if nothing
-  fits, file it unlabelled.
-- List every issue you filed (with numbers) in the final report.
