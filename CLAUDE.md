@@ -42,8 +42,9 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 - `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
   installs these rows, doctor verifies the same rows. A new symlinked config is
   a line here, not an edit in two scripts.
-- `tests/*_test.sh` — plain bash, fixtures in `tests/fixtures/bin`, run by
-  `make test`
+- `tests/*_test.sh` — plain bash, run by `make test`. Fixtures: stub executables
+  in `tests/fixtures/bin`, recorded transcript commands in
+  `tests/fixtures/hook-commands`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
 `wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
@@ -175,8 +176,11 @@ user's own and are never touched.
   only the two rules that must fire before anyone thinks of GitHub
 - Skill `typescript-conventions` — house TypeScript style, grown one rule at a time
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
-  until CLAUDE.md and README.md have been reviewed, using a session-scoped temp
-  flag so the retry passes
+  until CLAUDE.md and README.md have been reviewed, using a temp flag keyed to
+  the session **and the command** so the retry passes. Both halves of that key
+  matter: text the hook cannot tell from a command — a document that writes
+  `git push` at the start of a line — is denied too, and a session-only key
+  would let that denial spend the review the next real push owes
 
 ### WezTerm
 

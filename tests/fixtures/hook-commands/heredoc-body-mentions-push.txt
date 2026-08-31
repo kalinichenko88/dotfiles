@@ -1,0 +1,7 @@
+python3 - <<'PY'
+# finding 3 — Step 6 must stage the dependent's manifest when the cascade fired
+old6 = """```sh
+git add packages/<name>/package.json bun.lock CHANGELOG.md README.md
+git commit -m "chore(release): <name>-v<version>"
+git push origin main
+PY

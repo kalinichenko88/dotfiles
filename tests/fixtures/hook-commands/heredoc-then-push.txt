@@ -1,0 +1,5 @@
+git add src && git commit -q -F - <<'EOF'
+refactor: trim the palette commentary and inline the star RNG
+
+EOF
+git push 2>&1 | tail -3; git log --oneline -3; git status -sb | head -1
