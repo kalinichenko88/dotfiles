@@ -10,9 +10,29 @@
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 
-# Match git push at a command boundary — "git commit && git push" is the common form.
-PUSH_RE='(^[[:space:]]*|[;&|][[:space:]]*)git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+)?push([[:space:]]|$)'
-[[ $COMMAND =~ $PUSH_RE ]] || exit 0
+# A heredoc body is text, not commands: a document written through one can spell
+# out "git push origin main" on a line of its own and push nothing. Drop those
+# bodies first, so what is left is only what the shell would run. \047 is the
+# single quote, which awk cannot otherwise write inside a regex literal.
+CODE=$(printf '%s\n' "$COMMAND" | awk '
+  skip { if ($0 ~ term) skip = 0; next }
+  {
+    if (match($0, /<<-?[ \t]*[\047"]?[A-Za-z_][A-Za-z0-9_]*/)) {
+      word = substr($0, RSTART, RLENGTH)
+      sub(/^<<-?[ \t]*/, "", word)
+      gsub(/[\047"]/, "", word)
+      term = "^[ \t]*" word "[ \t]*$"
+      skip = 1
+    }
+    print
+  }
+')
+
+# Match git push at a command boundary — "git commit && git push" is the common
+# form, and a heredoc terminator ends the line, so a push after one starts its
+# own. Bash =~ has no multiline mode, hence the newline in the separator class.
+PUSH_RE=$'(^|[;&|(\n])[[:space:]]*git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+)?push([[:space:]]|$)'
+[[ $CODE =~ $PUSH_RE ]] || exit 0
 
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)

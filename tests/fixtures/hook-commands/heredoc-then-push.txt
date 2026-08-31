@@ -1,0 +1,13 @@
+git add src && git commit -q -F - <<'EOF'
+refactor: trim the palette commentary and inline the star RNG
+
+Four comments were restating their own code or the commit message that
+introduced them; each keeps the half that carries a constraint — the slab
+ceiling, the Tailwind alias trap — and drops the retelling.
+
+makeRng was a factory with one call site, so its closure moves to the module
+scope it was already the only consumer of. Verified behaviour-preserving: the
+star field markup hashes identically before and after, and two consecutive
+builds still produce the same dist/index.html.
+EOF
+git push 2>&1 | tail -3; git log --oneline -3; git status -sb | head -1

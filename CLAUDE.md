@@ -42,8 +42,11 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 - `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
   installs these rows, doctor verifies the same rows. A new symlinked config is
   a line here, not an edit in two scripts.
-- `tests/*_test.sh` — plain bash, fixtures in `tests/fixtures/bin`, run by
-  `make test`
+- `tests/*_test.sh` — plain bash, run by `make test`. Fixtures: stub executables
+  in `tests/fixtures/bin`, and in `tests/fixtures/hook-commands` the recorded
+  `Bash` commands `tests/hooks_test.sh` replays at the docs hook — transcript
+  payloads, kept verbatim, because a hand-typed command is not a shape the hook
+  ever sees
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
 `wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
