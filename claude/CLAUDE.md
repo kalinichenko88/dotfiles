@@ -18,6 +18,22 @@ If the bug shows on several surfaces, guard each one. Fixing the surface the
 report named and leaving its siblings is how the bug comes back under a new
 name.
 
+**The input comes from the source, not from your head.** Red-then-green proves
+the test exercises the code. It does not prove the case exists. A guard built on
+an input the real source never emits goes green forever while the real shape
+stays unchecked — and the fix underneath it can be doing nothing, or harm.
+
+So before the report is even believed, count it: pull a sample of real payloads
+and say how many carry the shape. Zero means the fix does not need to exist, and
+that is the finding. Then write the case against a recorded payload — whitespace,
+pretty-printing and all — not a string typed to make the assertion pass.
+
+Measured, the one time this was skipped: a "list items run together" bug, filed
+off a hand-written `<li>a</li><li>b</li>`, tested green, shipped. The sources
+turned out never to emit two block tags without whitespace between them — 0 of
+100 bodies — so the fix changed no table it claimed to fix and put a blank line
+inside 6 of 10 real lists. The test was green over data that never moved.
+
 ## Use the platform before reaching past it (always)
 
 Whatever the project runs on — Node, Bun, Deno, Go, the browser — check what its
