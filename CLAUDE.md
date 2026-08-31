@@ -176,8 +176,11 @@ user's own and are never touched.
   only the two rules that must fire before anyone thinks of GitHub
 - Skill `typescript-conventions` — house TypeScript style, grown one rule at a time
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
-  until CLAUDE.md and README.md have been reviewed, using a session-scoped temp
-  flag so the retry passes
+  until CLAUDE.md and README.md have been reviewed, using a temp flag keyed to
+  the session **and the command** so the retry passes. Both halves of that key
+  matter: text the hook cannot tell from a command — a document that writes
+  `git push` at the start of a line — is denied too, and a session-only key
+  would let that denial spend the review the next real push owes
 
 ### WezTerm
 
