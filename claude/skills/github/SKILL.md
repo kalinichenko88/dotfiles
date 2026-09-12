@@ -11,7 +11,7 @@ so in the final report rather than inventing a substitute.
 
 | Moment | What must happen |
 | --- | --- |
-| Writing a commit message | English, no `Co-Authored-By:` trailer |
+| Writing a commit message | One English sentence, no body, no `Co-Authored-By:` trailer |
 | `gh pr create` | `--assignee @me`; assign the issue it closes too |
 | Merging | `gh pr merge --squash --delete-branch` |
 | Finding something out of scope | File an issue — search by identifier first |
@@ -21,11 +21,22 @@ so in the final report rather than inventing a substitute.
 
 ## Commits
 
+A commit message is one sentence: the subject line, imperative, under 72
+characters, and nothing under it. The reasoning, the measurements, the
+alternatives and the test plan live in the PR description, which already says
+all of it; the commit names the change and stops. `git log --oneline` shows the
+whole message.
+
+```
+Make the docs hook read commands, not prose
+```
+
 Commit messages are English, in every repository — see *Code speaks English* in
 the global prompt.
 
 Never add a `Co-Authored-By:` trailer: no Claude, no model name, no
-`noreply@anthropic.com`.
+`noreply@anthropic.com`. A trailer the harness requires goes after a blank line
+and is the only thing below the subject.
 
 ## Pull requests
 
