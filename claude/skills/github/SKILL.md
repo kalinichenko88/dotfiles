@@ -11,7 +11,7 @@ so in the final report rather than inventing a substitute.
 
 | Moment | What must happen |
 | --- | --- |
-| Writing a commit message | One English sentence, no body, no `Co-Authored-By:` trailer |
+| Writing a commit message | `type: one sentence`, at most 5 bullets under it, no `Co-Authored-By:` |
 | `gh pr create` | `--assignee @me`; assign the issue it closes too |
 | Merging | `gh pr merge --squash --delete-branch` |
 | Finding something out of scope | File an issue — search by identifier first |
@@ -21,22 +21,42 @@ so in the final report rather than inventing a substitute.
 
 ## Commits
 
-A commit message is one sentence: the subject line, imperative, under 72
-characters, and nothing under it. The reasoning, the measurements, the
-alternatives and the test plan live in the PR description, which already says
-all of it; the commit names the change and stops. `git log --oneline` shows the
-whole message.
+A commit message is a typed subject line, and under it, at most, a short list of
+what was done:
 
 ```
-Make the docs hook read commands, not prose
+fix(hooks): make the docs hook read commands, not prose
+
+- Add the newline to the separator class
+- Replay two recorded pushes through the hook in tests/hooks_test.sh
 ```
+
+The subject is `type: sentence` or `type(scope): sentence` — imperative, up to
+100 characters, so the whole first sentence fits. The types, and the only ones:
+
+| Type | Use for |
+| --- | --- |
+| `feat` | a capability the user did not have before |
+| `fix` | behaviour that was wrong and is now right |
+| `refactor` | a change with no visible behaviour change |
+| `docs` | documentation only |
+| `test` | tests only |
+| `ci` | workflows and pipelines |
+| `chore` | anything else: dependencies, tooling, housekeeping |
+
+A change touching several kinds takes the type of the part the reader cares
+about; `wip` is not a type and never reaches `main`.
+
+The list, when there is one, comes after a blank line: one to five bullets, one
+line each, each naming a thing that was done. The reasoning, the measurements
+and the alternatives stay in the PR description. Nothing else goes below the
+list.
 
 Commit messages are English, in every repository — see *Code speaks English* in
 the global prompt.
 
 Never add a `Co-Authored-By:` trailer: no Claude, no model name, no
-`noreply@anthropic.com`. A trailer the harness requires goes after a blank line
-and is the only thing below the subject.
+`noreply@anthropic.com`.
 
 ## Pull requests
 
@@ -55,6 +75,8 @@ default only where there is nothing to match.
 
 Merging is always `gh pr merge --squash --delete-branch`. One commit per PR
 keeps `main` readable, and the branch has nothing left to say once it is in.
+The PR title becomes that commit's subject, so it takes the same `type: sentence`
+shape as a commit.
 
 - Already assigned to someone: leave it alone, say so, do not reassign.
 
