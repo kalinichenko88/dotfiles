@@ -16,5 +16,8 @@
   "statusLine": {
     "type": "command",
     "command": "$HOME/.claude/statusline-command.sh"
+  },
+  "attribution": {
+    "sessionUrl": false
   }
 }

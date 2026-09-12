@@ -230,7 +230,7 @@ other machines. Links pointing anywhere else are yours and are left alone.
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
 | `claude/statusline-command.sh` | `~/.claude/statusline-command.sh` |
-| `claude/settings-fragment.json` | `~/.claude/settings.json` (merge) |
+| `claude/settings-fragment.json` | `~/.claude/settings.json` (merge: hooks, status line, no session link in commits) |
 | — | `~/Dev/Personal`, `~/Dev/Work`, `~/Dev/Open Source` (created once) |
 
 The plain symlinks in that table are rows in `setup/links.tsv`, which is what
