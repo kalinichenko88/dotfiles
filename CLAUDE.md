@@ -162,9 +162,12 @@ symlink and doctor verifies it from the same table.
 `claude/skills/*` symlink to `~/.claude/skills/`, `claude/hooks/*.sh` to
 `~/.claude/hooks/`, and `claude/statusline-command.sh` to `~/.claude/`.
 `claude/settings-fragment.json` holds everything merged into
-`~/.claude/settings.json` — hooks and the status line together — in one `jq`
-pass, because a second merge into the same file backs up what the first just
-wrote. Unrelated keys survive, and changing an existing file requires `FORCE=1`.
+`~/.claude/settings.json` — hooks, the status line and `attribution` together —
+in one `jq` pass, because a second merge into the same file backs up what the
+first just wrote. Unrelated keys survive, and changing an existing file requires
+`FORCE=1`. `attribution.sessionUrl` is `false` there on purpose: the trailer
+Claude Code adds to commits links a session transcript, and a public repository
+would carry that link forever while the transcript's visibility stays a toggle.
 
 Installing then prunes dangling links in the skills and hooks directories with
 `dotfiles_prune_orphan_links`, so renaming a hook does not leave the old one
