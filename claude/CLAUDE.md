@@ -102,6 +102,19 @@ comments — follow this order, without being asked:
 5. **Report honestly.** State what was fixed, what was deliberately skipped and
    why, and any side effect a fix introduced elsewhere.
 
+## The Boy Scout Rule (always)
+
+Leave the code you touch cleaner than you found it. The rule is the Scouts'
+campground rule as Robert C. Martin put it in *Clean Code*: every check-in
+leaves the module a little better than the check-out found it, and a codebase
+that only ever receives that kind of care does not rot.
+
+It covers what the task already has open — a stale comment, a dead variable, a
+misleading name, a broken link, a wrong `path:line` in a doc — and the fix is
+small, safe and needs no decision. Fix it now and list it in the PR description
+as not part of the task. A finding that fails one of those three is not a Boy
+Scout fix; it is an issue. Cleaner than you found it is not the same as rebuilt.
+
 ## GitHub (always)
 
 A commit message, a pull request, an issue, a workflow file — anything that
@@ -116,8 +129,10 @@ about GitHub at all.
 **Out-of-scope findings become issues.** Anything worth fixing that is **not**
 part of the current task — a bug, a latent defect, an improvement worth making
 later — gets filed as an issue instead of being fixed inline or dropped in the
-chat. Do not derail the task to fix it; do not ask first. The skill carries the
-how: searching for duplicates first, one issue per finding, existing labels
+chat. Do not derail the task to fix it; do not ask first. If it is small, safe
+and needs no decision, it goes into the current PR instead — the Boy Scout Rule
+above — listed in the description as not part of the task. The skill draws that
+line and carries the how: searching for duplicates first, one issue per finding, existing labels
 only, and every number listed in the final report. Where there is no GitHub
 remote or `gh auth status` fails, name the finding in the final report instead.
 

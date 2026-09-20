@@ -14,7 +14,7 @@ so in the final report rather than inventing a substitute.
 | Writing a commit message | `type: one sentence`, at most 5 bullets under it, no `Co-Authored-By:` |
 | `gh pr create` | `--assignee @me`; assign the issue it closes too |
 | Merging | `gh pr merge --squash --delete-branch` |
-| Finding something out of scope | File an issue — search by identifier first |
+| Finding something out of scope | Small, safe, needs no decision: fix it in this PR, list it in the description. Otherwise file an issue — search by identifier first |
 | Filing next to an existing issue | Name the relation, and correct the other side |
 | Picking an issue up | Read what it is wired to; re-check its `path:line` |
 | Editing a workflow | Pin `uses:` to the latest major; runtime ≥ host |
@@ -86,6 +86,17 @@ Anything worth fixing that is **not** part of the current task — a bug, a late
 defect, an improvement worth making later — gets filed as an issue instead of
 being fixed inline or dropped in the chat. Do not derail the task to fix it; do
 not ask first.
+
+**If it is small, safe and needs no decision, it goes into this PR instead** —
+the Boy Scout Rule from the global prompt. All three, checked against the diff
+you would write, not the feeling: it stays within a few lines, it changes
+nothing another caller or user relies on, and there is only one way to do it — a
+typo, a stale comment, a dead variable, a wrong `path:line` in a doc, a broken
+link. Fix it now, in its own commit if it touches a file the task does not, and
+list it in the PR description under **Also fixed** with a line per item, so the
+reviewer knows which changes are not the task. An issue for a two-line fix costs
+more than the fix. Fails any of the three — a design choice, a behaviour change,
+a fix that needs its own test — and it is an issue, however small it looks.
 
 **Search by identifier, not by your title.** `gh issue list --search "Parser"
 --state all` finds every issue that names the symbol; the prose you were about
