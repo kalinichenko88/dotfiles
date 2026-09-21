@@ -35,6 +35,59 @@ review is a type hole, not a shortcut.
 No implicit arrow returns in callbacks and handlers, no one-line braced `if`.
 The body goes on its own line, even when it is one statement.
 
+## Render conditions are named constants
+
+```tsx
+const settings = config.data?.settings;
+const needsInvoiceSetup = settings !== undefined && !isConfigured(settings);
+
+if (needsInvoiceSetup) {
+  return <List>…</List>;
+}
+```
+
+The condition is declared above the return with the other consts, and the name
+says what the branch means, not how it is computed. Inline,
+`config.data && !isConfigured(config.data.settings)` makes the reader evaluate
+the expression to find out what the screen is about.
+
+Narrowing survives the alias only for a `const` holding a whole value. A `let`
+drops it, and so does a condition written against `config.data` — bind the value
+first, as above, or the branch loses the `undefined` check it just made.
+
+## A branch becomes a component when it has handlers and depth
+
+Both, not either: callbacks of its own — `onClick`, `onSubmit`, `onChange` — and
+JSX nested deeper than two levels. Declarative markup stays where it is, however
+wordy; a file and a jump buy nothing there.
+
+```tsx
+if (needsInvoiceSetup) {    // stays — no handlers, nothing to carry away
+  return (
+    <List>
+      <List.Item
+        icon={Icon.Gear}
+        title="Fill in the invoice details first"
+        actions={
+          <ActionPanel>
+            <Action.Push title="Open Settings" target={<Settings />} />
+          </ActionPanel>
+        }
+      />
+    </List>
+  );
+}
+
+if (isEditingLineItems) {   // goes — onChange and onRemove per row, three deep
+  return <LineItemEditor items={items} onSave={saveLineItems} />;
+}
+```
+
+What moves with the extracted component is its state and its handlers, which is
+the point; the early returns above it stay a table of contents for the screen.
+Loading and empty states — `return <Form isLoading />` — are the same case,
+already one line.
+
 ## Reach for the runtime before a dependency
 
 Node and Bun ship most of what a utility library used to. Check the engine the
