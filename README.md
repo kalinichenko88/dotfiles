@@ -237,9 +237,15 @@ The plain symlinks in that table are rows in `setup/links.tsv`, which is what
 both `make config-install` and `make doctor` read.
 
 Git switches identity by path: `~/Dev/Personal/` and `~/Dev/Open Source/` use
-the tracked personal profile, `~/Dev/Work/` uses a gitignored work file created
-from an example. Every directory bootstrap creates has a matching rule, and
-`make test` fails if one is ever added without it.
+the tracked personal profile, `~/Dev/Work/` uses `~/.config/git/gitconfig-work`.
+That file, and `~/.config/git/gitconfig-local` for signing and other overrides,
+are written by hand from the `git/*.example` templates and live outside this
+repository, never in `git/`. Every directory bootstrap creates has a matching
+rule, and `make test` fails if one is ever added without it.
+
+`gitconfig-local` is included after the directory rules, so a narrower
+`includeIf` placed there wins — that is how one client's repositories under
+`~/Dev/Work/<client>/` get their own address without naming the client here.
 
 No email is set at the top level, and `user.useConfigOnly = true`. Outside
 those directories Git refuses to commit rather than inventing
