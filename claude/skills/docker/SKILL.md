@@ -61,6 +61,36 @@ keeps doing so.
 When compose pulls the project's own image from a registry, it names the tag CI
 pushed — the commit SHA or the release — through a variable that fails when
 unset, `image: ghcr.io/<owner>/<app>:${APP_IMAGE_TAG:?}`, never `:latest`.
+Compose interpolates every file before merging them, so a dev override that
+builds the image instead still fails without the variable: the dev entry point
+sets it, `APP_IMAGE_TAG=dev`.
+
+## An exact pin needs something that bumps it
+
+A pinned tag no longer picks up the patches a floating one would have, so the
+repository raises those bumps itself. Before finishing, look at what it has:
+
+- `renovate.json` or another Renovate config — covered; its Dockerfile and
+  compose managers are on by default.
+- `.github/dependabot.yml` with `docker` and `docker-compose` entries whose
+  directories reach every file you touched — covered.
+- Anything else on GitHub — add the missing entries in the same change.
+  `directories` takes globs, so one entry covers `docker/*` or `apps/*`:
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: docker
+    directories: ["/", "/apps/*"]
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+```
+
+Not on GitHub — name the missing updater in the final report.
 
 ## A database keeps its major
 
@@ -89,3 +119,31 @@ toolchain. Build there, copy the artifact into the final stage.
 
 `scratch` has no CA certificates and no non-root user; use it only when the
 binary makes no TLS calls and you add a `USER` yourself.
+
+## `COPY . .` ships with a `.dockerignore`
+
+A Dockerfile that copies the whole context, or a directory of it, has a
+`.dockerignore` at the context root — written in the same change, not suggested.
+It excludes at least:
+
+- `.env*` and every other file holding secrets, leaving `.env.example` in
+- `.git`
+- installed dependencies — `node_modules`, `.venv`
+- local build output — `dist`, `build`, `coverage`
+
+Then read it the other way: a broad pattern such as `*.md` also drops files the
+app reads at runtime, and those go back in with `!path`.
+
+## The server receives SIGTERM
+
+`docker stop` and every redeploy send SIGTERM to PID 1 and kill it ten seconds
+later. A process running as PID 1 that registers no SIGTERM handler ignores the
+signal, so each stop waits out the ten seconds and ends in SIGKILL, mid-request
+or mid-write. So one of these holds for every long-running service:
+
+- compose sets `init: true` on it, or the image's `ENTRYPOINT` starts it under
+  `tini --`
+- the app handles SIGTERM itself — name the file that does in a comment
+
+An entrypoint script ends with `exec <server> "$@"`, so the server, not the
+shell, is the process that gets the signal.
