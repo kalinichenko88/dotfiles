@@ -75,12 +75,13 @@ the recent merged PRs and issues before writing, and match them. English is the
 default only where there is nothing to match.
 
 Merging is always `gh pr merge --squash --delete-branch`, with `--body` set to
-one bullet list in the *Commits* shape covering every commit on the branch:
-without it GitHub fills the squash commit from a repository setting, by default
-every branch commit's full message in turn. One commit per PR keeps `main`
-readable, and the branch has nothing left to say once it is in. Its subject is
-the PR title — by default a one-commit branch gives that commit's subject
-instead — so both take the same `type: sentence` shape.
+one list in the *Commits* shape — at most five bullets — that sums up every
+commit on the branch, not just the first: without it GitHub fills the squash
+commit from a repository setting, by default every branch commit's full message
+in turn. One commit per PR keeps `main` readable, and the branch has nothing
+left to say once it is in. Its subject is the PR title — by default a
+one-commit branch gives that commit's subject instead — so both take the same
+`type: sentence` shape.
 
 ## Filing an issue
 
@@ -145,23 +146,28 @@ Then check the issue's own `path:line` citations against the current tree before
 believing them — a line number is the first thing to rot — and correct them in
 the issue as the first act of the work.
 
-**Taking neighbours along.** Before the first edit, search the open issues for
-every file and symbol the task will change — by identifier, as for a finding:
-`gh issue list --state open --search "verify_target"`. The issue in hand stays
-the task; another one rides along only if it passes all four checks, against
-the diff you would write:
+**Taking neighbours along.** Before the first edit, sort the open issues on the
+code the task will change. The issue in hand stays the task throughout.
 
-- **Same file** — it changes a file the task already changes, in any function.
-  The same topic in another file is another PR.
-- **Settled** — its body already says what to do; nothing in it waits on a
-  decision.
-- **Smaller** — its share of the diff is smaller than the task's.
-- **Separable** — dropping it leaves the task whole, so a reviewer can ask for
-  it to be split out and lose nothing but a line in the description.
-
-Then add up the ones that passed: while their total is not smaller than the
-task's diff, drop the largest, one at a time. Past that line the PR title
-describes the minority of the change.
+1. **Search** by identifier, as for a finding — every file and symbol the task
+   will change: `gh issue list --state open --search "verify_target"`.
+2. **Pull in the task's own defect.** A hit reporting the same wrong behaviour,
+   fixed the same way, in another function or file is not a ride-along: it is
+   the task, because a bug fix guards every surface the bug shows on (the
+   global prompt). Its fix joins the diff, it closes next to the task's issue,
+   and the PR title names the defect rather than the one place reported.
+3. **Check every other hit.** It rides along only if it passes all four,
+   measured against the fix for the issue in hand alone:
+   - **Same file** — it changes a file the task already changes, in any
+     function. The same topic in another file is another PR.
+   - **Settled** — its body already says what to do; nothing in it waits on a
+     decision.
+   - **Smaller** — its share of the diff is smaller than that fix.
+   - **Separable** — dropping it leaves the task whole, so a reviewer can ask
+     for it to be split out and lose nothing but a line in the description.
+4. **Total the ones that passed.** While the total is not smaller than that
+   fix, drop the largest, one at a time. Past that line the ride-alongs
+   outweigh the issue the PR is named for.
 
 Nothing passes: ship the task alone — that is the usual case, not a failure to
 look. A ride-along is a whole issue, not a Boy Scout fix: a bug brings its own
