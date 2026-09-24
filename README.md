@@ -209,7 +209,9 @@ reinstalled just to change package-manager ownership.
 Files other tools also write — `~/.docker/config.json` and
 `~/.claude/settings.json` — are merged rather than replaced, and doctor checks
 that the tracked keys are present rather than that the file matches exactly.
-Docker registry credentials and Claude hooks you added yourself survive.
+Docker registry credentials, plugin directories and Claude hooks you added
+yourself survive, on any event. A hook this repository installed and later
+changed or renamed replaces its old copy instead of running twice.
 Installing also removes symlinks under `~/.claude` that point into this
 repository at a file it no longer has, so a renamed hook does not linger on
 other machines. Links pointing anywhere else are yours and are left alone.

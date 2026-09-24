@@ -85,7 +85,8 @@ Two rules that look like redundancy but are not:
   login` stores registry credentials there, and the user may have their own
   Claude hooks. Doctor checks `contains`, not equality, for the same reason.
   Turning either back into a copy or an equality check destroys user state and
-  leaves doctor with no state that can ever be green.
+  leaves doctor with no state that can ever be green — and so does jq's plain
+  `*`, which replaces arrays whole and deleted another tool's `PreToolUse` hook.
 - A manual-install CLI that is missing is a **warning**; one that is installed
   but fails its probe is a failure. Bootstrap only prints the checklist for
   those tools, so making absence a failure means a first run can never finish.
@@ -164,8 +165,12 @@ symlink and doctor verifies it from the same table.
 `claude/settings-fragment.json` holds everything merged into
 `~/.claude/settings.json` — hooks, the status line and `attribution` together —
 in one `jq` pass, because a second merge into the same file backs up what the
-first just wrote. Unrelated keys survive, and changing an existing file requires
-`FORCE=1`. `attribution.sessionUrl` is `false` there on purpose: the trailer
+first just wrote. Unrelated keys survive, and so do other tools' hooks on the
+events the fragment declares: an array gains the tracked entries instead of
+being replaced. An entry naming a hook under `$HOME/.claude/hooks/` belongs to
+this repository, so a hook whose timeout changed or that was renamed replaces
+its old copy. A file that changes is backed up first; no `FORCE=1` is needed.
+`attribution.sessionUrl` is `false` there on purpose: the trailer
 Claude Code adds to commits links a session transcript, and a public repository
 would carry that link forever while the transcript's visibility stays a toggle.
 
