@@ -16,7 +16,7 @@ so in the final report rather than inventing a substitute.
 | Merging | `gh pr merge --squash --delete-branch` |
 | Finding something out of scope | Small, safe, needs no decision: fix it in this PR, list it in the description. Otherwise file an issue — search by identifier first |
 | Filing next to an existing issue | Name the relation, and correct the other side |
-| Picking an issue up | Read what it is wired to; re-check its `path:line` |
+| Picking an issue up | Read what it is wired to; re-check its `path:line`; take along settled issues on the same code |
 | Editing a workflow | Pin `uses:` to the latest major; runtime ≥ host |
 
 ## Commits
@@ -143,8 +143,30 @@ Then check the issue's own `path:line` citations against the current tree before
 believing them — a line number is the first thing to rot — and correct them in
 the issue as the first act of the work.
 
-**Finishing.** The PR closes it (`Closes #12`), and the same pass updates every
-sibling issue whose text the change just falsified.
+**Taking neighbours along.** Before the first edit, search the open issues for
+every file and symbol the task will change — by identifier, as for a finding:
+`gh issue list --state open --search "verify_target"`. The issue in hand stays
+the task; another one rides along only if all four hold, checked against the
+diff you would write:
+
+- **Same place** — it changes a file the task already changes, ideally the same
+  function. The same topic in another file is another PR.
+- **Settled** — its body already says what to do; nothing in it waits on a
+  decision.
+- **Smaller** — its share of the diff is smaller than the task's, and all the
+  ride-alongs together are too. Past that, the PR title describes the minority
+  of the change.
+- **Separable** — dropping it leaves the task whole, so a reviewer can ask for
+  it to be split out and lose nothing but a line in the description.
+
+Nothing passes: ship the task alone — that is the usual case, not a failure to
+look. A ride-along is a whole issue, not a Boy Scout fix: a bug brings its own
+test, it is assigned like the task, and the PR description closes it under
+**Also closes**, one line per issue with its own keyword — `Closes #15` —
+because GitHub closes only the numbers a keyword precedes.
+
+**Finishing.** The PR closes it and every ride-along, and the same pass updates
+every sibling issue whose text the change just falsified.
 
 Measured on a live tracker: of the 100 newest issues, 4 bodies had ever been
 edited; 5 open issues still cited a file the schema migration had deleted; one
