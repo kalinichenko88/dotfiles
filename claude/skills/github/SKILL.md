@@ -12,8 +12,8 @@ so in the final report rather than inventing a substitute.
 | Moment | What must happen |
 | --- | --- |
 | Writing a commit message | `type: one sentence`, at most 5 bullets under it, no `Co-Authored-By:` |
-| `gh pr create` | `--assignee @me`; assign the issue it closes too |
-| Merging | `gh pr merge --squash --delete-branch` |
+| `gh pr create` | `--assignee @me`; assign every issue it closes too |
+| Merging | `gh pr merge --squash --delete-branch --body` with one bullet list for the whole branch |
 | Finding something out of scope | Small, safe, needs no decision: fix it in this PR, list it in the description. Otherwise file an issue — search by identifier first |
 | Filing next to an existing issue | Name the relation, and correct the other side |
 | Picking an issue up | Read what it is wired to; re-check its `path:line`; take along settled issues on the same code |
@@ -67,18 +67,20 @@ nobody's name on it in the list view, which is how review requests get lost.
 If the PR closes an issue — `Closes #12`, `Fixes #12` — assign that issue the
 same way *before* the PR merges and closes it: `gh issue edit 12 --add-assignee
 @me`. Once GitHub closes an issue automatically, nothing goes back to record who
-did the work.
+did the work. An issue already assigned to someone else stays theirs: say so,
+do not reassign.
 
 The title and description follow the language the project already uses — read
 the recent merged PRs and issues before writing, and match them. English is the
 default only where there is nothing to match.
 
-Merging is always `gh pr merge --squash --delete-branch`. One commit per PR
-keeps `main` readable, and the branch has nothing left to say once it is in.
-The PR title becomes that commit's subject, so it takes the same `type: sentence`
-shape as a commit.
-
-- Already assigned to someone: leave it alone, say so, do not reassign.
+Merging is always `gh pr merge --squash --delete-branch`, with `--body` set to
+one bullet list in the *Commits* shape covering every commit on the branch:
+without it GitHub fills the squash commit from a repository setting, by default
+every branch commit's full message in turn. One commit per PR keeps `main`
+readable, and the branch has nothing left to say once it is in. Its subject is
+the PR title — by default a one-commit branch gives that commit's subject
+instead — so both take the same `type: sentence` shape.
 
 ## Filing an issue
 
@@ -146,18 +148,20 @@ the issue as the first act of the work.
 **Taking neighbours along.** Before the first edit, search the open issues for
 every file and symbol the task will change — by identifier, as for a finding:
 `gh issue list --state open --search "verify_target"`. The issue in hand stays
-the task; another one rides along only if all four hold, checked against the
-diff you would write:
+the task; another one rides along only if it passes all four checks, against
+the diff you would write:
 
-- **Same place** — it changes a file the task already changes, ideally the same
-  function. The same topic in another file is another PR.
+- **Same file** — it changes a file the task already changes, in any function.
+  The same topic in another file is another PR.
 - **Settled** — its body already says what to do; nothing in it waits on a
   decision.
-- **Smaller** — its share of the diff is smaller than the task's, and all the
-  ride-alongs together are too. Past that, the PR title describes the minority
-  of the change.
+- **Smaller** — its share of the diff is smaller than the task's.
 - **Separable** — dropping it leaves the task whole, so a reviewer can ask for
   it to be split out and lose nothing but a line in the description.
+
+Then add up the ones that passed: while their total is not smaller than the
+task's diff, drop the largest, one at a time. Past that line the PR title
+describes the minority of the change.
 
 Nothing passes: ship the task alone — that is the usual case, not a failure to
 look. A ride-along is a whole issue, not a Boy Scout fix: a bug brings its own
