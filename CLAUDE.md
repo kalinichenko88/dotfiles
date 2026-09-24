@@ -175,6 +175,8 @@ behind on every other machine; links pointing outside this repository are the
 user's own and are never touched.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
+- Skill `docker` — the newest stable image looked up in the registry, pinned
+  exactly, on the smallest base that runs the app
 - Skill `github` — commits, PRs, issues and Actions; the global prompt keeps
   only the two rules that must fire before anyone thinks of GitHub
 - Skill `typescript-conventions` — house TypeScript style, grown one rule at a time
