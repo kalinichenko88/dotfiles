@@ -169,7 +169,9 @@ first just wrote. Unrelated keys survive, and so do other tools' hooks on the
 events the fragment declares: an array gains the tracked entries instead of
 being replaced. An entry naming a hook under `$HOME/.claude/hooks/` belongs to
 this repository, so a hook whose timeout changed or that was renamed replaces
-its old copy. A file that changes is backed up first; no `FORCE=1` is needed.
+its old copy — on an event the fragment still declares; a hook moved to another
+event, or an event dropped from the fragment, leaves its old entry behind. A
+file that changes is backed up first; no `FORCE=1` is needed.
 `attribution.sessionUrl` is `false` there on purpose: the trailer
 Claude Code adds to commits links a session transcript, and a public repository
 would carry that link forever while the transcript's visibility stays a toggle.

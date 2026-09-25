@@ -212,7 +212,8 @@ dotfiles_prune_orphan_links() {
 # Merges tracked JSON into a target other tools also write to. Arrays gain the
 # tracked entries instead of being replaced, as jq's `*` would, deleting another
 # tool's hook (#37); an entry naming $HOME/.claude/hooks/ is this repository's
-# and goes once the tracked file drops it. A missing target is {}; no FORCE.
+# and goes once the tracked file drops it from an array the file still declares.
+# A missing target is {}; no FORCE.
 dotfiles_merge_json() {
   local relative_source target program source_path target_dir temp_file
   relative_source=$1
