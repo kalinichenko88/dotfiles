@@ -209,15 +209,10 @@ dotfiles_prune_orphan_links() {
   done
 }
 
-# Merges tracked JSON into a target that other tools also write to, so their
-# keys survive. Objects merge key by key. An array keeps the target's entries
-# and gains the tracked ones it lacks — jq's own `*` would replace the whole
-# array and delete another tool's hook on an event the fragment declares (#37).
-# An entry naming a hook under $HOME/.claude/hooks/ belongs to this repository,
-# so it survives only while the tracked file still has it: a hook whose timeout
-# changed, or that was renamed, replaces its old copy instead of firing twice.
-# A missing target is treated as {}. No FORCE is needed, because nothing the
-# tracked file does not own is replaced.
+# Merges tracked JSON into a target other tools also write to. Arrays gain the
+# tracked entries instead of being replaced, as jq's `*` would, deleting another
+# tool's hook (#37); an entry naming $HOME/.claude/hooks/ is this repository's
+# and goes once the tracked file drops it. A missing target is {}; no FORCE.
 dotfiles_merge_json() {
   local relative_source target program source_path target_dir temp_file
   relative_source=$1
@@ -226,13 +221,12 @@ dotfiles_merge_json() {
   # shell expansion.
   # shellcheck disable=SC2016
   program='
-    def owned: tostring | contains("$HOME/.claude/hooks/");
     def merge($s):
       if type == "object" and ($s | type) == "object" then
         reduce ($s | keys_unsorted[]) as $k (.; .[$k] |= merge($s[$k]))
       elif type == "array" and ($s | type) == "array" then
-        [.[] | select((owned | not) or (. as $e | $s | any(.[]; . == $e)))] as $kept
-        | $kept + [$s[] | select(. as $e | $kept | any(.[]; . == $e) | not)]
+        (. - ([.[] | select(tostring | contains("$HOME/.claude/hooks/"))] - $s)) as $kept
+        | $kept + ($s - $kept)
       else $s end;
     merge($source[0])'
   source_path=$DOTFILES_ROOT/$relative_source
