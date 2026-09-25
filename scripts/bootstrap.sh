@@ -235,8 +235,8 @@ announce_missing_git_identity() {
 install_claude_settings() {
   # One merge for the whole fragment: a second write into the same file would
   # back up the state the first one just produced, on a machine that had no
-  # settings at all. The default program merges hooks and the status line
-  # alike, and Claude Code expands the $HOME the fragment spells out, so a
+  # settings at all. The merge handles hooks and the status line alike, and
+  # Claude Code expands the $HOME the fragment spells out, so a
   # public repository carries nobody's home directory.
   dotfiles_merge_json claude/settings-fragment.json \
     "$DOTFILES_TARGET_HOME/.claude/settings.json"

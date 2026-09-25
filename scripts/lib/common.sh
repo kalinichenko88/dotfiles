@@ -209,17 +209,27 @@ dotfiles_prune_orphan_links() {
   done
 }
 
-# Merges tracked JSON into a target that other tools also write to, so their
-# keys survive. The jq program gets the target as input and the tracked file as
-# $source; a missing target is treated as {}. No FORCE is needed, because
-# nothing outside the tracked keys is replaced.
+# Merges tracked JSON into a target other tools also write to. Arrays gain the
+# tracked entries instead of being replaced, as jq's `*` would, deleting another
+# tool's hook (#37); an entry naming $HOME/.claude/hooks/ is this repository's
+# and goes once the tracked file drops it from an array the file still declares.
+# A missing target is {}; no FORCE.
 dotfiles_merge_json() {
   local relative_source target program source_path target_dir temp_file
   relative_source=$1
   target=$2
-  # $source is a jq variable, not a shell one.
+  # $source and $s are jq variables, and $HOME is text jq matches, not a
+  # shell expansion.
   # shellcheck disable=SC2016
-  program=${3:-'. * $source[0]'}
+  program='
+    def merge($s):
+      if type == "object" and ($s | type) == "object" then
+        reduce ($s | keys_unsorted[]) as $k (.; .[$k] |= merge($s[$k]))
+      elif type == "array" and ($s | type) == "array" then
+        (. - ([.[] | select(tostring | contains("$HOME/.claude/hooks/"))] - $s)) as $kept
+        | $kept + ($s - $kept)
+      else $s end;
+    merge($source[0])'
   source_path=$DOTFILES_ROOT/$relative_source
   target_dir=$(dirname -- "$target")
 

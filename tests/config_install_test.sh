@@ -56,6 +56,17 @@ mv "$tmp/docker-with-auth.json" "$target_home/.docker/config.json"
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config docker
 assert_equals 'token' \
   "$(jq -r '.auths["ghcr.io"].auth' "$target_home/.docker/config.json")"
+
+# A plugin directory the user added sits in the same array as the tracked one.
+jq '.cliPluginsExtraDirs += ["/usr/local/lib/docker/cli-plugins"]' \
+  "$target_home/.docker/config.json" > "$tmp/docker-with-plugins.json"
+mv "$tmp/docker-with-plugins.json" "$target_home/.docker/config.json"
+DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config docker
+jq -e --slurpfile source "$TEST_ROOT/docker/config.json" \
+  'contains($source[0])
+   and (.cliPluginsExtraDirs | index("/usr/local/lib/docker/cli-plugins") != null)' \
+  "$target_home/.docker/config.json" >/dev/null || \
+  fail 'Docker config merge deleted a plugin directory the user added'
 # The work identity is deliberately NOT created from the example: a placeholder
 # address satisfies useConfigOnly, so Git would author work commits as it
 # instead of refusing. Git ignores an includeIf whose path does not exist.
@@ -123,22 +134,48 @@ jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
 [ -z "$(find "$target_home/.claude" -maxdepth 1 -name 'settings.json.backup.*' \
   -print -quit)" ] || fail 'a no-op Claude merge created a backup'
 
-# On an event this repository does declare, the tracked hooks win — and the
-# file that gets rewritten is backed up first.
-jq '.hooks.PreToolUse = [{matcher: "Bash", hooks: [{type: "command", command: "stale"}]}]' \
+# A hook this repository installed is replaced, not kept alongside: a copy with
+# an old timeout and one whose script was renamed both give way to the tracked
+# hook, and the file that gets rewritten is backed up first.
+# $HOME is text in the fragment, not a shell expansion.
+# shellcheck disable=SC2016
+jq '.hooks.PreToolUse = [
+      {matcher: "Bash", hooks: [{type: "command", timeout: 5,
+        command: "$HOME/.claude/hooks/check-docs-before-push.sh"}]},
+      {matcher: "Bash", hooks: [{type: "command",
+        command: "$HOME/.claude/hooks/renamed-away.sh"}]}
+    ]' \
   "$target_home/.claude/settings.json" > "$tmp/settings-stale-hook.json"
 mv "$tmp/settings-stale-hook.json" "$target_home/.claude/settings.json"
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
   > "$tmp/claude-stale-hook.out"
 jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
-  '(.hooks | contains($fragment[0].hooks)) and .hooks.Stop[0].hooks[0].command == "mine"' \
+  '.hooks.PreToolUse == $fragment[0].hooks.PreToolUse
+   and .hooks.Stop[0].hooks[0].command == "mine"' \
   "$target_home/.claude/settings.json" >/dev/null || \
-  fail 'Claude merge did not restore the tracked hooks alongside the user hook'
+  fail 'Claude merge kept a stale copy of a tracked hook'
 settings_backup=$(find "$target_home/.claude" -maxdepth 1 \
   -name 'settings.json.backup.*' -print -quit)
 [ -n "$settings_backup" ] || fail 'Claude merge did not back up the changed file'
-assert_equals 'stale' \
-  "$(jq -r '.hooks.PreToolUse[0].hooks[0].command' "$settings_backup")"
+assert_equals "\$HOME/.claude/hooks/renamed-away.sh" \
+  "$(jq -r '.hooks.PreToolUse[1].hooks[0].command' "$settings_backup")"
+
+# Another tool's hook on an event this repository also declares keeps firing.
+# The shape is a real settings.json: a catch-all group written by another tool,
+# next to the tracked one. Replacing the whole array deleted it (#37).
+jq '.hooks.PreToolUse += [{matcher: "*", hooks: [{type: "command", command: "theirs", timeout: 10}]}]' \
+  "$target_home/.claude/settings.json" > "$tmp/settings-shared-event.json"
+mv "$tmp/settings-shared-event.json" "$target_home/.claude/settings.json"
+backups_before=$(find "$target_home/.claude" -maxdepth 1 -name 'settings.json.backup.*' | wc -l)
+DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config claude \
+  > "$tmp/claude-shared-event.out"
+jq -e --slurpfile fragment "$TEST_ROOT/claude/settings-fragment.json" \
+  '(.hooks | contains($fragment[0].hooks))
+   and ([.hooks.PreToolUse[].hooks[].command] | index("theirs") != null)' \
+  "$target_home/.claude/settings.json" >/dev/null || \
+  fail 'Claude merge deleted a hook the user owns on a tracked event'
+assert_equals "$backups_before" \
+  "$(find "$target_home/.claude" -maxdepth 1 -name 'settings.json.backup.*' | wc -l)"
 
 # With several identities in play, a guessed address is worse than an error.
 grep -E '^[[:space:]]*useConfigOnly[[:space:]]*=[[:space:]]*true' \
