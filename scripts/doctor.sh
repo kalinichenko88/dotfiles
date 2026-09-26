@@ -169,6 +169,25 @@ check_gh_preferences() {
   done < "$DOTFILES_ROOT/gh/config.yml"
 }
 
+# Read back through the CLI, installed and enabled: a disabled plugin injects
+# no rules and loads no skills. A missing claude is a warning, as bootstrap
+# only warns and skips the plugin then.
+check_claude_plugin() {
+  if ! command -v claude >/dev/null 2>&1; then
+    doctor_status warning config claude-plugin
+    return 0
+  fi
+  if command -v jq >/dev/null 2>&1 && \
+    dotfiles_run_with_timeout 10 env HOME="$DOTFILES_TARGET_HOME" \
+      claude plugin list --json 2>/dev/null \
+      | jq -e --arg id "$DOTFILES_CLAUDE_PLUGIN" \
+        'any(.[]; .id == $id and .enabled)' >/dev/null 2>&1; then
+    doctor_status present config claude-plugin
+  else
+    doctor_missing config claude-plugin
+  fi
+}
+
 # gitconfig-work holds a work address and gitconfig-local the signing keys. An
 # older bootstrap symlinked both into this repository, which is public, so the
 # private data ended up inside a published checkout. They have to be real files
@@ -245,6 +264,7 @@ check_config() {
   else
     doctor_missing config claude-settings
   fi
+  check_claude_plugin
 }
 
 check_manual_state() {

@@ -9,7 +9,15 @@ set -eu
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-config.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 target_home=$tmp/home
-mkdir -p "$target_home"
+mkdir -p "$target_home/.claude" "$tmp/bin"
+
+# The real claude would clone the plugin from GitHub; the stub records instead.
+ln -s "$TEST_ROOT/tests/fixtures/bin/claude" "$tmp/bin/claude"
+export PATH="$tmp/bin:$PATH" CLAUDE_STUB_LOG=$tmp/claude.log
+
+# What an older bootstrap left behind: the base prompt moved into the plugin,
+# so the link into this repository now dangles.
+ln -s "$TEST_ROOT/claude/CLAUDE.md" "$target_home/.claude/CLAUDE.md"
 
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config
 
@@ -26,7 +34,12 @@ assert_link "$TEST_ROOT/zsh/zshrc" "$target_home/.zshrc"
 assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
-assert_link "$TEST_ROOT/claude/CLAUDE.md" "$target_home/.claude/CLAUDE.md"
+[ ! -L "$target_home/.claude/CLAUDE.md" ] || \
+  fail 'the dangling link to the old base prompt survived the install'
+assert_file_contains "$tmp/claude.log" \
+  "$target_home plugin marketplace add kalinichenko88/agent-skills"
+assert_file_contains "$tmp/claude.log" \
+  "$target_home plugin install kalinichenko@kalinichenko"
 assert_link "$TEST_ROOT/claude/statusline-command.sh" \
   "$target_home/.claude/statusline-command.sh"
 assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"
