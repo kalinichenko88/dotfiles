@@ -229,7 +229,7 @@ other machines. Links pointing anywhere else are yours and are left alone.
 | `wezterm.lua` | `~/.wezterm.lua` |
 | `starship/starship.toml` | `~/.config/starship.toml` |
 | `docker/config.json` | `~/.docker/config.json` (merge) |
-| `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` |
+| [agent-skills](https://github.com/kalinichenko88/agent-skills) | the `kalinichenko` Claude Code plugin: global prompt and the `github`, `docker`, `typescript-conventions` skills |
 | `claude/skills/*` | `~/.claude/skills/*` |
 | `claude/hooks/*.sh` | `~/.claude/hooks/*.sh` |
 | `claude/statusline-command.sh` | `~/.claude/statusline-command.sh` |

@@ -242,6 +242,21 @@ install_claude_settings() {
     "$DOTFILES_TARGET_HOME/.claude/settings.json"
 }
 
+# Through the CLI, not the settings fragment: a plugin named only in
+# settings.json is registered and never installed. Both commands are no-ops
+# when already done, and HOME aims them at the target home like everything else
+# this unit writes.
+install_claude_plugin() {
+  if [ "${DRY_RUN:-0}" != 1 ] && ! command -v claude >/dev/null 2>&1; then
+    dotfiles_warn 'claude is unavailable; skipping its plugin'
+    return 0
+  fi
+  dotfiles_run env HOME="$DOTFILES_TARGET_HOME" \
+    claude plugin marketplace add "$DOTFILES_CLAUDE_MARKETPLACE" || return 1
+  dotfiles_run env HOME="$DOTFILES_TARGET_HOME" \
+    claude plugin install "$DOTFILES_CLAUDE_PLUGIN"
+}
+
 config_dev_dirs() {
   local directory
   # git/gitconfig selects the personal or work identity by these paths.
@@ -318,9 +333,12 @@ config_claude() {
     dotfiles_link "claude/hooks/$item_name" \
       "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name"
   done
+  dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/skills"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/hooks"
-  install_claude_settings
+  # run_step suspends set -e, so a failed merge has to fail the unit itself.
+  install_claude_settings || return 1
+  install_claude_plugin
 }
 
 CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm gh starship docker claude'

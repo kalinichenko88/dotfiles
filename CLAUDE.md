@@ -44,7 +44,8 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   a line here, not an edit in two scripts.
 - `tests/*_test.sh` — plain bash, run by `make test`. Fixtures: stub executables
   in `tests/fixtures/bin`, recorded transcript commands in
-  `tests/fixtures/hook-commands`
+  `tests/fixtures/hook-commands`, recorded `claude plugin list --json` output in
+  `tests/fixtures/claude-plugin-list.json`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
 `wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
@@ -154,11 +155,16 @@ keybindings, Mason/LSP, and formatters.
 
 ### Claude Code prompt, skills, and hooks
 
-`claude/CLAUDE.md` is the global prompt, symlinked to `~/.claude/CLAUDE.md`:
-nothing but the user writes that file, so it is a link rather than a merge and
-edits on either side are the same file. `config_claude` installs it by calling
-`config_links claude`, so the row lives in `setup/links.tsv` like every other
-symlink and doctor verifies it from the same table.
+The global prompt and the skills colleagues share — `github`, `docker`,
+`typescript-conventions` — are not here. They are the `kalinichenko` plugin in
+[kalinichenko88/agent-skills](https://github.com/kalinichenko88/agent-skills),
+for Claude Code and Codex alike, and `config_claude` installs it with `claude
+plugin marketplace add` and `claude plugin install`. Settings alone would not
+do: a plugin named only in `settings.json` is registered and never installed.
+Doctor reads `claude plugin list --json` back and fails on a plugin that is
+absent or disabled; a missing `claude` is a warning, since bootstrap only skips
+the plugin then. The repository and plugin names live once, in
+`scripts/lib/common.sh`.
 
 `claude/skills/*` symlink to `~/.claude/skills/`, `claude/hooks/*.sh` to
 `~/.claude/hooks/`, and `claude/statusline-command.sh` to `~/.claude/`.
@@ -176,18 +182,13 @@ file that changes is backed up first; no `FORCE=1` is needed.
 Claude Code adds to commits links a session transcript, and a public repository
 would carry that link forever while the transcript's visibility stays a toggle.
 
-Installing then prunes dangling links in the skills and hooks directories with
-`dotfiles_prune_orphan_links`, so renaming a hook does not leave the old one
+Installing then prunes dangling links in `~/.claude` and its skills and hooks
+directories with `dotfiles_prune_orphan_links`, so renaming a hook — or moving
+the prompt and three skills into the plugin — does not leave the old link
 behind on every other machine; links pointing outside this repository are the
 user's own and are never touched.
 
 - Skill `create-post` — English blog posts from rough Russian drafts
-- Skill `docker` — the newest stable image looked up in the registry, pinned
-  exactly, on the smallest base that runs the app; an updater for the pins, a
-  `.dockerignore` next to `COPY . .`, and a server that receives SIGTERM
-- Skill `github` — commits, PRs, issues and Actions; the global prompt keeps
-  only the two rules that must fire before anyone thinks of GitHub
-- Skill `typescript-conventions` — house TypeScript style, grown one rule at a time
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
   until CLAUDE.md and README.md have been reviewed, using a temp flag keyed to
   the session **and the command** so the retry passes. Both halves of that key

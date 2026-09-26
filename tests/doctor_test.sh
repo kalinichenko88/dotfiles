@@ -18,11 +18,14 @@ mkdir -p "$target_home/.nvm/versions/node/v24.18.0" \
 export TMPDIR=$tmp/doctor-tmp/
 printf 'v24.18.0\n' > "$target_home/.nvm/alias/default"
 
-for command_name in claude opencode lms op codex; do
+for command_name in opencode lms op codex; do
   ln -s /usr/bin/true "$stub_bin/$command_name"
 done
+# The real claude would clone the plugin from GitHub during bootstrap.
+ln -s "$TEST_ROOT/tests/fixtures/bin/claude" "$stub_bin/claude"
 
-DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config >/dev/null
+PATH="$stub_bin:$PATH" DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config >/dev/null
 
 # Bootstrap must not have invented a work identity; the rest of the run needs a
 # real one so the warning does not muddy the other assertions.
@@ -57,6 +60,9 @@ brew_taps=$(manifest | awk 'match($0, /^tap "[^"]+"/) {
 # from the same file bootstrap applies.
 gh_preferences=$(sed -n 's/^\([a-z_]*\): \(.*\)$/\1=\2/p' "$TEST_ROOT/gh/config.yml")
 
+# Recorded from the real `claude plugin list --json` with the plugin installed.
+claude_plugins=$(cat "$TEST_ROOT/tests/fixtures/claude-plugin-list.json")
+
 doctor_path="$TEST_ROOT/tests/fixtures/bin:$stub_bin:/usr/bin:/bin"
 
 # Every invocation shares the same stub environment; a caller overrides one
@@ -66,6 +72,7 @@ run_doctor() {
   BREW_STUB_CASKS="$brew_casks" BREW_STUB_TAPS="${STUB_TAPS-$brew_taps}" \
   BREW_STUB_OUTDATED="${STUB_OUTDATED-}" \
   GH_STUB_CONFIG="${STUB_GH_CONFIG-$gh_preferences}" \
+  CLAUDE_STUB_PLUGINS="${STUB_CLAUDE_PLUGINS-$claude_plugins}" \
   NPM_STUB_SLEEP="${STUB_NPM_SLEEP-0}" \
   DOCTOR_AUTH_TIMEOUT_SECONDS="${STUB_AUTH_TIMEOUT-3}" \
   PATH="$doctor_path" DOTFILES_TARGET_HOME="$target_home" \
@@ -113,6 +120,14 @@ if STUB_GH_CONFIG='git_protocol=https' run_doctor > "$tmp/gh-drift.out"; then
   fail 'a drifted gh preference must fail doctor'
 fi
 assert_file_contains "$tmp/gh-drift.out" 'missing config gh-git_protocol'
+
+# Installed is not enough: a disabled plugin injects no rules and loads no skills.
+assert_file_contains "$tmp/ready.out" 'present config claude-plugin'
+if STUB_CLAUDE_PLUGINS=$(jq '.[0].enabled = false' <<<"$claude_plugins") \
+  run_doctor > "$tmp/claude-plugin-disabled.out"; then
+  fail 'a disabled Claude plugin must fail doctor'
+fi
+assert_file_contains "$tmp/claude-plugin-disabled.out" 'missing config claude-plugin'
 
 # An absent work identity is safe — useConfigOnly refuses the commit — but an
 # unedited copy of the example is not: the placeholder satisfies it.
