@@ -12,6 +12,12 @@ DRY_RUN=${DRY_RUN:-0}
 FORCE=${FORCE:-0}
 export DOTFILES_ROOT DOTFILES_TARGET_HOME DRY_RUN FORCE
 
+# The base prompt and the shared skills, published as a plugin so colleagues
+# install them without these dotfiles. bootstrap installs it, doctor checks it.
+DOTFILES_CLAUDE_MARKETPLACE=kalinichenko88/agent-skills
+DOTFILES_CLAUDE_PLUGIN=kalinichenko@kalinichenko
+export DOTFILES_CLAUDE_MARKETPLACE DOTFILES_CLAUDE_PLUGIN
+
 dotfiles_info() {
   printf 'info: %s\n' "$*"
 }

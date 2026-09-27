@@ -12,5 +12,4 @@ zsh	zsh	zsh/zshrc	.zshrc
 nvim	nvim	nvim	.config/nvim
 wezterm	wezterm	wezterm.lua	.wezterm.lua
 starship	starship	starship/starship.toml	.config/starship.toml
-claude	claude-md	claude/CLAUDE.md	.claude/CLAUDE.md
 claude	claude-statusline	claude/statusline-command.sh	.claude/statusline-command.sh

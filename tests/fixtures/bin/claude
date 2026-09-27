@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# `claude plugin list --json` answers from CLAUDE_STUB_PLUGINS, a JSON array in
+# the shape the real command prints. Every other call is recorded in
+# CLAUDE_STUB_LOG, prefixed with the HOME it was aimed at, and succeeds.
+if [ "$*" = 'plugin list --json' ]; then
+  printf '%s\n' "${CLAUDE_STUB_PLUGINS:-[]}"
+  exit 0
+fi
+
+if [ -n "${CLAUDE_STUB_LOG:-}" ]; then
+  printf '%s %s\n' "$HOME" "$*" >> "$CLAUDE_STUB_LOG"
+fi
+exit 0
