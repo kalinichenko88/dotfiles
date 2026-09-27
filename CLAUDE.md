@@ -161,7 +161,11 @@ The global prompt and the skills colleagues share — `github`, `docker`,
 for Claude Code and Codex alike, and `config_claude` installs it with `claude
 plugin marketplace add` and `claude plugin install`. Settings alone would not
 do: a plugin named only in `settings.json` is registered and never installed.
-Doctor reads `claude plugin list --json` back and fails on a plugin that is
+Both commands are no-ops once done and fetch nothing, so `config_claude` — and
+through it `make update` — also runs `claude plugin update`, which refreshes
+the marketplace and moves the plugin to the latest commit. The symlinked
+`CLAUDE.md` it replaces updated with every pull; without that step a machine
+would stay on its first install for good. Doctor reads `claude plugin list --json` back and fails on a plugin that is
 absent or disabled; a missing `claude` is a warning, since bootstrap only skips
 the plugin then. The repository and plugin names live once, in
 `scripts/lib/common.sh`.

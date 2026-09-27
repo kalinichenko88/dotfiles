@@ -40,6 +40,10 @@ assert_file_contains "$tmp/claude.log" \
   "$target_home plugin marketplace add kalinichenko88/agent-skills"
 assert_file_contains "$tmp/claude.log" \
   "$target_home plugin install kalinichenko@kalinichenko"
+# Add and install are no-ops once done, so without an update `make update`
+# would leave every machine on the plugin version it first installed.
+assert_file_contains "$tmp/claude.log" \
+  "$target_home plugin update kalinichenko@kalinichenko"
 assert_link "$TEST_ROOT/claude/statusline-command.sh" \
   "$target_home/.claude/statusline-command.sh"
 assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"

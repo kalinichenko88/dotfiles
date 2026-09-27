@@ -243,9 +243,10 @@ install_claude_settings() {
 }
 
 # Through the CLI, not the settings fragment: a plugin named only in
-# settings.json is registered and never installed. Both commands are no-ops
-# when already done, and HOME aims them at the target home like everything else
-# this unit writes.
+# settings.json is registered and never installed. Add and install are no-ops
+# once done and fetch nothing, so the update is what brings a machine to the
+# latest commit; it refreshes the marketplace itself. HOME aims all three at the
+# target home like everything else this unit writes.
 install_claude_plugin() {
   if [ "${DRY_RUN:-0}" != 1 ] && ! command -v claude >/dev/null 2>&1; then
     dotfiles_warn 'claude is unavailable; skipping its plugin'
@@ -254,7 +255,9 @@ install_claude_plugin() {
   dotfiles_run env HOME="$DOTFILES_TARGET_HOME" \
     claude plugin marketplace add "$DOTFILES_CLAUDE_MARKETPLACE" || return 1
   dotfiles_run env HOME="$DOTFILES_TARGET_HOME" \
-    claude plugin install "$DOTFILES_CLAUDE_PLUGIN"
+    claude plugin install "$DOTFILES_CLAUDE_PLUGIN" || return 1
+  dotfiles_run env HOME="$DOTFILES_TARGET_HOME" \
+    claude plugin update "$DOTFILES_CLAUDE_PLUGIN"
 }
 
 config_dev_dirs() {
