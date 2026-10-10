@@ -195,10 +195,11 @@ user's own and are never touched.
 - Skill `create-post` — English blog posts from rough Russian drafts
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
   until CLAUDE.md and README.md have been reviewed, using a temp flag keyed to
-  the session **and the command** so the retry passes. Both halves of that key
-  matter: text the hook cannot tell from a command — a document that writes
-  `git push` at the start of a line — is denied too, and a session-only key
-  would let that denial spend the review the next real push owes
+  the **session alone** so the next push passes however it is worded — a retry
+  rarely repeats the denied text, and the one after a README fix commits it on
+  the way. That is safe only because heredoc bodies are dropped before the
+  match: a document that writes `git push` at the start of a line is never
+  denied, so it cannot spend the review the next real push owes
 
 ### WezTerm
 

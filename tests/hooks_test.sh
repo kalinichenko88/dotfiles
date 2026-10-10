@@ -25,7 +25,7 @@ run_hook() {
   local session=${2:-dotfiles-hooks-test-$$-$RANDOM}
   jq -n --arg c "$1" --arg s "$session" --arg cwd "$tmp/repo" \
     '{tool_input: {command: $c}, session_id: $s, cwd: $cwd}' | bash "$HOOK"
-  [ -n "${2:-}" ] || rm -f "/tmp/claude-docs-checked-$session-"*
+  [ -n "${2:-}" ] || rm -f "/tmp/claude-docs-checked-$session"
 }
 
 # The hook denies with a JSON payload and allows by saying nothing.
@@ -47,14 +47,20 @@ assert_decision allow 'git status'
 # written through one always leaves the push on a line of its own.
 assert_decision deny "$(cat "$FIXTURES/heredoc-then-push.txt")"
 
-# A deny arms only the command that earned it. The other recorded payload writes
-# a document that names a push without running one: it is stopped, being text the
-# hook cannot tell from a command, but the review the next real push owes must
-# still be owed. Only a re-run of the same command passes.
+# The other recorded payload writes a document that names a push without running
+# one. A heredoc body is text, not a command: it is not stopped, and it does not
+# spend the review the next real push owes.
 session="dotfiles-hooks-sequence-$$-$RANDOM"
-assert_decision deny "$(cat "$FIXTURES/heredoc-body-mentions-push.txt")" "$session"
+assert_decision allow "$(cat "$FIXTURES/heredoc-body-mentions-push.txt")" "$session"
 assert_decision deny 'git push origin main' "$session"
 assert_decision allow 'git push origin main' "$session"
-rm -f "/tmp/claude-docs-checked-$session-"*
+rm -f "/tmp/claude-docs-checked-$session"
+
+# A recorded retry: the review changed README.md, so the re-run commits it on
+# the way. Different text, same push — the review is done and it must pass.
+session="dotfiles-hooks-retry-$$-$RANDOM"
+assert_decision deny 'git push -u origin manual-receipts 2>&1 | tail -5' "$session"
+assert_decision allow "git add README.md && git commit -q --amend --no-edit && git log --format='%s' -1 && git push -u origin manual-receipts 2>&1 | tail -5" "$session"
+rm -f "/tmp/claude-docs-checked-$session"
 
 pass 'the docs hook stops a push wherever the command puts it'
