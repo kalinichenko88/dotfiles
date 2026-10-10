@@ -12,7 +12,9 @@
       "No dramatic single-sentence conclusions",
       "Vocabulary is simple (B1-B2 level for non-technical prose)",
       "Title is descriptive, not clickbaity",
-      "Output includes frontmatter with title, description, pubDate, tags"
+      "Output includes frontmatter with title, description, pubDate, tags",
+      "No em dashes or en dashes anywhere in the post",
+      "Frontmatter has 2 to 3 tags, reused from existing posts"
     ]
   },
   {
@@ -28,7 +30,9 @@
       "No dramatic single-sentence conclusions",
       "Vocabulary is simple (B1-B2 level for non-technical prose)",
       "Title is descriptive, not clickbaity",
-      "Output includes frontmatter with title, description, pubDate, tags"
+      "Output includes frontmatter with title, description, pubDate, tags",
+      "No em dashes or en dashes anywhere in the post",
+      "Frontmatter has 2 to 3 tags, reused from existing posts"
     ]
   },
   {
@@ -44,7 +48,9 @@
       "No dramatic single-sentence conclusions",
       "Vocabulary is simple (B1-B2 level for non-technical prose)",
       "Title is descriptive, not clickbaity",
-      "Output includes frontmatter with title, description, pubDate, tags"
+      "Output includes frontmatter with title, description, pubDate, tags",
+      "No em dashes or en dashes anywhere in the post",
+      "Frontmatter has 2 to 3 tags, reused from existing posts"
     ]
   },
   {
@@ -57,7 +63,9 @@
       "No AI-writing patterns",
       "Vocabulary is simple (B1-B2 level for non-technical prose)",
       "Output includes frontmatter with title, description, pubDate, tags",
-      "Title is descriptive, not clickbaity"
+      "Title is descriptive, not clickbaity",
+      "No em dashes or en dashes anywhere in the post",
+      "Frontmatter has 2 to 3 tags, reused from existing posts"
     ]
   },
   {
@@ -70,7 +78,9 @@
       "No AI patterns that soften the tone",
       "Vocabulary is simple (B1-B2 level for non-technical prose)",
       "Output includes frontmatter with title, description, pubDate, tags",
-      "Title is descriptive, not clickbaity"
+      "Title is descriptive, not clickbaity",
+      "No em dashes or en dashes anywhere in the post",
+      "Frontmatter has 2 to 3 tags, reused from existing posts"
     ]
   }
 ]
