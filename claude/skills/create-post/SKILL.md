@@ -1,19 +1,21 @@
 ---
 name: create-post
-description: Creates blog posts from rough Russian technical drafts. Translates into clear, natural English while preserving technical accuracy, code examples, and the author's personal voice. Use when creating new blog posts from Russian drafts.
+description: Creates blog posts for kalinichenko.dev from rough Russian technical drafts or notes. Translates into clear, natural English while preserving technical accuracy, code examples, and the author's personal voice, and writes the post into content/posts/. Use when turning a Russian draft or a list of notes into a new blog post.
 ---
 
 # Create Blog Post
 
-Creates English blog posts from rough Russian technical drafts. The output should read like something a developer wrote on a Sunday afternoon — not like marketing copy or an AI-generated article.
+Creates English blog posts from rough Russian technical drafts. The output should read like something a developer wrote on a Sunday afternoon, not like marketing copy or an AI-generated article.
 
 ## Author Context
 
-The author is Ivan Kalinichenko, a Staff/Principal Frontend Engineer with 10+ years of experience. His expertise spans React, TypeScript, Next.js, Vue.js, Node.js, NestJS, GraphQL, and infrastructure (CI/CD, Docker, Testing, Performance). He also has leadership experience in mentoring, code review, hiring, and onboarding. His focus area is developer tools. The blog lives at kalinichenko.dev.
+The author is Ivan Kalinichenko, a Senior Frontend Engineer with 10+ years of experience. Expertise: React, TypeScript, Next.js, Vue.js, Node.js, NestJS, GraphQL, and infrastructure (CI/CD, Docker, testing, performance), plus mentoring, code review, hiring, and onboarding. Day job: the frontend of a self-hosted product, with AI tools as part of the daily workflow. The blog lives at kalinichenko.dev and mostly covers developer tooling: Claude Code, Neovim, Obsidian, git.
 
-The author's writing style is direct and slightly ironic. He doesn't hedge or soften opinions — if something is bad, he says it's bad. No "this might not be ideal" when "this is bad" works.
+The repo is the source of truth for this: `ROLE` and `SITE_DESCRIPTION` in `src/consts.ts`, the expertise list in `src/config/resume.ts`. If they disagree with the paragraph above, follow the repo.
 
-Keep this context in mind when translating — the author writes from a position of deep technical experience.
+The author's writing style is direct and slightly ironic. He doesn't hedge or soften opinions: if something is bad, he says it's bad. No "this might not be ideal" when "this is bad" works.
+
+Keep this context in mind when translating: the author writes from a position of deep technical experience.
 
 ## Core Principles
 
@@ -22,7 +24,7 @@ Keep this context in mind when translating — the author writes from a position
 - Use "use" not "utilize", "start" not "initialize" (when not a technical term), "show" not "demonstrate", "try" not "attempt"
 - Prefer short, common words over fancy ones
 - Prefer simple sentence structures
-- Technical terms can be advanced — surrounding prose should be plain
+- Technical terms can be advanced; surrounding prose should be plain
 - Avoid uncommon idioms that non-native speakers won't know
 
 ### 2. Natural Language
@@ -49,8 +51,8 @@ Keep this context in mind when translating — the author writes from a position
 - It's fine to jump between ideas without a bridge sentence
 - Don't wrap up every section with a neat conclusion
 - A one-sentence paragraph is fine
-- Skip "setup" sentences like "Let's look at..." or "Here's how it works:" — just show the code or explain the thing directly
-- The post doesn't need to feel "complete" or "polished" — slightly rough is better than too smooth
+- Skip "setup" sentences like "Let's look at..." or "Here's how it works:". Just show the code or explain the thing directly
+- The post doesn't need to feel "complete" or "polished". Slightly rough is better than too smooth
 
 ### 6. Avoid AI Writing Patterns
 Never use these:
@@ -74,11 +76,11 @@ Also avoid these subtler AI patterns:
 - Wrapping up with a grand statement about a broader principle
 - Copula avoidance: don't write "serves as", "stands as", "functions as" when "is" works
 - Superficial -ing phrases tacked onto sentences: "highlighting the importance of...", "showcasing how...", "emphasizing the need for..."
-- Significance inflation: "crucial", "pivotal", "testament", "enduring legacy", "marking a shift" — just state the fact
+- Significance inflation: "crucial", "pivotal", "testament", "enduring legacy", "marking a shift". Just state the fact
 - Synonym cycling: don't repeat the same idea with different words to avoid repetition ("the tool / the assistant / the system" for the same thing)
 - Negative parallelisms: "It's not just X, it's Y", "Not only...but also..."
-- Em dash overuse: one or two per post is fine, five is an AI tell — use commas or periods instead
-- Inline-header lists: don't format lists as "**Bold label:** description" — just write normal sentences or plain list items
+- Em dashes (`—`) and en dashes (`–`): none at all. The site bans them in visible copy (`DESIGN.md` in the repo) and the recent posts carry zero. Use a comma, a period, a colon or parentheses instead
+- Inline-header lists: don't format lists as "**Bold label:** description". Write normal sentences or plain list items
 
 ### 7. Titles and Headings
 - Keep titles descriptive, not clever or clickbaity
@@ -132,7 +134,7 @@ Bad:  "Now we should implement the function which will handle..."
 Good: "Next, write a function that handles..."
 
 Bad:  "It is important to note that..."
-Good: "Watch out —"
+Good: "Watch out:"
 
 Bad:  "The solution turned out to be straightforward"
 Good: "The fix is simple"
@@ -146,12 +148,14 @@ Before finishing, verify:
 - [ ] Are technical terms accurate?
 - [ ] Does it sound like a human developer wrote it?
 - [ ] Are code examples intact?
-- [ ] Is the author's voice preserved — direct, no hedging, opinions intact?
+- [ ] Is the author's voice preserved: direct, no hedging, opinions intact?
 - [ ] No AI-writing patterns (including subtle ones)?
 - [ ] Title is descriptive, not clickbaity?
 - [ ] No rule-of-three or dramatic one-liner constructions?
 - [ ] No unnecessary "flow" or "bridge" sentences?
-- [ ] Post length is reasonable — expanded from notes but not padded?
+- [ ] Post length is reasonable: expanded from notes but not padded?
+- [ ] No em dashes or en dashes anywhere in the post?
+- [ ] 2 to 3 tags, reused from existing posts, most specific first?
 - [ ] Frontmatter is complete (title, description, pubDate, tags)?
 
 ## Common Patterns to Fix
@@ -162,7 +166,7 @@ Before finishing, verify:
 ```
 Russian: "В данной статье мы рассмотрим..."
 Bad:  "In this article we will consider..."
-Good: "Here's what I've been working on."
+Good: (drop the sentence and start with the actual content)
 ```
 
 **Passive constructions:**
@@ -175,7 +179,7 @@ Good: "I created the component..."
 **Verbose expressions:**
 ```
 Bad:  "It is necessary to perform the following actions..."
-Good: "Here's what you need to do:"
+Good: (drop the sentence and go straight to the steps)
 ```
 
 **Technical precision:**
@@ -208,39 +212,34 @@ The draft is usually bullet points or rough notes. Expand them into a real post,
 
 ## Handling Ambiguity
 
-If something in the draft is unclear — an ambiguous phrase, missing context, unclear technical detail — ask the author before guessing. Same for links to Russian-language resources: ask if there's an English alternative.
+If something in the draft is unclear (an ambiguous phrase, missing context, an unclear technical detail), ask the author before guessing. Same for links to Russian-language resources: ask if there's an English alternative.
 
 ## Output Format
 
-The blog uses Astro with MDX/MD files. Output a complete post file with frontmatter:
+Write the post to `content/posts/<slug>.md` in the site repo. The file name is the URL slug (`/blog/<slug>`), so make it short, lowercase, hyphenated English. Use `.mdx` only when the post imports a component.
 
-```mdx
+Frontmatter follows the `posts` schema in `src/content.config.ts`:
+
+```md
 ---
-title: "Descriptive title here"
-description: "One-sentence summary"
+title: 'Descriptive title here'
+description: 'One-sentence summary'
 pubDate: YYYY-MM-DD
-tags: [relevant, tags]
+tags: [tool-tag, topic-tag]
 ---
 
 Post content here.
 ```
 
-If the post uses custom components (e.g. `<VideoPlayer>`), include the import:
-```mdx
-import VideoPlayer from '../../src/components/VideoPlayer.astro';
-```
+- `pubDate` is today's date unless the author gives another.
+- Tags follow the Tags section of the repo's `CLAUDE.md`: 2 to 3 tags, reuse the ones existing posts already use (`grep -h '^tags' content/posts/*`), most specific first, because the first tag is the chip on `/blog`.
+- Images go in `src/assets/images/` and are referenced with a relative path (`../../src/assets/images/foo.png`) so Astro optimizes them.
+- A custom component needs its import at the top of an `.mdx` post, e.g. `import VideoPlayer from '../../src/components/VideoPlayer.astro';`.
 
-Return the post as clean markdown/MDX:
-- Preserve all code blocks with language tags
-- Keep heading hierarchy
-- Maintain link formatting
-- Include any images/diagrams references
-- Preserve custom Astro components and their imports
-
-Do NOT add:
+Do NOT add to the post:
 - Meta commentary about the translation
 - "Translated from Russian" notes
 - Explanations of choices made
 - Your own opinions or additions
 
-Just deliver the blog post.
+After writing the file, run `npm run build` in the repo: it validates the frontmatter against the schema. Then tell the author the file path and any question from *Handling Ambiguity* that is still open.
