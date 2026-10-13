@@ -1,21 +1,5 @@
 local wezterm = require('wezterm')
 
-local function mode_for_appearance(appearance)
-  if appearance:find('Dark') then
-    return 'dark'
-  else
-    return 'light'
-  end
-end
-
-local function delta_theme_for_mode(mode)
-  if mode == 'dark' then
-    return 'OneHalfDark'
-  else
-    return 'OneHalfLight'
-  end
-end
-
 local function scheme_for_appearance(appearance)
   if appearance:find('Dark') then
     return 'kanagawabones'
@@ -47,12 +31,7 @@ config.line_height = 1.2
 
 -- Colors
 local appearance = (wezterm.gui and wezterm.gui.get_appearance()) or 'Dark'
-local mode = mode_for_appearance(appearance)
 config.color_scheme = scheme_for_appearance(appearance)
-config.set_environment_variables = {
-  BAT_THEME = delta_theme_for_mode(mode),
-  DELTA_THEME_MODE = mode,
-}
 
 -- UI
 config.hide_tab_bar_if_only_one_tab = true
@@ -72,6 +51,13 @@ config.scrollback_lines = 10000
 
 -- macOS
 config.native_macos_fullscreen_mode = true
+
+-- Sessions: panes live in a mux server, so Cmd+Q detaches instead of killing
+-- them and the next launch reattaches every window, split and process.
+-- Spawned panes take their environment from that server, which has no
+-- wezterm.gui; anything appearance-dependent must be resolved by the tool.
+config.unix_domains = { { name = 'unix' } }
+config.default_gui_startup_args = { 'connect', 'unix' }
 
 -- Window
 config.window_background_opacity = 1.0

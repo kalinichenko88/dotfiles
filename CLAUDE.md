@@ -203,9 +203,19 @@ user's own and are never touched.
 
 ### WezTerm
 
-Single-file `wezterm.lua`: dark/light switching on macOS appearance, Cmd+D pane
-splits, Monaco DemiBold with Menlo and Nerd Font fallbacks, and a tab title
-showing the basename of the pane's working directory.
+Single-file `wezterm.lua`: dark/light switching on macOS appearance,
+Cmd+Shift+arrow and Cmd+Shift+| pane splits, Monaco DemiBold with Menlo and Nerd
+Font fallbacks, and a tab title showing the basename of the pane's working
+directory.
+
+The GUI connects to a unix-domain mux server (`default_gui_startup_args`), so
+Cmd+Q detaches and the next launch reattaches every window, split and running
+process; closing a tab still kills it, and a reboot loses everything. Panes take
+their environment from that server, which has no `wezterm.gui` and outlives
+appearance changes, so nothing appearance-dependent belongs in
+`set_environment_variables` — the delta pager in `git/gitconfig` reads
+`defaults` itself. A server started before a WezTerm reinstall keeps running the
+old build; `pkill -f wezterm-mux-server` ends it and every session in it.
 
 ### ssh-remote
 

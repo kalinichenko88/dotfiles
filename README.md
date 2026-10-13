@@ -113,6 +113,12 @@ not cost this machine the configuration it was about to apply. It applies everyt
 bumps any manifest needs no second command. Casks that update themselves are left alone — Homebrew skips them by
 design, and this repository does not use `--greedy`.
 
+WezTerm keeps its panes in a background mux server: Cmd+Q detaches, and the next
+launch brings back every window, split and running process (a reboot does not).
+`wezterm@nightly` is one of the casks `make update` skips. After reinstalling it
+by hand, run `pkill -f wezterm-mux-server` — closing every session — if the new
+build fails to connect to the server the old one started.
+
 Then look at what this machine has that no manifest declares:
 
 ```bash
