@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  macOS gives a unix stream socket 8 KB of buffer. A WezTerm window attaching
+  to the mux server with many panes fills both directions at once, and client
+  and server then wait on each other forever (#44). `sysctl -w` alone is lost
+  at boot; launchd runs this at every boot and once when it is loaded.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.kalinichenko.unix-socket-buffers</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/sbin/sysctl</string>
+    <string>-w</string>
+    <string>net.local.stream.sendspace=65536</string>
+    <string>net.local.stream.recvspace=65536</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>

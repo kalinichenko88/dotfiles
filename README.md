@@ -44,7 +44,8 @@ never inferred from a plain bootstrap request. Bootstrap runs in this order:
 1. platform check — Apple Silicon macOS with Command Line Tools;
 2. Homebrew, then `Brewfile` and `Brewfile.local` if present;
 3. pinned NVM and the exact Node version;
-4. the `~/Dev` project directories, then all configuration;
+4. the `~/Dev` project directories, then all configuration — `sudo` asks for
+   your password once, to install the socket-buffer LaunchDaemon WezTerm needs;
 5. strict `doctor` verification;
 6. `~/.config/dotfiles/bootstrap-complete` — written only after 1-5 pass.
 
@@ -118,6 +119,11 @@ launch brings back every window, split and running process (a reboot does not).
 `wezterm@nightly` is one of the casks `make update` skips. After reinstalling it
 by hand, run `pkill -f wezterm-mux-server` — closing every session — if the new
 build fails to connect to the server the old one started.
+
+With many panes, a window can attach to the server and show every tab empty:
+macOS sockets buffer only 8 KB, and the window and the server block each other.
+`make config-wezterm` installs a LaunchDaemon that raises the buffer at every
+boot, through `sudo`; afterwards, quit and reopen only the window.
 
 Then look at what this machine has that no manifest declares:
 
@@ -200,7 +206,8 @@ reappear in the tracked manifests.
 ## What doctor reports
 
 Required failures: missing taps, formulae, or casks; a wrong Node version;
-missing tracked configuration; a work Git identity still holding the template's
+missing tracked configuration; a socket-buffer LaunchDaemon that is not
+installed, or buffers below its values; a work Git identity still holding the template's
 placeholder address, or one symlinked into this repository instead of living in
 `~/.config/git` — that would put a work address and the signing keys inside a
 public checkout. Warnings: available upgrades, unsupported manual
@@ -233,6 +240,7 @@ other machines. Links pointing anywhere else are yours and are left alone.
 | `zsh/zshrc` | `~/.zshrc` |
 | `nvim/` | `~/.config/nvim` |
 | `wezterm.lua` | `~/.wezterm.lua` |
+| `launchd/dev.kalinichenko.unix-socket-buffers.plist` | `/Library/LaunchDaemons/` (copied with `sudo`, root-owned) |
 | `starship/starship.toml` | `~/.config/starship.toml` |
 | `docker/config.json` | `~/.docker/config.json` (merge) |
 | [agent-skills](https://github.com/kalinichenko88/agent-skills) | the `kalinichenko` Claude Code plugin: global prompt and the `github`, `docker`, `typescript-conventions` skills |

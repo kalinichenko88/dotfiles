@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Records each call in SUDO_STUB_LOG and runs nothing: a test must never reach
+# the real sudo, which prompts on a workstation and changes the runner on CI.
+printf '%s\n' "$*" >> "${SUDO_STUB_LOG:-/dev/null}"
