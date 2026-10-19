@@ -72,6 +72,8 @@ run_doctor() {
   BREW_STUB_CASKS="$brew_casks" BREW_STUB_TAPS="${STUB_TAPS-$brew_taps}" \
   BREW_STUB_OUTDATED="${STUB_OUTDATED-}" \
   GH_STUB_CONFIG="${STUB_GH_CONFIG-$gh_preferences}" \
+  GH_STUB_CONFIG_DIR="$target_home/.config/gh" \
+  SYSCTL_STUB_VALUES="${STUB_SYSCTL-}" \
   CLAUDE_STUB_PLUGINS="${STUB_CLAUDE_PLUGINS-$claude_plugins}" \
   NPM_STUB_SLEEP="${STUB_NPM_SLEEP-0}" \
   DOCTOR_AUTH_TIMEOUT_SECONDS="${STUB_AUTH_TIMEOUT-3}" \
@@ -94,8 +96,13 @@ chmod +x "$target_home/.nvm/versions/node/v24.18.0/bin/node"
 # whether the timeout works is measured in common_test against the helper
 # itself: timing a whole doctor run made this assertion flaky.
 STUB_OUTDATED=fd STUB_NPM_SLEEP=5 STUB_AUTH_TIMEOUT=1 \
-  run_doctor > "$tmp/ready.out"
+  run_doctor > "$tmp/ready.out" || \
+  fail "doctor failed a ready machine: $(grep '^missing' "$tmp/ready.out")"
 assert_file_contains "$tmp/ready.out" 'needs-login auth npm'
+# The gh preferences are read from the target home, where bootstrap wrote them.
+assert_file_contains "$tmp/ready.out" 'present config gh-git_protocol'
+# System-wide state is not checked for a home other than the user's own.
+assert_file_excludes "$tmp/ready.out" 'unix-socket-buffers'
 
 assert_file_contains "$tmp/ready.out" 'present-manual cask obsidian'
 # A cask installed by hand must not be re-failed by a second, stricter pass.
@@ -128,6 +135,32 @@ if STUB_CLAUDE_PLUGINS=$(jq '.[0].enabled = false' <<<"$claude_plugins") \
   fail 'a disabled Claude plugin must fail doctor'
 fi
 assert_file_contains "$tmp/claude-plugin-disabled.out" 'missing config claude-plugin'
+
+# The socket buffers WezTerm's mux needs (#44): the installed daemon and the
+# values in effect are both required, since `sysctl -w` alone is lost at boot.
+daemon=dev.kalinichenko.unix-socket-buffers
+mkdir -p "$tmp/LaunchDaemons"
+cp "$TEST_ROOT/launchd/$daemon.plist" "$tmp/LaunchDaemons/"
+buffers='net.local.stream.sendspace=65536
+net.local.stream.recvspace=65536'
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" STUB_SYSCTL=$buffers \
+  run_doctor > "$tmp/buffers.out" || \
+  fail "doctor failed applied socket buffers: $(grep '^missing' "$tmp/buffers.out")"
+assert_file_contains "$tmp/buffers.out" "present config $daemon"
+assert_file_contains "$tmp/buffers.out" 'present sysctl net.local.stream.recvspace'
+if DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+  STUB_SYSCTL=${buffers/recvspace=65536/recvspace=8192} \
+  run_doctor > "$tmp/buffers-default.out"; then
+  fail 'socket buffers at the macOS default must fail doctor'
+fi
+assert_file_contains "$tmp/buffers-default.out" \
+  'missing sysctl net.local.stream.recvspace'
+rm "$tmp/LaunchDaemons/$daemon.plist"
+if DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" STUB_SYSCTL=$buffers \
+  run_doctor > "$tmp/buffers-no-daemon.out"; then
+  fail 'socket buffers without their launch daemon must fail doctor'
+fi
+assert_file_contains "$tmp/buffers-no-daemon.out" "missing config $daemon"
 
 # An absent work identity is safe — useConfigOnly refuses the commit — but an
 # unedited copy of the example is not: the placeholder satisfies it.

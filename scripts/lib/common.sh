@@ -18,6 +18,19 @@ DOTFILES_CLAUDE_MARKETPLACE=kalinichenko88/agent-skills
 DOTFILES_CLAUDE_PLUGIN=kalinichenko@kalinichenko
 export DOTFILES_CLAUDE_MARKETPLACE DOTFILES_CLAUDE_PLUGIN
 
+# The socket buffers WezTerm's mux needs (#44). A LaunchDaemon is system-wide,
+# so only a run for the user's own home touches /Library/LaunchDaemons: any
+# other target home, tests included, gets an empty directory and skips it.
+DOTFILES_SOCKET_BUFFERS_DAEMON=launchd/dev.kalinichenko.unix-socket-buffers.plist
+if [ -z "${DOTFILES_LAUNCH_DAEMONS_DIR+set}" ]; then
+  if [ "$DOTFILES_TARGET_HOME" = "$HOME" ]; then
+    DOTFILES_LAUNCH_DAEMONS_DIR=/Library/LaunchDaemons
+  else
+    DOTFILES_LAUNCH_DAEMONS_DIR=
+  fi
+fi
+export DOTFILES_SOCKET_BUFFERS_DAEMON DOTFILES_LAUNCH_DAEMONS_DIR
+
 dotfiles_info() {
   printf 'info: %s\n' "$*"
 }

@@ -298,9 +298,38 @@ config_ssh() {
   config_links ssh
 }
 
+# Root-owned and outside every home, so this is the one step that goes through
+# sudo. An identical copy in place means nothing to do. Otherwise bootout first,
+# as launchd keeps a loaded definition and would not run a changed one; loading
+# runs it at once, so the values apply without a reboot.
+install_launch_daemon() {
+  local source label target
+  source=$DOTFILES_ROOT/$1
+  label=$(basename -- "$1" .plist)
+  if [ -z "$DOTFILES_LAUNCH_DAEMONS_DIR" ]; then
+    dotfiles_info "system-wide, skipped for this target home: $label"
+    return 0
+  fi
+  target=$DOTFILES_LAUNCH_DAEMONS_DIR/$label.plist
+  if cmp -s "$source" "$target"; then
+    dotfiles_info "launch daemon already installed: $target"
+    return 0
+  fi
+  dotfiles_run sudo install -m 644 -o root -g wheel "$source" "$target" || return 1
+  dotfiles_run sudo launchctl bootout "system/$label" 2>/dev/null || :
+  dotfiles_run sudo launchctl bootstrap system "$target"
+}
+
+config_wezterm() {
+  # run_step suspends set -e, so a failed link has to fail the unit itself.
+  config_links wezterm || return 1
+  install_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON"
+}
+
 # Applied through `gh config set`, never symlinked: gh writes its own state
 # into this file — it added `version: "1"` the first time the link was in
 # place, dirtying the repository — so the file has to stay gh's own.
+# GH_CONFIG_DIR aims gh at the target home like everything else this unit writes.
 config_gh() {
   local key value
   if [ "${DRY_RUN:-0}" != 1 ] && ! command -v gh >/dev/null 2>&1; then
@@ -310,7 +339,8 @@ config_gh() {
   while IFS=': ' read -r key value; do
     [ -n "$key" ] || continue
     case "$key" in '#'*) continue ;; esac
-    dotfiles_run gh config set "$key" "$value"
+    dotfiles_run env GH_CONFIG_DIR="$DOTFILES_TARGET_HOME/.config/gh" \
+      gh config set "$key" "$value"
   done < "$DOTFILES_ROOT/gh/config.yml"
 }
 

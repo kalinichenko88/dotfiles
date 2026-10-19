@@ -1,9 +1,14 @@
 #!/bin/bash
 
 # `gh config get <key>` answers from GH_STUB_CONFIG, a newline-separated list of
-# key=value pairs. Everything else behaves as a failed auth probe whose output
-# must never reach the report.
+# key=value pairs, but only to a gh aimed at GH_STUB_CONFIG_DIR when that is set:
+# the real one reads whatever GH_CONFIG_DIR names. Everything else behaves as a
+# failed auth probe whose output must never reach the report.
 if [ "${1:-}" = config ] && [ "${2:-}" = get ]; then
+  if [ -n "${GH_STUB_CONFIG_DIR:-}" ] && \
+    [ "${GH_CONFIG_DIR:-}" != "$GH_STUB_CONFIG_DIR" ]; then
+    exit 0
+  fi
   printf '%s\n' "${GH_STUB_CONFIG:-}" \
     | awk -F= -v key="$3" '$1 == key { print $2 }'
   exit 0

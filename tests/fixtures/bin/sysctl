@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# `sysctl -n <name>` answers from SYSCTL_STUB_VALUES, a newline-separated list
+# of name=value pairs. Anything else fails, as the real one does on a bad name.
+[ "${1:-}" = -n ] || exit 1
+printf '%s\n' "${SYSCTL_STUB_VALUES:-}" \
+  | awk -F= -v key="$2" '$1 == key { print $2; found = 1 } END { exit !found }'

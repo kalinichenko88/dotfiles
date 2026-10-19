@@ -12,14 +12,21 @@ target_home=$tmp/home
 mkdir -p "$target_home/.claude" "$tmp/bin"
 
 # The real claude would clone the plugin from GitHub; the stub records instead.
+# The real sudo would prompt, or on CI change the runner; its stub records too.
 ln -s "$TEST_ROOT/tests/fixtures/bin/claude" "$tmp/bin/claude"
-export PATH="$tmp/bin:$PATH" CLAUDE_STUB_LOG=$tmp/claude.log
+ln -s "$TEST_ROOT/tests/fixtures/bin/sudo" "$tmp/bin/sudo"
+export PATH="$tmp/bin:$PATH" CLAUDE_STUB_LOG=$tmp/claude.log \
+  SUDO_STUB_LOG=$tmp/sudo.log
 
 # What an older bootstrap left behind: the base prompt moved into the plugin,
 # so the link into this repository now dangles.
 ln -s "$TEST_ROOT/claude/CLAUDE.md" "$target_home/.claude/CLAUDE.md"
 
 DOTFILES_TARGET_HOME="$target_home" "$TEST_ROOT/scripts/bootstrap.sh" config
+
+# Provisioning a home other than the user's own must not touch the machine.
+[ ! -s "$tmp/sudo.log" ] || \
+  fail "config for a temporary home ran sudo: $(cat "$tmp/sudo.log")"
 
 assert_link() {
   expected=$1
@@ -226,6 +233,40 @@ EOF
   fail 'gh config must not be symlinked; gh writes to it'
 grep -q 'gh config set' "$TEST_ROOT/scripts/bootstrap.sh" || \
   fail 'gh preferences are no longer applied'
+
+# The real gh, aimed by HOME at a stand-in for the developer's home: the
+# preferences belong in the target home, and a test run must not rewrite the
+# developer's own gh config (#39).
+command -v gh >/dev/null 2>&1 || fail 'this test needs the real gh'
+env -u XDG_CONFIG_HOME -u GH_CONFIG_DIR HOME="$tmp/developer-home" \
+  DOTFILES_TARGET_HOME="$tmp/gh-home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config gh > /dev/null
+assert_file_contains "$tmp/gh-home/.config/gh/config.yml" 'git_protocol: ssh'
+[ ! -e "$tmp/developer-home/.config/gh" ] || \
+  fail 'config gh wrote outside the target home'
+
+# The socket buffers WezTerm's mux needs are system-wide (#44): a root-owned
+# LaunchDaemon re-applies them at every boot. Installed through sudo, and only
+# once: an identical copy in place means nothing to do.
+daemon=launchd/dev.kalinichenko.unix-socket-buffers.plist
+plutil -lint "$TEST_ROOT/$daemon" >/dev/null || fail "$daemon is not a valid plist"
+assert_equals "$(basename "$daemon" .plist)" \
+  "$(plutil -extract Label raw -o - "$TEST_ROOT/$daemon")"
+mkdir -p "$tmp/LaunchDaemons"
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+  DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+assert_file_contains "$tmp/sudo.log" \
+  "install -m 644 -o root -g wheel $TEST_ROOT/$daemon $tmp/LaunchDaemons/${daemon##*/}"
+assert_file_contains "$tmp/sudo.log" \
+  "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
+cp "$TEST_ROOT/$daemon" "$tmp/LaunchDaemons/"
+: > "$tmp/sudo.log"
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+  DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+[ ! -s "$tmp/sudo.log" ] || \
+  fail "an installed launch daemon was installed again: $(cat "$tmp/sudo.log")"
 
 # Both scripts now read setup/links.tsv, so there is no second table to drift
 # against; what has to hold is that every row actually got installed.

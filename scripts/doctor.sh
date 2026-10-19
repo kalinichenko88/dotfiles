@@ -160,7 +160,8 @@ check_gh_preferences() {
   while IFS=': ' read -r key value; do
     [ -n "$key" ] || continue
     case "$key" in '#'*) continue ;; esac
-    actual=$(gh config get "$key" 2>/dev/null || :)
+    actual=$(GH_CONFIG_DIR="$DOTFILES_TARGET_HOME/.config/gh" \
+      gh config get "$key" 2>/dev/null || :)
     if [ "$actual" = "$value" ]; then
       doctor_status present config "gh-$key"
     else
@@ -188,6 +189,35 @@ check_claude_plugin() {
   fi
 }
 
+# Both the installed copy and the values in effect: `sysctl -w` alone passes
+# today and is gone after the next boot, and a daemon installed but never
+# loaded passes the file check while the old values stay. A value only has to
+# reach the tracked one, because a larger buffer set by hand does no harm.
+check_launch_daemon() {
+  local relative_source label key value actual
+  relative_source=$1
+  [ -n "$DOTFILES_LAUNCH_DAEMONS_DIR" ] || return 0
+  label=$(basename -- "$relative_source" .plist)
+  if cmp -s "$DOTFILES_ROOT/$relative_source" \
+    "$DOTFILES_LAUNCH_DAEMONS_DIR/$label.plist"; then
+    doctor_status present config "$label"
+  else
+    doctor_missing config "$label"
+  fi
+  while IFS='=' read -r key value; do
+    actual=$(sysctl -n "$key" 2>/dev/null || :)
+    case "$actual" in
+      ''|*[!0-9]*) actual=0 ;;
+    esac
+    if [ "$actual" -ge "$value" ]; then
+      doctor_status present sysctl "$key"
+    else
+      doctor_missing sysctl "$key"
+    fi
+  done < <(sed -n 's|.*<string>\([a-z.]*=[0-9]*\)</string>.*|\1|p' \
+    "$DOTFILES_ROOT/$relative_source")
+}
+
 # gitconfig-work holds a work address and gitconfig-local the signing keys. An
 # older bootstrap symlinked both into this repository, which is public, so the
 # private data ended up inside a published checkout. They have to be real files
@@ -209,6 +239,7 @@ check_config() {
   while IFS=$'\t' read -r label source target; do
     check_link "$source" "$DOTFILES_TARGET_HOME/$target" "$label"
   done < <(dotfiles_links)
+  check_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON"
   check_gh_preferences
 
   # Containment, not equality: docker login adds registry credentials to the

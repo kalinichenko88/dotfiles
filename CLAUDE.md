@@ -38,7 +38,9 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   table), `dotfiles_brewfile_records` (the one Brewfile parser),
   `dotfiles_merge_json` (tracked JSON into a file other tools also write),
   `dotfiles_make_tmp`, `dotfiles_run_with_timeout` (macOS ships no `timeout(1)`;
-  without it a hanging auth probe hangs doctor)
+  without it a hanging auth probe hangs doctor), and `DOTFILES_LAUNCH_DAEMONS_DIR`
+  — `/Library/LaunchDaemons` only when the target home is `$HOME`, empty for any
+  other, so tests and other target homes never reach the system-wide step
 - `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
   installs these rows, doctor verifies the same rows. A new symlinked config is
   a line here, not an edit in two scripts.
@@ -76,6 +78,9 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
   aborts on the first one, which blocks a first run entirely.
 - A failing config unit must not stop the units after it: `ssh` precedes `zsh`,
   and stopping there leaves a new machine with no shell configuration.
+- Configuring a target home other than `$HOME` must not touch the machine: no
+  `sudo` call, and gh writes through `GH_CONFIG_DIR` into the target home, not
+  the developer's own `~/.config/gh` (#39).
 - `wezterm.lua` must not register a `format-tab-title` handler. WezTerm
   converts every tab to Lua on each title or progress change, and a dozen busy
   Claude Code tabs kept the GUI's main thread at 100%: the window stopped
@@ -220,6 +225,16 @@ appearance changes, so nothing appearance-dependent belongs in
 `set_environment_variables` — the delta pager in `git/gitconfig` reads
 `defaults` itself. A server started before a WezTerm reinstall keeps running the
 old build; `pkill -f wezterm-mux-server` ends it and every session in it.
+
+macOS gives a unix stream socket 8 KB of buffer. A window attaching with a dozen
+panes fills both directions at once, and client and server then wait on each
+other forever: the new window shows its tabs with empty panes (#44). So the
+`wezterm` unit also installs `launchd/dev.kalinichenko.unix-socket-buffers.plist`,
+a LaunchDaemon that raises `net.local.stream.sendspace` and `recvspace` to 64 KB
+at every boot. It goes into `/Library/LaunchDaemons` through `sudo` — the only
+step in bootstrap that does — and only when the target home is `$HOME`; an
+identical copy already in place skips it. Doctor requires both the installed
+copy and the values in effect: `sysctl -w` alone passes until the next boot.
 
 ### ssh-remote
 
