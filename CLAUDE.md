@@ -76,6 +76,10 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
   aborts on the first one, which blocks a first run entirely.
 - A failing config unit must not stop the units after it: `ssh` precedes `zsh`,
   and stopping there leaves a new machine with no shell configuration.
+- `wezterm.lua` must not register a `format-tab-title` handler. WezTerm
+  converts every tab to Lua on each title or progress change, and a dozen busy
+  Claude Code tabs kept the GUI's main thread at 100%: the window stopped
+  taking input after a resize.
 
 Two rules that look like redundancy but are not:
 
@@ -204,9 +208,9 @@ user's own and are never touched.
 ### WezTerm
 
 Single-file `wezterm.lua`: dark/light switching on macOS appearance,
-Cmd+Shift+arrow and Cmd+Shift+| pane splits, Monaco DemiBold with Menlo and Nerd
-Font fallbacks, and a tab title showing the basename of the pane's working
-directory.
+Cmd+Shift+arrow and Cmd+Shift+| pane splits, and Monaco DemiBold with Menlo and
+Nerd Font fallbacks. Tabs keep WezTerm's default title, the one the running
+program sets — see the invariant above for why there is no custom one.
 
 The GUI connects to a unix-domain mux server (`default_gui_startup_args`), so
 Cmd+Q detaches and the next launch reattaches every window, split and running

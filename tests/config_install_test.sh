@@ -201,6 +201,11 @@ grep -E '^[[:space:]]*useConfigOnly[[:space:]]*=[[:space:]]*true' \
 grep -E '^[[:space:]]*email[[:space:]]*=' "$TEST_ROOT/git/gitconfig" >/dev/null && \
   fail 'gitconfig must not set a top-level email; identity comes from includeIf'
 
+# A format-tab-title handler converts every tab to Lua on each title or
+# progress change; with many busy panes the GUI's main thread never idles.
+grep -F 'format-tab-title' "$TEST_ROOT/wezterm.lua" >/dev/null && \
+  fail 'wezterm.lua must not register a format-tab-title handler'
+
 # Every project directory bootstrap creates must have a Git identity rule.
 # Without one, commits there fall back to a guessed user@hostname address.
 DRY_RUN=1 DOTFILES_TARGET_HOME="$tmp/dev-dirs" \
