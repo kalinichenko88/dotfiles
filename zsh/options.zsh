@@ -19,6 +19,12 @@ setopt auto_cd auto_pushd pushd_ignore_dups pushd_minus \
   always_to_end complete_in_word interactive_comments long_list_jobs prompt_subst
 unsetopt flow_control
 
+# Tab title: the current directory, set again at every prompt. A program that
+# sets its own title keeps it while it runs; Claude Code clears it on exit.
+autoload -Uz add-zsh-hook
+_dotfiles_title() { print -Pn '\e]2;%1~\a' }
+[[ $TERM == dumb ]] || add-zsh-hook precmd _dotfiles_title
+
 # Completion. Homebrew's function directory is added here rather than relying
 # on this file loading after path.zsh.
 [[ -d /opt/homebrew/share/zsh/site-functions ]] &&
