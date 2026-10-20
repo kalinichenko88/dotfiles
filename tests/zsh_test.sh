@@ -97,4 +97,14 @@ HOME="$tmp/home" COMPLETION_MARKER="$tmp/completion-marker" \
 [ ! -e "$tmp/completion-marker" ] || \
   fail 'tracked Zsh configuration must not source OpenClaw completions'
 
+# Claude Code clears the title to an empty string on exit, and WezTerm keeps
+# it: the tab stays blank unless the next prompt sets it again.
+mkdir -p "$tmp/home/project"
+# shellcheck disable=SC2016
+title=$(cd "$tmp/home/project" && HOME="$tmp/home" PATH="$tmp/bin:$PATH" \
+  zsh -f -c 'source "$1"; for f in $precmd_functions; do "$f"; done' \
+  zsh "$tracked_zsh/zshrc")
+[ "$title" = $'\e]2;project\a' ] || \
+  fail "prompt must set the tab title to the directory, got: $(printf %q "$title")"
+
 pass 'tracked Zsh configuration is portable'

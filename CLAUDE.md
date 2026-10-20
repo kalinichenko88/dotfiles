@@ -127,7 +127,7 @@ overrode aliases declared in `aliases.zsh`.
 
 - `aliases.zsh` — git, nvim, and claude shortcuts
 - `options.zsh` — history, `setopt` list, `bindkey -e` (without it zsh infers vi
-  mode from `$EDITOR`), `compinit`
+  mode from `$EDITOR`), `compinit`, the tab title
 - `path.zsh` — Homebrew shellenv, NVM, optional app-bundled CLIs
 - `starship.zsh` — prompt, loaded last
 
@@ -215,7 +215,11 @@ user's own and are never touched.
 Single-file `wezterm.lua`: dark/light switching on macOS appearance,
 Cmd+Shift+arrow and Cmd+Shift+| pane splits, and Monaco DemiBold with Menlo and
 Nerd Font fallbacks. Tabs keep WezTerm's default title, the one the running
-program sets — see the invariant above for why there is no custom one.
+program sets — see the invariant above for why there is no custom one. At an
+idle prompt that program is zsh: a `precmd` hook in `options.zsh` sets the
+title to the current directory. Without it the tab goes blank after Claude
+Code exits, because Claude Code clears the title to an empty string and
+WezTerm falls back to the process name only while no title was ever set.
 
 The GUI connects to a unix-domain mux server (`default_gui_startup_args`), so
 Cmd+Q detaches and the next launch reattaches every window, split and running

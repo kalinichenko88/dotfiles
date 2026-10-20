@@ -271,8 +271,8 @@ worse than an error. Set `user.email` in the repository, or clone it under
 `~/Dev`.
 
 Zsh loads every tracked module from `zsh/`, then the ignored `zsh/local.zsh`
-exactly once, last. Shell behaviour — history, completion, keybindings — lives
-in `zsh/options.zsh`; there is no framework.
+exactly once, last. Shell behaviour — history, completion, keybindings, the
+tab title — lives in `zsh/options.zsh`; there is no framework.
 
 See [`nvim/README.md`](nvim/README.md) for Neovim plugins, keybindings, LSP, and
 formatters. `gh/config.yml` holds public preferences only, applied with
