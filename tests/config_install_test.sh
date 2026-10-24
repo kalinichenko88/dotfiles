@@ -134,6 +134,7 @@ printf 'local ssh\n' > "$partial_home/.ssh/config"
 printf 'local git\n' > "$partial_home/.config/git/config"
 printf 'local ghostty\n' > "$partial_home/.config/agterm/ghostty.conf"
 printf 'local statusline\n' > "$partial_home/.claude/statusline-command.sh"
+printf '{not json\n' > "$partial_home/.claude/settings.json"
 if DOTFILES_TARGET_HOME="$partial_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
   > "$tmp/partial.out" 2> "$tmp/partial.err"; then
   fail 'a failed config unit must still fail the run'
@@ -141,7 +142,13 @@ fi
 for unit in ssh git agterm claude; do
   assert_file_contains "$tmp/partial.err" "config $unit failed"
 done
+# A failed step costs the unit only that step; the ones after it still run.
 assert_link "$TEST_ROOT/agterm/keymap.conf" "$partial_home/.config/agterm/keymap.conf"
+jq -e --slurpfile source "$TEST_ROOT/agterm/settings.json" 'contains($source[0])' \
+  "$partial_home/Library/Application Support/agterm/settings.json" >/dev/null || \
+  fail 'a refused agterm link skipped the settings merge'
+assert_file_contains "$tmp/claude.log" \
+  "$partial_home plugin install kalinichenko@kalinichenko"
 assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"
 assert_link "$TEST_ROOT/zsh/zshrc" "$partial_home/.zshrc"
 assert_link "$TEST_ROOT/wezterm.lua" "$partial_home/.wezterm.lua"

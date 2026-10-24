@@ -60,6 +60,12 @@ dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/settings.json" >/dev/
 cmp -s "$TEST_ROOT/tests/fixtures/agterm-settings.json" "$tmp/home/agterm/settings.json" || \
   fail 'a merge that changed no value rewrote the file'
 
+# An empty file holds no settings, the same as a missing one.
+: > "$tmp/home/agterm/empty.json"
+dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/empty.json" >/dev/null
+jq -e --slurpfile source "$tmp/repo/agterm/settings.json" 'contains($source[0])' \
+  "$tmp/home/agterm/empty.json" >/dev/null || fail 'a merge into an empty file was lost'
+
 ln -s "$tmp/missing" "$tmp/home/.broken"
 if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
   fail 'a broken symlink must be treated as a conflict'

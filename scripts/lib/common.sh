@@ -267,7 +267,8 @@ dotfiles_merge_json() {
     return 1
   fi
 
-  if ! { [ -f "$target" ] && cat "$target" || printf '{}\n'; } \
+  # -s, not -f: an empty file gives jq no input, and so no output to merge into.
+  if ! { [ -s "$target" ] && cat "$target" || printf '{}\n'; } \
     | jq --slurpfile source "$source_path" "$program" > "$temp_file"; then
     rm -f "$temp_file"
     dotfiles_die "could not merge $relative_source into $target"

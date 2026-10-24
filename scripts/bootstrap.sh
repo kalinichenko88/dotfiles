@@ -326,19 +326,24 @@ install_launch_daemon() {
 }
 
 config_wezterm() {
+  local status=0
   # run_step suspends set -e, so a failed link has to fail the unit itself.
-  config_links wezterm || return 1
-  install_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON"
+  config_links wezterm || status=1
+  install_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON" || status=1
+  return "$status"
 }
 
 # Merged, never linked: the Settings window rewrites settings.json atomically,
 # so a symlink would turn back into a plain file on the first change. agterm
 # reads the file at launch, and restoreMode applies only from a new launch.
 config_agterm() {
+  local status=0
   # run_step suspends set -e, so a failed link has to fail the unit itself.
-  config_links agterm || return 1
+  config_links agterm || status=1
   dotfiles_merge_json agterm/settings.json \
-    "$DOTFILES_TARGET_HOME/Library/Application Support/agterm/settings.json"
+    "$DOTFILES_TARGET_HOME/Library/Application Support/agterm/settings.json" \
+    || status=1
+  return "$status"
 }
 
 # Applied through `gh config set`, never symlinked: gh writes its own state
@@ -385,7 +390,7 @@ config_claude() {
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/skills"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/hooks"
-  install_claude_settings || return 1
+  install_claude_settings || status=1
   install_claude_plugin || status=1
   return "$status"
 }
