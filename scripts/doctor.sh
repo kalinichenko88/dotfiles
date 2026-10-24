@@ -236,9 +236,11 @@ check_private_git_file() {
 # Containment, not equality: other tools write the rest of these files, and the
 # merge deliberately leaves their keys alone — docker login its registry
 # credentials, the user their own Claude hooks, agterm every other setting.
+# Slurped, like the merge: a file holding a second value is not present.
 check_merged_json() {
   if command -v jq >/dev/null 2>&1 && \
-    jq -e --slurpfile source "$DOTFILES_ROOT/$1" 'contains($source[0])' \
+    jq -es --slurpfile source "$DOTFILES_ROOT/$1" \
+      'length == 1 and (.[0] | contains($source[0]))' \
       "$DOTFILES_TARGET_HOME/$2" >/dev/null 2>&1; then
     doctor_status present config "$3"
   else

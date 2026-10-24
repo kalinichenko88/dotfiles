@@ -176,13 +176,16 @@ if GH_SET_LOG=$tmp/gh-set.log PATH="$tmp/gh-fails-first:$PATH" \
 fi
 assert_equals "$(sed -n 's/:.*//p' "$TEST_ROOT/gh/config.yml")" "$(cat "$tmp/gh-set.log")"
 
-# A project directory that cannot be created fails the unit.
-mkdir -p "$tmp/dev-file-home"
-printf 'not a directory\n' > "$tmp/dev-file-home/Dev"
+# A project directory that cannot be created fails the unit, and the ones
+# after it are still created.
+mkdir -p "$tmp/dev-file-home/Dev"
+printf 'not a directory\n' > "$tmp/dev-file-home/Dev/Personal"
 if DOTFILES_TARGET_HOME="$tmp/dev-file-home" \
   "$TEST_ROOT/scripts/bootstrap.sh" config dev-dirs > /dev/null 2>&1; then
   fail 'a project directory that could not be created did not fail the unit'
 fi
+[ -d "$tmp/dev-file-home/Dev/Work" ] && [ -d "$tmp/dev-file-home/Dev/Open Source" ] || \
+  fail 'a refused project directory stopped the ones after it'
 
 assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"
 assert_link "$TEST_ROOT/zsh/zshrc" "$partial_home/.zshrc"
