@@ -79,9 +79,10 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
   aborts on the first one, which blocks a first run entirely.
 - A failing config unit must not stop the units after it: `ssh` precedes `zsh`,
   and stopping there leaves a new machine with no shell configuration.
-- Inside a unit, a failed step fails the unit but does not skip the steps after
-  it: a refused link still lets the merge and the plugin install run, and a
-  refused row does not hide behind a later one that succeeds. The one exception
+- Inside a unit, a refused link, JSON merge, gh preference or project
+  directory fails the unit but does not skip the steps after it: a refused
+  link still lets the merge and the plugin install run, and a refused row does
+  not hide behind a later one that succeeds. The one exception
   is a failed Claude settings merge, which stops the plugin install: the
   plugin CLI writes the same `settings.json`.
 - Configuring a target home other than `$HOME` must not touch the machine: no

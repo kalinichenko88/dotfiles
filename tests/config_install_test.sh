@@ -161,16 +161,27 @@ fi
 assert_equals '{not json' "$(cat "$broken_home/.claude/settings.json")"
 assert_file_excludes "$tmp/claude.log" "$broken_home plugin"
 
-# A refused gh preference fails the unit even when the keys after it apply.
+# A refused gh preference fails the unit, and the keys after it still apply.
 mkdir -p "$tmp/gh-fails-first"
 cat > "$tmp/gh-fails-first/gh" <<'EOF'
 #!/bin/sh
+printf '%s\n' "$3" >> "$GH_SET_LOG"
 [ "$3" != git_protocol ]
 EOF
 chmod +x "$tmp/gh-fails-first/gh"
-if PATH="$tmp/gh-fails-first:$PATH" DOTFILES_TARGET_HOME="$tmp/gh-fail-home" \
+if GH_SET_LOG=$tmp/gh-set.log PATH="$tmp/gh-fails-first:$PATH" \
+  DOTFILES_TARGET_HOME="$tmp/gh-fail-home" \
   "$TEST_ROOT/scripts/bootstrap.sh" config gh > /dev/null 2>&1; then
   fail 'a refused gh preference did not fail the unit'
+fi
+assert_equals "$(sed -n 's/:.*//p' "$TEST_ROOT/gh/config.yml")" "$(cat "$tmp/gh-set.log")"
+
+# A project directory that cannot be created fails the unit.
+mkdir -p "$tmp/dev-file-home"
+printf 'not a directory\n' > "$tmp/dev-file-home/Dev"
+if DOTFILES_TARGET_HOME="$tmp/dev-file-home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config dev-dirs > /dev/null 2>&1; then
+  fail 'a project directory that could not be created did not fail the unit'
 fi
 
 assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"

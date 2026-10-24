@@ -72,6 +72,17 @@ for blank in '' '\n' ' \n\n'; do
     fail "a merge into a blank file was lost: $(printf %q "$blank")"
 done
 
+# A stray brace from a hand edit, or a second value, is not a file to merge
+# into: the merge fails and leaves it as it was.
+for broken in '{"theme":"x"}\n}\n' '{"theme":"x"}{"font":"y"}'; do
+  printf '%b' "$broken" > "$tmp/home/agterm/broken.json"
+  if dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/broken.json" \
+    >/dev/null 2>&1; then
+    fail "a merge accepted a broken file: $(printf %q "$broken")"
+  fi
+  assert_equals "$(printf '%b' "$broken")" "$(cat "$tmp/home/agterm/broken.json")"
+done
+
 ln -s "$tmp/missing" "$tmp/home/.broken"
 if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
   fail 'a broken symlink must be treated as a conflict'
