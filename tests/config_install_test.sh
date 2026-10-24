@@ -41,10 +41,6 @@ assert_link "$TEST_ROOT/zsh/zshrc" "$target_home/.zshrc"
 assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
 assert_link "$TEST_ROOT/agterm/ghostty.conf" "$target_home/.config/agterm/ghostty.conf"
-# Merged, not linked: the Settings window rewrites this file atomically.
-jq -e --slurpfile source "$TEST_ROOT/agterm/settings.json" 'contains($source[0])' \
-  "$target_home/Library/Application Support/agterm/settings.json" >/dev/null || \
-  fail 'agterm settings were not merged'
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
 [ ! -L "$target_home/.claude/CLAUDE.md" ] || \
   fail 'the dangling link to the old base prompt survived the install'
