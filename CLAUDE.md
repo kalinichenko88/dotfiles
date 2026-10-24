@@ -47,7 +47,8 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 - `tests/*_test.sh` — plain bash, run by `make test`. Fixtures: stub executables
   in `tests/fixtures/bin`, recorded transcript commands in
   `tests/fixtures/hook-commands`, recorded `claude plugin list --json` output in
-  `tests/fixtures/claude-plugin-list.json`
+  `tests/fixtures/claude-plugin-list.json`, and a `settings.json` as agterm
+  writes it in `tests/fixtures/agterm-settings.json`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
 `wezterm`, `agterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
@@ -263,7 +264,11 @@ conversation, so `zsh/claude-resume.zsh` wraps `claude` and ties each tab's
 conversation to `AGTERM_SESSION_ID`: `--session-id` the first time, `--resume`
 after that. It must be a function, not an alias: the replay quotes every word,
 which stops alias expansion but not function lookup. Do not edit the vendored
-body; take a new upstream revision instead.
+body; take a new upstream revision instead. One conversation per tab is the
+recipe's design and was kept on purpose: `claude` in a tab always resumes it,
+and a reboot after `/clear` or `/resume` brings back the earlier conversation.
+A wrapper with a SessionStart hook that tracks the current conversation was
+considered and declined.
 
 ### ssh-remote
 
@@ -278,8 +283,9 @@ Do not look for them here.
 - `.editorconfig` sets 2-space indentation and line endings for everything else
 - Shell scripts must pass `shellcheck`. Two suppressions are legitimate and
   already used: `SC1091` for runtime-resolved `source` paths, and `SC2016` for
-  single-quoted jq programs, where `$source` is a jq variable rather than a
-  shell one. Anything else means fixing the code, not silencing the check.
+  single-quoted text that must reach its reader unexpanded — a jq program,
+  where `$source` is a jq variable, or a `zsh -c` program and a literal `$HOME`
+  in the tests. Anything else means fixing the code, not silencing the check.
 - Tests are POSIX `[ ]` everywhere except the prefix match in
   `dotfiles_prune_orphan_links`, where `[[ ]]` replaces a four-line `case`.
   Every script here is `#!/bin/bash`, so that is a style choice, not a rule.

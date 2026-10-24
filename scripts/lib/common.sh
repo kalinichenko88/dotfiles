@@ -275,7 +275,10 @@ dotfiles_merge_json() {
   fi
   chmod 600 "$temp_file"
 
-  if [ -f "$target" ] && cmp -s "$target" "$temp_file"; then
+  # Values, not bytes: agterm and Docker write their own layout, and a merge
+  # that changes nothing must not back up and rewrite on every run.
+  if [ -f "$target" ] && jq -e --slurpfile merged "$temp_file" \
+    '. == $merged[0]' "$target" >/dev/null 2>&1; then
     rm -f "$temp_file"
     dotfiles_info "merge already applied: $target"
     return 0

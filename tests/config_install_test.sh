@@ -126,13 +126,22 @@ assert_equals 'local zsh' "$(cat "$target_home/.zshrc")"
 # leaves the shell, editor and terminal unconfigured. The run reports the
 # failure and still exits non-zero.
 partial_home=$tmp/partial-home
-mkdir -p "$partial_home/.ssh"
+mkdir -p "$partial_home/.ssh" "$partial_home/.config/git" \
+  "$partial_home/.config/agterm" "$partial_home/.claude"
 printf 'local ssh\n' > "$partial_home/.ssh/config"
+# A refused link fails its unit even when steps after it succeed: the first of
+# two rows (git, agterm), or a link before the merge and the plugin (claude).
+printf 'local git\n' > "$partial_home/.config/git/config"
+printf 'local ghostty\n' > "$partial_home/.config/agterm/ghostty.conf"
+printf 'local statusline\n' > "$partial_home/.claude/statusline-command.sh"
 if DOTFILES_TARGET_HOME="$partial_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
   > "$tmp/partial.out" 2> "$tmp/partial.err"; then
   fail 'a failed config unit must still fail the run'
 fi
-assert_file_contains "$tmp/partial.err" 'config ssh'
+for unit in ssh git agterm claude; do
+  assert_file_contains "$tmp/partial.err" "config $unit failed"
+done
+assert_link "$TEST_ROOT/agterm/keymap.conf" "$partial_home/.config/agterm/keymap.conf"
 assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"
 assert_link "$TEST_ROOT/zsh/zshrc" "$partial_home/.zshrc"
 assert_link "$TEST_ROOT/wezterm.lua" "$partial_home/.wezterm.lua"

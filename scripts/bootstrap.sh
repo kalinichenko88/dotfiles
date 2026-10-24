@@ -274,20 +274,25 @@ config_dev_dirs() {
 }
 
 # Installs every symlink setup/links.tsv declares for one unit. A unit whose
-# whole definition is symlinks needs no function of its own.
+# whole definition is symlinks needs no function of its own. Every row is
+# tried, and any refused row fails the unit: a loop returns only the status of
+# its last row, which hid a refused first one.
 config_links() {
-  local source target
+  local source target status=0
   while IFS=$'\t' read -r _ source target; do
-    dotfiles_link "$source" "$DOTFILES_TARGET_HOME/$target"
+    dotfiles_link "$source" "$DOTFILES_TARGET_HOME/$target" || status=1
   done < <(dotfiles_links "$1")
+  return "$status"
 }
 
 config_git() {
-  config_links git
+  local status=0
+  config_links git || status=1
   announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-work"
   announce_missing_git_identity \
     "$DOTFILES_TARGET_HOME/.config/git/gitconfig-local"
+  return "$status"
 }
 
 # Only the 1Password agent wiring is tracked. Hosts live in the untracked
@@ -362,26 +367,27 @@ config_docker() {
 }
 
 config_claude() {
-  local item item_name
-  config_links claude
+  local item item_name status=0
+  # run_step suspends set -e, so every failed step has to fail the unit itself.
+  config_links claude || status=1
   for item in "$DOTFILES_ROOT"/claude/skills/*; do
     [ -d "$item" ] || continue
     item_name=$(basename -- "$item")
     dotfiles_link "claude/skills/$item_name" \
-      "$DOTFILES_TARGET_HOME/.claude/skills/$item_name"
+      "$DOTFILES_TARGET_HOME/.claude/skills/$item_name" || status=1
   done
   for item in "$DOTFILES_ROOT"/claude/hooks/*.sh; do
     [ -f "$item" ] || continue
     item_name=$(basename -- "$item")
     dotfiles_link "claude/hooks/$item_name" \
-      "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name"
+      "$DOTFILES_TARGET_HOME/.claude/hooks/$item_name" || status=1
   done
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/skills"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/hooks"
-  # run_step suspends set -e, so a failed merge has to fail the unit itself.
   install_claude_settings || return 1
-  install_claude_plugin
+  install_claude_plugin || status=1
+  return "$status"
 }
 
 CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm agterm gh starship docker claude'

@@ -49,6 +49,17 @@ backup=$(find "$tmp/home" -maxdepth 1 -name '.zshrc.backup.*' -print | head -n 1
 [ -n "$backup" ] || fail 'forced link backup is missing'
 assert_equals 'local' "$(cat "$backup")"
 
+# agterm writes settings.json in its own layout, `"key" : value`. A merge that
+# changes no value is no change: no backup, no rewrite.
+mkdir -p "$tmp/repo/agterm" "$tmp/home/agterm"
+jq . "$TEST_ROOT/tests/fixtures/agterm-settings.json" > "$tmp/repo/agterm/settings.json"
+cp "$TEST_ROOT/tests/fixtures/agterm-settings.json" "$tmp/home/agterm/settings.json"
+dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/settings.json" >/dev/null
+[ -z "$(find "$tmp/home/agterm" -name '*.backup.*' -print -quit)" ] || \
+  fail 'a merge that changed no value made a backup'
+cmp -s "$TEST_ROOT/tests/fixtures/agterm-settings.json" "$tmp/home/agterm/settings.json" || \
+  fail 'a merge that changed no value rewrote the file'
+
 ln -s "$tmp/missing" "$tmp/home/.broken"
 if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
   fail 'a broken symlink must be treated as a conflict'

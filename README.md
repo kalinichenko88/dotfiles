@@ -130,7 +130,10 @@ Quitting agterm leaves every pane's process running, and the next launch
 reattaches to it. A restart or shutdown of the Mac ends those processes, so
 agterm records each pane's command at quit and starts it again at the next
 launch. For Claude Code, `zsh/claude-resume.zsh` makes that replay resume the
-conversation the tab had, not start a new one. macOS does not open agterm
+tab's conversation, not start a new one. Each tab keeps one conversation:
+`claude` there always continues it, and after `/clear` or `/resume` a reboot
+brings back the conversation from before them. `command claude` starts a
+conversation outside that rule. macOS does not open agterm
 after a restart by itself: open it, or keep "Reopen windows when logging back
 in" selected in the restart dialog. A force quit or a power loss records
 nothing, and those panes start a plain shell.
@@ -138,9 +141,11 @@ nothing, and those panes start a plain shell.
 The Settings window writes `~/Library/Application Support/agterm/settings.json`;
 `make config-agterm` puts the tracked keys back. After you change a setting
 in the window, copy its key into `agterm/settings.json`, or the next
-`make update` reverts it. Quit agterm before `make config-agterm`: agterm
-reads the file only at launch, and a later change in the window writes the
-values it loaded back over the merge.
+`make update` reverts it. agterm reads the file only at launch. When
+`make config-agterm` or `make update` changes it, restart agterm before you
+change anything in the window: otherwise the window writes the values agterm
+loaded back over the merge. In Live sessions mode a restart keeps every pane
+running.
 
 Then look at what this machine has that no manifest declares:
 
