@@ -327,7 +327,6 @@ install_launch_daemon() {
 
 config_wezterm() {
   local status=0
-  # run_step suspends set -e, so a failed link has to fail the unit itself.
   config_links wezterm || status=1
   install_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON" || status=1
   return "$status"
@@ -338,7 +337,6 @@ config_wezterm() {
 # reads the file at launch, and restoreMode applies only from a new launch.
 config_agterm() {
   local status=0
-  # run_step suspends set -e, so a failed link has to fail the unit itself.
   config_links agterm || status=1
   dotfiles_merge_json agterm/settings.json \
     "$DOTFILES_TARGET_HOME/Library/Application Support/agterm/settings.json" \
@@ -351,7 +349,7 @@ config_agterm() {
 # place, dirtying the repository — so the file has to stay gh's own.
 # GH_CONFIG_DIR aims gh at the target home like everything else this unit writes.
 config_gh() {
-  local key value
+  local key value status=0
   if [ "${DRY_RUN:-0}" != 1 ] && ! command -v gh >/dev/null 2>&1; then
     dotfiles_warn 'gh is unavailable; skipping its preferences'
     return 0
@@ -360,8 +358,9 @@ config_gh() {
     [ -n "$key" ] || continue
     case "$key" in '#'*) continue ;; esac
     dotfiles_run env GH_CONFIG_DIR="$DOTFILES_TARGET_HOME/.config/gh" \
-      gh config set "$key" "$value"
+      gh config set "$key" "$value" || status=1
   done < "$DOTFILES_ROOT/gh/config.yml"
+  return "$status"
 }
 
 # Merged, never copied: `docker login` writes registry credentials into the
@@ -373,7 +372,6 @@ config_docker() {
 
 config_claude() {
   local item item_name status=0
-  # run_step suspends set -e, so every failed step has to fail the unit itself.
   config_links claude || status=1
   for item in "$DOTFILES_ROOT"/claude/skills/*; do
     [ -d "$item" ] || continue
@@ -390,7 +388,9 @@ config_claude() {
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/skills"
   dotfiles_prune_orphan_links "$DOTFILES_TARGET_HOME/.claude/hooks"
-  install_claude_settings || status=1
+  # The one step that stops the unit: the plugin CLI writes the same
+  # settings.json, and must not touch a file the merge could not parse.
+  install_claude_settings || return 1
   install_claude_plugin || status=1
   return "$status"
 }
@@ -398,7 +398,9 @@ config_claude() {
 CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm agterm gh starship docker claude'
 
 # A unit with a function runs it; anything else is defined entirely by its rows
-# in setup/links.tsv.
+# in setup/links.tsv. run_step suspends set -e, so a unit function tries every
+# step, records each failure in its own status and returns it: a failed link
+# must fail the unit without costing it the merge or the install after it.
 install_config_unit() {
   local unit function_name
   unit=$1

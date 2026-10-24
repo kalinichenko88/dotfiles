@@ -234,7 +234,7 @@ dotfiles_prune_orphan_links() {
 # and goes once the tracked file drops it from an array the file still declares.
 # A missing target is {}; no FORCE.
 dotfiles_merge_json() {
-  local relative_source target program source_path target_dir temp_file
+  local relative_source target program source_path target_dir temp_file input
   relative_source=$1
   target=$2
   # $source and $s are jq variables, and $HOME is text jq matches, not a
@@ -248,7 +248,7 @@ dotfiles_merge_json() {
         (. - ([.[] | select(tostring | contains("$HOME/.claude/hooks/"))] - $s)) as $kept
         | $kept + ($s - $kept)
       else $s end;
-    merge($source[0])'
+    (first(inputs) // {}) | merge($source[0])'
   source_path=$DOTFILES_ROOT/$relative_source
   target_dir=$(dirname -- "$target")
 
@@ -267,9 +267,12 @@ dotfiles_merge_json() {
     return 1
   fi
 
-  # -s, not -f: an empty file gives jq no input, and so no output to merge into.
-  if ! { [ -s "$target" ] && cat "$target" || printf '{}\n'; } \
-    | jq --slurpfile source "$source_path" "$program" > "$temp_file"; then
+  # A missing, empty or blank target gives jq no value at all, and the merge
+  # then starts from {}: piping it into jq would produce no output to merge into.
+  input=$target
+  [ -f "$target" ] || input=/dev/null
+  if ! jq -n --slurpfile source "$source_path" "$program" "$input" \
+    > "$temp_file"; then
     rm -f "$temp_file"
     dotfiles_die "could not merge $relative_source into $target"
     return 1

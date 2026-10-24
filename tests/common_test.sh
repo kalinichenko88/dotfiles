@@ -60,11 +60,17 @@ dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/settings.json" >/dev/
 cmp -s "$TEST_ROOT/tests/fixtures/agterm-settings.json" "$tmp/home/agterm/settings.json" || \
   fail 'a merge that changed no value rewrote the file'
 
-# An empty file holds no settings, the same as a missing one.
-: > "$tmp/home/agterm/empty.json"
-dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/empty.json" >/dev/null
-jq -e --slurpfile source "$tmp/repo/agterm/settings.json" 'contains($source[0])' \
-  "$tmp/home/agterm/empty.json" >/dev/null || fail 'a merge into an empty file was lost'
+# An empty or blank file holds no settings, the same as a missing one.
+blank_count=0
+for blank in '' '\n' ' \n\n'; do
+  blank_count=$((blank_count + 1))
+  blank_file=$tmp/home/agterm/blank-$blank_count.json
+  printf '%b' "$blank" > "$blank_file"
+  dotfiles_merge_json agterm/settings.json "$blank_file" >/dev/null
+  jq -e --slurpfile source "$tmp/repo/agterm/settings.json" 'contains($source[0])' \
+    "$blank_file" >/dev/null || \
+    fail "a merge into a blank file was lost: $(printf %q "$blank")"
+done
 
 ln -s "$tmp/missing" "$tmp/home/.broken"
 if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
