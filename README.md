@@ -259,6 +259,7 @@ other machines. Links pointing anywhere else are yours and are left alone.
 | `wezterm.lua` | `~/.wezterm.lua` |
 | `launchd/dev.kalinichenko.unix-socket-buffers.plist` | `/Library/LaunchDaemons/` (copied with `sudo`, root-owned) |
 | `agterm/ghostty.conf` | `~/.config/agterm/ghostty.conf` |
+| `agterm/keymap.conf` | `~/.config/agterm/keymap.conf` |
 | `agterm/settings.json` | `~/Library/Application Support/agterm/settings.json` (merge) |
 | `starship/starship.toml` | `~/.config/starship.toml` |
 | `docker/config.json` | `~/.docker/config.json` (merge) |

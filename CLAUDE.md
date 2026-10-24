@@ -251,8 +251,10 @@ copy and the values in effect: `sysctl -w` alone passes until the next boot.
 `agterm/ghostty.conf` is symlinked to `~/.config/agterm/ghostty.conf`: Ghostty
 keys for agterm only. Font, theme and the rest of the Settings window are in
 `agterm/settings.json`, merged, and agterm applies them after `ghostty.conf`.
-`keymap.conf`, `hooks.conf` and `restore-denylist.conf` hold only agterm's
-seeded defaults, so none of them is tracked.
+`agterm/keymap.conf` is symlinked the same way. agterm writes either file only
+when it is absent, and its Edit Config and Edit Keymap open `$EDITOR` on the
+path, so the links stay links. `hooks.conf` and `restore-denylist.conf` hold
+only agterm's seeded defaults, so neither is tracked.
 
 `restoreMode` is `live`: each pane runs in a zmx daemon that outlives agterm.
 A reboot ends the daemons; agterm then replays the command each pane ran at the

@@ -12,5 +12,6 @@ zsh	zsh	zsh/zshrc	.zshrc
 nvim	nvim	nvim	.config/nvim
 wezterm	wezterm	wezterm.lua	.wezterm.lua
 agterm	agterm-ghostty	agterm/ghostty.conf	.config/agterm/ghostty.conf
+agterm	agterm-keymap	agterm/keymap.conf	.config/agterm/keymap.conf
 starship	starship	starship/starship.toml	.config/starship.toml
 claude	claude-statusline	claude/statusline-command.sh	.claude/statusline-command.sh
