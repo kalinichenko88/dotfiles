@@ -1,8 +1,8 @@
 # dotfiles
 
 Reproducible macOS workstation setup for Apple Silicon: Homebrew packages,
-pinned runtimes, and the configuration for Git, Zsh, Neovim, WezTerm, GitHub
-CLI, Starship, Docker, and Claude Code.
+pinned runtimes, and the configuration for Git, Zsh, Neovim, WezTerm, agterm,
+GitHub CLI, Starship, Docker, and Claude Code.
 
 Every command is idempotent and refuses to overwrite a file it does not manage.
 Only `make cleanup` ever uninstalls anything, and only when asked.
@@ -125,6 +125,23 @@ macOS sockets buffer only 8 KB, and the window and the server block each other.
 `make config-wezterm` installs a LaunchDaemon that raises the buffer at every
 boot, through `sudo`; afterwards, quit and reopen only the window.
 
+agterm runs in Live sessions mode (`restoreMode` in `agterm/settings.json`).
+Quitting agterm leaves every pane's process running, and the next launch
+reattaches to it. A restart or shutdown of the Mac ends those processes, so
+agterm records each pane's command at quit and starts it again at the next
+launch. For Claude Code, `zsh/claude-resume.zsh` makes that replay resume the
+conversation the tab had, not start a new one. macOS does not open agterm
+after a restart by itself: open it, or keep "Reopen windows when logging back
+in" selected in the restart dialog. A force quit or a power loss records
+nothing, and those panes start a plain shell.
+
+The Settings window writes `~/Library/Application Support/agterm/settings.json`;
+`make config-agterm` puts the tracked keys back. After you change a setting
+in the window, copy its key into `agterm/settings.json`, or the next
+`make update` reverts it. Quit agterm before `make config-agterm`: agterm
+reads the file only at launch, and a later change in the window writes the
+values it loaded back over the merge.
+
 Then look at what this machine has that no manifest declares:
 
 ```bash
@@ -167,8 +184,8 @@ make config-nvim                 # one unit
 | `make git-check` | Active `user.name`/`user.email` and their sources |
 | `make test` | Shell integration and regression tests |
 
-Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
-`docker`, `claude`.
+Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `agterm`, `gh`,
+`starship`, `docker`, `claude`.
 
 ## Safety
 
@@ -183,8 +200,8 @@ Units: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`, `wezterm`, `gh`, `starship`,
   address would satisfy `useConfigOnly` and author commits as itself. Until you
   write `~/.config/git/gitconfig-work`, Git refuses commits under `~/Dev/Work`
   and doctor warns.
-- Docker config and Claude settings are merged with `jq` rather than replaced,
-  because other tools write to those files too. Unrelated keys survive, and a
+- Docker config, agterm settings and Claude settings are merged with `jq`
+  rather than replaced, because other tools write to those files too. Unrelated keys survive, and a
   file that does change is backed up first.
 
 ## Machine-specific software
@@ -219,8 +236,8 @@ For casks, doctor accepts either a Homebrew receipt or the expected application
 bundle from `setup/cask-apps.tsv`, so an app installed by hand is not
 reinstalled just to change package-manager ownership.
 
-Files other tools also write — `~/.docker/config.json` and
-`~/.claude/settings.json` — are merged rather than replaced, and doctor checks
+Files other tools also write — `~/.docker/config.json`, agterm's
+`settings.json` and `~/.claude/settings.json` — are merged rather than replaced, and doctor checks
 that the tracked keys are present rather than that the file matches exactly.
 Docker registry credentials, plugin directories and Claude hooks you added
 yourself survive, on any event. A hook this repository installed and later
@@ -241,6 +258,8 @@ other machines. Links pointing anywhere else are yours and are left alone.
 | `nvim/` | `~/.config/nvim` |
 | `wezterm.lua` | `~/.wezterm.lua` |
 | `launchd/dev.kalinichenko.unix-socket-buffers.plist` | `/Library/LaunchDaemons/` (copied with `sudo`, root-owned) |
+| `agterm/ghostty.conf` | `~/.config/agterm/ghostty.conf` |
+| `agterm/settings.json` | `~/Library/Application Support/agterm/settings.json` (merge) |
 | `starship/starship.toml` | `~/.config/starship.toml` |
 | `docker/config.json` | `~/.docker/config.json` (merge) |
 | [agent-skills](https://github.com/kalinichenko88/agent-skills) | the `kalinichenko` Claude Code plugin: global prompt and the `github`, `docker`, `typescript-conventions` skills |

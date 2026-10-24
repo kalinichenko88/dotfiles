@@ -1,0 +1,11 @@
+{
+  "cursorStyle": "block",
+  "darkTheme": "Kanagawabones",
+  "followSystemAppearance": true,
+  "fontFamily": "Monaco",
+  "fontSize": 14,
+  "newSessionDirectory": "currentSession",
+  "restoreMode": "live",
+  "sidebarFontSize": 14,
+  "theme": "Monospace Light"
+}

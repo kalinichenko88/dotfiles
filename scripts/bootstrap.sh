@@ -326,6 +326,16 @@ config_wezterm() {
   install_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON"
 }
 
+# Merged, never linked: the Settings window rewrites settings.json atomically,
+# so a symlink would turn back into a plain file on the first change. agterm
+# reads the file at launch, and restoreMode applies only from a new launch.
+config_agterm() {
+  # run_step suspends set -e, so a failed link has to fail the unit itself.
+  config_links agterm || return 1
+  dotfiles_merge_json agterm/settings.json \
+    "$DOTFILES_TARGET_HOME/Library/Application Support/agterm/settings.json"
+}
+
 # Applied through `gh config set`, never symlinked: gh writes its own state
 # into this file — it added `version: "1"` the first time the link was in
 # place, dirtying the repository — so the file has to stay gh's own.
@@ -374,7 +384,7 @@ config_claude() {
   install_claude_plugin
 }
 
-CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm gh starship docker claude'
+CONFIG_UNITS='dev-dirs git ssh zsh nvim wezterm agterm gh starship docker claude'
 
 # A unit with a function runs it; anything else is defined entirely by its rows
 # in setup/links.tsv.

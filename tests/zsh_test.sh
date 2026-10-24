@@ -114,4 +114,27 @@ title=$(prompt_output dumb)
 [ -z "$title" ] || \
   fail "prompt must not send a title to a dumb terminal, got: $(printf %q "$title")"
 
+# After a reboot agterm replays the argv each pane ran. A replayed bare claude
+# would open a new conversation; the wrapper must resume the tab's own one, also
+# when the pane was started through the cc alias.
+ln -s "$TEST_ROOT/tests/fixtures/bin/claude" "$tmp/bin/claude"
+tab_id=0f1e2d3c-4b5a-4978-8695-a4b3c2d1e0f9
+# The stub goes first only after zshrc: path.zsh puts Homebrew, where a real
+# claude may live, ahead of whatever PATH the shell started with.
+claude_argv() {
+  : > "$tmp/claude.log"
+  # shellcheck disable=SC2016
+  HOME="$tmp/home" AGTERM_SESSION_ID=$tab_id CLAUDE_STUB_LOG=$tmp/claude.log \
+    zsh -f -c 'source "$1" > /dev/null; path=("$3" $path); eval "$2"' \
+    zsh "$tracked_zsh/zshrc" "$1" "$tmp/bin"
+  cut -d' ' -f2- "$tmp/claude.log"
+}
+cc_flags='--dangerously-skip-permissions --permission-mode acceptEdits'
+assert_equals "--session-id $tab_id $cc_flags" "$(claude_argv cc)"
+mkdir -p "$tmp/home/.claude/projects/-project"
+printf '{"type":"queue-operation","operation":"enqueue","timestamp":"2026-01-01T00:00:00.000Z","sessionId":"%s","content":"hello"}\n' \
+  "$tab_id" > "$tmp/home/.claude/projects/-project/$tab_id.jsonl"
+assert_equals "--resume $tab_id $cc_flags" \
+  "$(claude_argv "'claude' '--session-id' '$tab_id' $cc_flags")"
+
 pass 'tracked Zsh configuration is portable'

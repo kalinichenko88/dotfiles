@@ -5,8 +5,8 @@ update instructions live in [README.md](README.md) — do not restate them here.
 
 ## Repository Overview
 
-Personal macOS dotfiles: configuration for Git, Zsh, Neovim, WezTerm, GitHub
-CLI, Starship, Docker, and Claude Code, plus the scripts that provision and
+Personal macOS dotfiles: configuration for Git, Zsh, Neovim, WezTerm, agterm,
+GitHub CLI, Starship, Docker, and Claude Code, plus the scripts that provision and
 verify a workstation. Most of it is configuration symlinked into place;
 `scripts/` is the only real code.
 
@@ -50,7 +50,7 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   `tests/fixtures/claude-plugin-list.json`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
-`wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
+`wezterm`, `agterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
 `CONFIG_UNITS` in `scripts/bootstrap.sh`; the Makefile and the tests ask for it
 with `./scripts/bootstrap.sh units`. `make help` is generated the same way — from
 the `## description` on each target — and `tests/make_interface_test.sh` fails on
@@ -88,13 +88,16 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 
 Two rules that look like redundancy but are not:
 
-- `~/.docker/config.json` and `~/.claude/settings.json` are **merged**
+- `~/.docker/config.json`, `~/.claude/settings.json` and agterm's
+  `~/Library/Application Support/agterm/settings.json` are **merged**
   (`dotfiles_merge_json`), never copied. `~/.config/gh/config.yml` is applied
   with `gh config set` and never symlinked, for the same reason: gh writes its
-  own state into it, and a symlink made the repository dirty on first use. Other tools write to both — `docker
-  login` stores registry credentials there, and the user may have their own
-  Claude hooks. Doctor checks `contains`, not equality, for the same reason.
-  Turning either back into a copy or an equality check destroys user state and
+  own state into it, and a symlink made the repository dirty on first use. Other tools write to each — `docker
+  login` stores registry credentials there, the user may have their own
+  Claude hooks, and agterm's Settings window rewrites its whole file
+  atomically, which would replace a symlink with a plain file. Doctor checks
+  `contains`, not equality, for the same reason (`check_merged_json`).
+  Turning any of them back into a copy or an equality check destroys user state and
   leaves doctor with no state that can ever be green — and so does jq's plain
   `*`, which replaces arrays whole and deleted another tool's `PreToolUse` hook.
 - A manual-install CLI that is missing is a **warning**; one that is installed
@@ -126,6 +129,8 @@ removed because starship already owned the prompt and its `git` plugin silently
 overrode aliases declared in `aliases.zsh`.
 
 - `aliases.zsh` — git, nvim, and claude shortcuts
+- `claude-resume.zsh` — a `claude` wrapper copied unchanged from agterm's
+  cookbook; see agterm below
 - `options.zsh` — history, `setopt` list, `bindkey -e` (without it zsh infers vi
   mode from `$EDITOR`), `compinit`, the tab title
 - `path.zsh` — Homebrew shellenv, NVM, optional app-bundled CLIs
@@ -240,6 +245,23 @@ at every boot. It goes into `/Library/LaunchDaemons` through `sudo` — the only
 step in bootstrap that does — and only when the target home is `$HOME`; an
 identical copy already in place skips it. Doctor requires both the installed
 copy and the values in effect: `sysctl -w` alone passes until the next boot.
+
+### agterm
+
+`agterm/ghostty.conf` is symlinked to `~/.config/agterm/ghostty.conf`: Ghostty
+keys for agterm only. Font, theme and the rest of the Settings window are in
+`agterm/settings.json`, merged, and agterm applies them after `ghostty.conf`.
+`keymap.conf`, `hooks.conf` and `restore-denylist.conf` hold only agterm's
+seeded defaults, so none of them is tracked.
+
+`restoreMode` is `live`: each pane runs in a zmx daemon that outlives agterm.
+A reboot ends the daemons; agterm then replays the command each pane ran at the
+last clean quit, through `zsh -lic`. A replayed bare `claude` starts a new
+conversation, so `zsh/claude-resume.zsh` wraps `claude` and ties each tab's
+conversation to `AGTERM_SESSION_ID`: `--session-id` the first time, `--resume`
+after that. It must be a function, not an alias: the replay quotes every word,
+which stops alias expansion but not function lookup. Do not edit the vendored
+body; take a new upstream revision instead.
 
 ### ssh-remote
 
