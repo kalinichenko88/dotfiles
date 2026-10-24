@@ -184,8 +184,10 @@ if DOTFILES_TARGET_HOME="$tmp/dev-file-home" \
   "$TEST_ROOT/scripts/bootstrap.sh" config dev-dirs > /dev/null 2>&1; then
   fail 'a project directory that could not be created did not fail the unit'
 fi
-[ -d "$tmp/dev-file-home/Dev/Work" ] && [ -d "$tmp/dev-file-home/Dev/Open Source" ] || \
-  fail 'a refused project directory stopped the ones after it'
+for dir in Work 'Open Source'; do
+  [ -d "$tmp/dev-file-home/Dev/$dir" ] || \
+    fail "a refused project directory stopped Dev/$dir after it"
+done
 
 assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"
 assert_link "$TEST_ROOT/zsh/zshrc" "$partial_home/.zshrc"
