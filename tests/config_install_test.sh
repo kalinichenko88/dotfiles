@@ -40,6 +40,8 @@ assert_link "$TEST_ROOT/git/gitconfig-personal" "$target_home/.config/git/gitcon
 assert_link "$TEST_ROOT/zsh/zshrc" "$target_home/.zshrc"
 assert_link "$TEST_ROOT/nvim" "$target_home/.config/nvim"
 assert_link "$TEST_ROOT/wezterm.lua" "$target_home/.wezterm.lua"
+assert_link "$TEST_ROOT/agterm/ghostty.conf" "$target_home/.config/agterm/ghostty.conf"
+assert_link "$TEST_ROOT/agterm/keymap.conf" "$target_home/.config/agterm/keymap.conf"
 assert_link "$TEST_ROOT/starship/starship.toml" "$target_home/.config/starship.toml"
 [ ! -L "$target_home/.claude/CLAUDE.md" ] || \
   fail 'the dangling link to the old base prompt survived the install'
@@ -124,13 +126,69 @@ assert_equals 'local zsh' "$(cat "$target_home/.zshrc")"
 # leaves the shell, editor and terminal unconfigured. The run reports the
 # failure and still exits non-zero.
 partial_home=$tmp/partial-home
-mkdir -p "$partial_home/.ssh"
+mkdir -p "$partial_home/.ssh" "$partial_home/.config/git" \
+  "$partial_home/.config/agterm" "$partial_home/.claude"
 printf 'local ssh\n' > "$partial_home/.ssh/config"
+# A refused link fails its unit even when steps after it succeed: the first of
+# two rows (git, agterm), or a link before the merge and the plugin (claude).
+printf 'local git\n' > "$partial_home/.config/git/config"
+printf 'local ghostty\n' > "$partial_home/.config/agterm/ghostty.conf"
+printf 'local statusline\n' > "$partial_home/.claude/statusline-command.sh"
 if DOTFILES_TARGET_HOME="$partial_home" "$TEST_ROOT/scripts/bootstrap.sh" config \
   > "$tmp/partial.out" 2> "$tmp/partial.err"; then
   fail 'a failed config unit must still fail the run'
 fi
-assert_file_contains "$tmp/partial.err" 'config ssh'
+for unit in ssh git agterm claude; do
+  assert_file_contains "$tmp/partial.err" "config $unit failed"
+done
+# A failed step costs the unit only that step; the ones after it still run.
+assert_link "$TEST_ROOT/agterm/keymap.conf" "$partial_home/.config/agterm/keymap.conf"
+jq -e --slurpfile source "$TEST_ROOT/agterm/settings.json" 'contains($source[0])' \
+  "$partial_home/Library/Application Support/agterm/settings.json" >/dev/null || \
+  fail 'a refused agterm link skipped the settings merge'
+assert_file_contains "$tmp/claude.log" \
+  "$partial_home plugin install kalinichenko@kalinichenko"
+
+# The one exception: the plugin CLI writes the settings.json that the merge
+# could not parse, so a failed merge stops the claude unit before it.
+broken_home=$tmp/broken-claude-home
+mkdir -p "$broken_home/.claude"
+printf '{not json\n' > "$broken_home/.claude/settings.json"
+if DOTFILES_TARGET_HOME="$broken_home" "$TEST_ROOT/scripts/bootstrap.sh" \
+  config claude > /dev/null 2>&1; then
+  fail 'a failed Claude settings merge must fail the unit'
+fi
+assert_equals '{not json' "$(cat "$broken_home/.claude/settings.json")"
+assert_file_excludes "$tmp/claude.log" "$broken_home plugin"
+
+# A refused gh preference fails the unit, and the keys after it still apply.
+mkdir -p "$tmp/gh-fails-first"
+cat > "$tmp/gh-fails-first/gh" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$3" >> "$GH_SET_LOG"
+[ "$3" != git_protocol ]
+EOF
+chmod +x "$tmp/gh-fails-first/gh"
+if GH_SET_LOG=$tmp/gh-set.log PATH="$tmp/gh-fails-first:$PATH" \
+  DOTFILES_TARGET_HOME="$tmp/gh-fail-home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config gh > /dev/null 2>&1; then
+  fail 'a refused gh preference did not fail the unit'
+fi
+assert_equals "$(sed -n 's/:.*//p' "$TEST_ROOT/gh/config.yml")" "$(cat "$tmp/gh-set.log")"
+
+# A project directory that cannot be created fails the unit, and the ones
+# after it are still created.
+mkdir -p "$tmp/dev-file-home/Dev"
+printf 'not a directory\n' > "$tmp/dev-file-home/Dev/Personal"
+if DOTFILES_TARGET_HOME="$tmp/dev-file-home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config dev-dirs > /dev/null 2>&1; then
+  fail 'a project directory that could not be created did not fail the unit'
+fi
+for dir in Work 'Open Source'; do
+  [ -d "$tmp/dev-file-home/Dev/$dir" ] || \
+    fail "a refused project directory stopped Dev/$dir after it"
+done
+
 assert_equals 'local ssh' "$(cat "$partial_home/.ssh/config")"
 assert_link "$TEST_ROOT/zsh/zshrc" "$partial_home/.zshrc"
 assert_link "$TEST_ROOT/wezterm.lua" "$partial_home/.wezterm.lua"

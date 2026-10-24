@@ -233,6 +233,21 @@ check_private_git_file() {
   esac
 }
 
+# Containment, not equality: other tools write the rest of these files, and the
+# merge deliberately leaves their keys alone — docker login its registry
+# credentials, the user their own Claude hooks, agterm every other setting.
+# Slurped, like the merge: a file holding a second value is not present.
+check_merged_json() {
+  if command -v jq >/dev/null 2>&1 && \
+    jq -es --slurpfile source "$DOTFILES_ROOT/$1" \
+      'length == 1 and (.[0] | contains($source[0]))' \
+      "$DOTFILES_TARGET_HOME/$2" >/dev/null 2>&1; then
+    doctor_status present config "$3"
+  else
+    doctor_missing config "$3"
+  fi
+}
+
 check_config() {
   local item item_name label source target
   # The same table bootstrap installs from, so the two cannot drift.
@@ -241,17 +256,9 @@ check_config() {
   done < <(dotfiles_links)
   check_launch_daemon "$DOTFILES_SOCKET_BUFFERS_DAEMON"
   check_gh_preferences
-
-  # Containment, not equality: docker login adds registry credentials to the
-  # same file, and the merge deliberately leaves them alone.
-  if command -v jq >/dev/null 2>&1 && \
-    jq -e --slurpfile source "$DOTFILES_ROOT/docker/config.json" \
-      'contains($source[0])' \
-      "$DOTFILES_TARGET_HOME/.docker/config.json" >/dev/null 2>&1; then
-    doctor_status present config docker
-  else
-    doctor_missing config docker
-  fi
+  check_merged_json docker/config.json .docker/config.json docker
+  check_merged_json agterm/settings.json \
+    'Library/Application Support/agterm/settings.json' agterm-settings
 
   for item in "$DOTFILES_ROOT"/claude/skills/*; do
     [ -d "$item" ] || continue
@@ -284,17 +291,8 @@ check_config() {
     doctor_status present config git-work-email
   fi
 
-  # Containment, not equality: the merge preserves hooks this repository does
-  # not declare, and demanding equality would delete them to stay green.
-  if command -v jq >/dev/null 2>&1 && \
-    jq -e --slurpfile fragment "$DOTFILES_ROOT/claude/settings-fragment.json" \
-      'contains($fragment[0])' \
-      "$DOTFILES_TARGET_HOME/.claude/settings.json" \
-      >/dev/null 2>&1; then
-    doctor_status present config claude-settings
-  else
-    doctor_missing config claude-settings
-  fi
+  check_merged_json claude/settings-fragment.json .claude/settings.json \
+    claude-settings
   check_claude_plugin
 }
 

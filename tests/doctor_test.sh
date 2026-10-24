@@ -128,6 +128,17 @@ if STUB_GH_CONFIG='git_protocol=https' run_doctor > "$tmp/gh-drift.out"; then
 fi
 assert_file_contains "$tmp/gh-drift.out" 'missing config gh-git_protocol'
 
+# A merged file holding a second value is one bootstrap refuses to merge into,
+# so doctor must not call it present either.
+agterm_settings="$target_home/Library/Application Support/agterm/settings.json"
+cp "$agterm_settings" "$tmp/agterm-settings.json"
+{ printf '{"theme":"x"}'; cat "$tmp/agterm-settings.json"; } > "$agterm_settings"
+if run_doctor > "$tmp/agterm-two-values.out"; then
+  fail 'a merged file with a second JSON value must fail doctor'
+fi
+assert_file_contains "$tmp/agterm-two-values.out" 'missing config agterm-settings'
+cp "$tmp/agterm-settings.json" "$agterm_settings"
+
 # Installed is not enough: a disabled plugin injects no rules and loads no skills.
 assert_file_contains "$tmp/ready.out" 'present config claude-plugin'
 if STUB_CLAUDE_PLUGINS=$(jq '.[0].enabled = false' <<<"$claude_plugins") \

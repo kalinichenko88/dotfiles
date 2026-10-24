@@ -5,8 +5,8 @@ update instructions live in [README.md](README.md) — do not restate them here.
 
 ## Repository Overview
 
-Personal macOS dotfiles: configuration for Git, Zsh, Neovim, WezTerm, GitHub
-CLI, Starship, Docker, and Claude Code, plus the scripts that provision and
+Personal macOS dotfiles: configuration for Git, Zsh, Neovim, WezTerm, agterm,
+GitHub CLI, Starship, Docker, and Claude Code, plus the scripts that provision and
 verify a workstation. Most of it is configuration symlinked into place;
 `scripts/` is the only real code.
 
@@ -47,10 +47,11 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
 - `tests/*_test.sh` — plain bash, run by `make test`. Fixtures: stub executables
   in `tests/fixtures/bin`, recorded transcript commands in
   `tests/fixtures/hook-commands`, recorded `claude plugin list --json` output in
-  `tests/fixtures/claude-plugin-list.json`
+  `tests/fixtures/claude-plugin-list.json`, and a `settings.json` as agterm
+  writes it in `tests/fixtures/agterm-settings.json`
 
 Config units for `make config-<unit>`: `dev-dirs`, `git`, `ssh`, `zsh`, `nvim`,
-`wezterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
+`wezterm`, `agterm`, `gh`, `starship`, `docker`, `claude`. The ordered list lives once, in
 `CONFIG_UNITS` in `scripts/bootstrap.sh`; the Makefile and the tests ask for it
 with `./scripts/bootstrap.sh units`. `make help` is generated the same way — from
 the `## description` on each target — and `tests/make_interface_test.sh` fails on
@@ -78,6 +79,12 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
   aborts on the first one, which blocks a first run entirely.
 - A failing config unit must not stop the units after it: `ssh` precedes `zsh`,
   and stopping there leaves a new machine with no shell configuration.
+- Inside a unit, a refused link, JSON merge, gh preference or project
+  directory fails the unit but does not skip the steps after it: a refused
+  link still lets the merge and the plugin install run, and a refused row does
+  not hide behind a later one that succeeds. The one
+  exception is a failed Claude settings merge, which stops the plugin install:
+  the plugin CLI writes the same `settings.json`.
 - Configuring a target home other than `$HOME` must not touch the machine: no
   `sudo` call, and gh writes through `GH_CONFIG_DIR` into the target home, not
   the developer's own `~/.config/gh` (#39).
@@ -88,13 +95,16 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 
 Two rules that look like redundancy but are not:
 
-- `~/.docker/config.json` and `~/.claude/settings.json` are **merged**
+- `~/.docker/config.json`, `~/.claude/settings.json` and agterm's
+  `~/Library/Application Support/agterm/settings.json` are **merged**
   (`dotfiles_merge_json`), never copied. `~/.config/gh/config.yml` is applied
   with `gh config set` and never symlinked, for the same reason: gh writes its
-  own state into it, and a symlink made the repository dirty on first use. Other tools write to both — `docker
-  login` stores registry credentials there, and the user may have their own
-  Claude hooks. Doctor checks `contains`, not equality, for the same reason.
-  Turning either back into a copy or an equality check destroys user state and
+  own state into it, and a symlink made the repository dirty on first use. Other tools write to each — `docker
+  login` stores registry credentials there, the user may have their own
+  Claude hooks, and agterm's Settings window rewrites its whole file
+  atomically, which would replace a symlink with a plain file. Doctor checks
+  `contains`, not equality, for the same reason (`check_merged_json`).
+  Turning any of them back into a copy or an equality check destroys user state and
   leaves doctor with no state that can ever be green — and so does jq's plain
   `*`, which replaces arrays whole and deleted another tool's `PreToolUse` hook.
 - A manual-install CLI that is missing is a **warning**; one that is installed
@@ -126,6 +136,8 @@ removed because starship already owned the prompt and its `git` plugin silently
 overrode aliases declared in `aliases.zsh`.
 
 - `aliases.zsh` — git, nvim, and claude shortcuts
+- `claude-resume.zsh` — a `claude` wrapper copied unchanged from agterm's
+  cookbook; see agterm below
 - `options.zsh` — history, `setopt` list, `bindkey -e` (without it zsh infers vi
   mode from `$EDITOR`), `compinit`, the tab title
 - `path.zsh` — Homebrew shellenv, NVM, optional app-bundled CLIs
@@ -241,6 +253,29 @@ step in bootstrap that does — and only when the target home is `$HOME`; an
 identical copy already in place skips it. Doctor requires both the installed
 copy and the values in effect: `sysctl -w` alone passes until the next boot.
 
+### agterm
+
+`agterm/ghostty.conf` is symlinked to `~/.config/agterm/ghostty.conf`: Ghostty
+keys for agterm only. Font, theme and the rest of the Settings window are in
+`agterm/settings.json`, merged, and agterm applies them after `ghostty.conf`.
+`agterm/keymap.conf` is symlinked the same way. agterm writes either file only
+when it is absent, and its Edit Config and Edit Keymap open `$EDITOR` on the
+path, so the links stay links. `hooks.conf` and `restore-denylist.conf` hold
+only agterm's seeded defaults, so neither is tracked.
+
+`restoreMode` is `live`: each pane runs in a zmx daemon that outlives agterm.
+A reboot ends the daemons; agterm then replays the command each pane ran at the
+last clean quit, through `zsh -lic`. A replayed bare `claude` starts a new
+conversation, so `zsh/claude-resume.zsh` wraps `claude` and ties each tab's
+conversation to `AGTERM_SESSION_ID`: `--session-id` the first time, `--resume`
+after that. It must be a function, not an alias: the replay quotes every word,
+which stops alias expansion but not function lookup. Do not edit the vendored
+body; take a new upstream revision instead. One conversation per tab is the
+recipe's design and was kept on purpose: `claude` in a tab always resumes it,
+and a reboot after `/clear` or `/resume` brings back the earlier conversation.
+A wrapper with a SessionStart hook that tracks the current conversation was
+considered and declined.
+
 ### ssh-remote
 
 Nothing of it is on `main`. The `ssh()` wrapper, `zsh/ssh-remote.zsh`, the
@@ -254,8 +289,9 @@ Do not look for them here.
 - `.editorconfig` sets 2-space indentation and line endings for everything else
 - Shell scripts must pass `shellcheck`. Two suppressions are legitimate and
   already used: `SC1091` for runtime-resolved `source` paths, and `SC2016` for
-  single-quoted jq programs, where `$source` is a jq variable rather than a
-  shell one. Anything else means fixing the code, not silencing the check.
+  single-quoted text that must reach its reader unexpanded — a jq program,
+  where `$source` is a jq variable, or a `zsh -c` program and a literal `$HOME`
+  in the tests. Anything else means fixing the code, not silencing the check.
 - Tests are POSIX `[ ]` everywhere except the prefix match in
   `dotfiles_prune_orphan_links`, where `[[ ]]` replaces a four-line `case`.
   Every script here is `#!/bin/bash`, so that is a style choice, not a rule.

@@ -232,9 +232,10 @@ dotfiles_prune_orphan_links() {
 # tracked entries instead of being replaced, as jq's `*` would, deleting another
 # tool's hook (#37); an entry naming $HOME/.claude/hooks/ is this repository's
 # and goes once the tracked file drops it from an array the file still declares.
-# A missing target is {}; no FORCE.
+# A missing or blank target, or one holding null, is {}; a target that is not
+# one JSON value fails the merge and stays as it was. No FORCE.
 dotfiles_merge_json() {
-  local relative_source target program source_path target_dir temp_file
+  local relative_source target program source_path target_dir temp_file input
   relative_source=$1
   target=$2
   # $source and $s are jq variables, and $HOME is text jq matches, not a
@@ -248,7 +249,8 @@ dotfiles_merge_json() {
         (. - ([.[] | select(tostring | contains("$HOME/.claude/hooks/"))] - $s)) as $kept
         | $kept + ($s - $kept)
       else $s end;
-    merge($source[0])'
+    if length > 1 then error("more than one JSON value") else .[0] // {} end
+    | merge($source[0])'
   source_path=$DOTFILES_ROOT/$relative_source
   target_dir=$(dirname -- "$target")
 
@@ -267,15 +269,22 @@ dotfiles_merge_json() {
     return 1
   fi
 
-  if ! { [ -f "$target" ] && cat "$target" || printf '{}\n'; } \
-    | jq --slurpfile source "$source_path" "$program" > "$temp_file"; then
+  # Slurped, so jq parses the whole file: a missing or blank target is [] and
+  # starts from {}, and a stray brace or a second value fails the merge.
+  input=$target
+  [ -f "$target" ] || input=/dev/null
+  if ! jq -s --slurpfile source "$source_path" "$program" "$input" \
+    > "$temp_file"; then
     rm -f "$temp_file"
     dotfiles_die "could not merge $relative_source into $target"
     return 1
   fi
   chmod 600 "$temp_file"
 
-  if [ -f "$target" ] && cmp -s "$target" "$temp_file"; then
+  # Values, not bytes: agterm and Docker write their own layout, and a merge
+  # that changes nothing must not back up and rewrite on every run.
+  if [ -f "$target" ] && jq -e --slurpfile merged "$temp_file" \
+    '. == $merged[0]' "$target" >/dev/null 2>&1; then
     rm -f "$temp_file"
     dotfiles_info "merge already applied: $target"
     return 0

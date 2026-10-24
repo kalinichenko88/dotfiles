@@ -49,6 +49,40 @@ backup=$(find "$tmp/home" -maxdepth 1 -name '.zshrc.backup.*' -print | head -n 1
 [ -n "$backup" ] || fail 'forced link backup is missing'
 assert_equals 'local' "$(cat "$backup")"
 
+# agterm writes settings.json in its own layout, `"key" : value`. A merge that
+# changes no value is no change: no backup, no rewrite.
+mkdir -p "$tmp/repo/agterm" "$tmp/home/agterm"
+jq . "$TEST_ROOT/tests/fixtures/agterm-settings.json" > "$tmp/repo/agterm/settings.json"
+cp "$TEST_ROOT/tests/fixtures/agterm-settings.json" "$tmp/home/agterm/settings.json"
+dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/settings.json" >/dev/null
+[ -z "$(find "$tmp/home/agterm" -name '*.backup.*' -print -quit)" ] || \
+  fail 'a merge that changed no value made a backup'
+cmp -s "$TEST_ROOT/tests/fixtures/agterm-settings.json" "$tmp/home/agterm/settings.json" || \
+  fail 'a merge that changed no value rewrote the file'
+
+# An empty or blank file holds no settings, the same as a missing one.
+blank_count=0
+for blank in '' '\n' ' \n\n'; do
+  blank_count=$((blank_count + 1))
+  blank_file=$tmp/home/agterm/blank-$blank_count.json
+  printf '%b' "$blank" > "$blank_file"
+  dotfiles_merge_json agterm/settings.json "$blank_file" >/dev/null
+  jq -e --slurpfile source "$tmp/repo/agterm/settings.json" 'contains($source[0])' \
+    "$blank_file" >/dev/null || \
+    fail "a merge into a blank file was lost: $(printf %q "$blank")"
+done
+
+# A stray brace from a hand edit, or a second value, is not a file to merge
+# into: the merge fails and leaves it as it was.
+for broken in '{"theme":"x"}\n}\n' '{"theme":"x"}{"font":"y"}'; do
+  printf '%b' "$broken" > "$tmp/home/agterm/broken.json"
+  if dotfiles_merge_json agterm/settings.json "$tmp/home/agterm/broken.json" \
+    >/dev/null 2>&1; then
+    fail "a merge accepted a broken file: $(printf %q "$broken")"
+  fi
+  assert_equals "$(printf '%b' "$broken")" "$(cat "$tmp/home/agterm/broken.json")"
+done
+
 ln -s "$tmp/missing" "$tmp/home/.broken"
 if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
   fail 'a broken symlink must be treated as a conflict'
