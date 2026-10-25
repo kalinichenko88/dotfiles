@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# `launchctl print system/<label>` succeeds for the label in
+# LAUNCHCTL_STUB_LOADED and exits 113 otherwise, as the real one does for a
+# service launchd has not loaded. Any other call fails the same way.
+[ "$*" = "print system/${LAUNCHCTL_STUB_LOADED:-}" ] || exit 113
