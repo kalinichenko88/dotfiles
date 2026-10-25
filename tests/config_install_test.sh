@@ -315,27 +315,27 @@ plutil -lint "$TEST_ROOT/$daemon" >/dev/null || fail "$daemon is not a valid pli
 assert_equals "$(basename "$daemon" .plist)" \
   "$(plutil -extract Label raw -o - "$TEST_ROOT/$daemon")"
 mkdir -p "$tmp/LaunchDaemons"
-DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
-  DOTFILES_TARGET_HOME="$target_home" \
-  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+config_wezterm() {
+  : > "$tmp/sudo.log"
+  DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+    DOTFILES_TARGET_HOME="$target_home" \
+    "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+}
+# Buffers already in effect do not stand in for the copy: a machine that has
+# them still needs the daemon, or a changed one, to keep them across a boot.
+SYSCTL_STUB_VALUES=$buffers config_wezterm
 assert_file_contains "$tmp/sudo.log" \
   "install -m 644 -o root -g wheel $TEST_ROOT/$daemon $tmp/LaunchDaemons/${daemon##*/}"
 assert_file_contains "$tmp/sudo.log" \
   "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
 cp "$TEST_ROOT/$daemon" "$tmp/LaunchDaemons/"
-: > "$tmp/sudo.log"
-DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" SYSCTL_STUB_VALUES=$buffers \
-  DOTFILES_TARGET_HOME="$target_home" \
-  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+SYSCTL_STUB_VALUES=$buffers config_wezterm
 [ ! -s "$tmp/sudo.log" ] || \
   fail "an installed launch daemon was installed again: $(cat "$tmp/sudo.log")"
 
 # The copy went in and the load failed (#52): the next run must load it again,
 # not stop at the identical copy while the buffers stay at the 8 KB default.
-DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
-  SYSCTL_STUB_VALUES=${buffers//=65536/=8192} \
-  DOTFILES_TARGET_HOME="$target_home" \
-  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+SYSCTL_STUB_VALUES=${buffers//=65536/=8192} config_wezterm
 assert_file_contains "$tmp/sudo.log" \
   "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
 
