@@ -13,8 +13,10 @@ mkdir -p "$target_home/.claude" "$tmp/bin"
 
 # The real claude would clone the plugin from GitHub; the stub records instead.
 # The real sudo would prompt, or on CI change the runner; its stub records too.
+# The real launchctl would answer from this machine's launchd.
 ln -s "$TEST_ROOT/tests/fixtures/bin/claude" "$tmp/bin/claude"
 ln -s "$TEST_ROOT/tests/fixtures/bin/sudo" "$tmp/bin/sudo"
+ln -s "$TEST_ROOT/tests/fixtures/bin/launchctl" "$tmp/bin/launchctl"
 export PATH="$tmp/bin:$PATH" CLAUDE_STUB_LOG=$tmp/claude.log \
   SUDO_STUB_LOG=$tmp/sudo.log
 
@@ -305,10 +307,11 @@ assert_file_contains "$tmp/gh-home/.config/gh/config.yml" 'git_protocol: ssh'
 
 # The socket buffers WezTerm's mux needs are system-wide (#44): a root-owned
 # LaunchDaemon re-applies them at every boot. Installed through sudo, and only
-# once: an identical copy in place means nothing to do.
+# once: an identical copy that launchd has loaded means nothing to do.
 daemon=launchd/dev.kalinichenko.unix-socket-buffers.plist
+label=$(basename "$daemon" .plist)
 plutil -lint "$TEST_ROOT/$daemon" >/dev/null || fail "$daemon is not a valid plist"
-assert_equals "$(basename "$daemon" .plist)" \
+assert_equals "$label" \
   "$(plutil -extract Label raw -o - "$TEST_ROOT/$daemon")"
 mkdir -p "$tmp/LaunchDaemons"
 DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
@@ -320,11 +323,19 @@ assert_file_contains "$tmp/sudo.log" \
   "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
 cp "$TEST_ROOT/$daemon" "$tmp/LaunchDaemons/"
 : > "$tmp/sudo.log"
-DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" LAUNCHCTL_STUB_LOADED=$label \
   DOTFILES_TARGET_HOME="$target_home" \
   "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
 [ ! -s "$tmp/sudo.log" ] || \
   fail "an installed launch daemon was installed again: $(cat "$tmp/sudo.log")"
+
+# The copy went in and the load failed (#52): the next run must load it again,
+# not stop at the identical copy while the buffers stay at 8 KB.
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+  DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
+assert_file_contains "$tmp/sudo.log" \
+  "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
 
 # Both scripts now read setup/links.tsv, so there is no second table to drift
 # against; what has to hold is that every row actually got installed.

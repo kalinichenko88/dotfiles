@@ -249,8 +249,10 @@ other forever: the new window shows its tabs with empty panes (#44). So the
 `wezterm` unit also installs `launchd/dev.kalinichenko.unix-socket-buffers.plist`,
 a LaunchDaemon that raises `net.local.stream.sendspace` and `recvspace` to 64 KB
 at every boot. It goes into `/Library/LaunchDaemons` through `sudo` — the only
-step in bootstrap that does — and only when the target home is `$HOME`; an
-identical copy already in place skips it. Doctor requires both the installed
+step in bootstrap that does — and only when the target home is `$HOME`. An
+identical copy skips it only while `launchctl print` finds the daemon loaded,
+which needs no `sudo`: a copy whose load failed is loaded again on the next
+run (#52). Doctor requires both the installed
 copy and the values in effect: `sysctl -w` alone passes until the next boot.
 
 ### agterm

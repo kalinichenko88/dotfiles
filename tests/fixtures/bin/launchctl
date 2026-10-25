@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# `launchctl print system/<label>` succeeds for a label in
+# LAUNCHCTL_STUB_LOADED, a newline-separated list, and exits 113 otherwise, as
+# the real one does for a service launchd has not loaded. Anything else fails.
+[ "${1:-}" = print ] || exit 1
+printf '%s\n' "${LAUNCHCTL_STUB_LOADED:-}" | grep -qxF -- "${2#system/}" || exit 113
