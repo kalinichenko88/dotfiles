@@ -270,7 +270,16 @@ conversation, so `zsh/claude-resume.zsh` wraps `claude` and ties each tab's
 conversation to `AGTERM_SESSION_ID`: `--session-id` the first time, `--resume`
 after that. It must be a function, not an alias: the replay quotes every word,
 which stops alias expansion but not function lookup. Do not edit the vendored
-body; take a new upstream revision instead. One conversation per tab is the
+body; take a new upstream revision instead.
+
+`zsh/zshrc` carries agterm's agent-status block itself, with a `$HOME` path.
+agterm's Install Agent Status Hooks writes through the `~/.zshrc` symlink and
+appends the block, with an absolute path, to a file that lacks its begin
+marker `# >>> agterm agent-status >>>`. With the marker present it leaves the
+file alone. Do not move the block to `zsh/local.zsh`: the next install puts it
+back in `zshrc`.
+
+One conversation per tab is the
 recipe's design and was kept on purpose: `claude` in a tab always resumes it,
 and a reboot after `/clear` or `/resume` brings back the earlier conversation.
 A wrapper with a SessionStart hook that tracks the current conversation was
