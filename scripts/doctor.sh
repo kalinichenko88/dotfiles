@@ -191,10 +191,9 @@ check_claude_plugin() {
 
 # Both the installed copy and the values in effect: `sysctl -w` alone passes
 # today and is gone after the next boot, and a daemon installed but never
-# loaded passes the file check while the old values stay. A value only has to
-# reach the tracked one, because a larger buffer set by hand does no harm.
+# loaded passes the file check while the old values stay.
 check_launch_daemon() {
-  local relative_source label key value actual
+  local relative_source label key value
   relative_source=$1
   [ -n "$DOTFILES_LAUNCH_DAEMONS_DIR" ] || return 0
   label=$(basename -- "$relative_source" .plist)
@@ -205,17 +204,12 @@ check_launch_daemon() {
     doctor_missing config "$label"
   fi
   while IFS='=' read -r key value; do
-    actual=$(sysctl -n "$key" 2>/dev/null || :)
-    case "$actual" in
-      ''|*[!0-9]*) actual=0 ;;
-    esac
-    if [ "$actual" -ge "$value" ]; then
+    if dotfiles_sysctl_reaches "$key" "$value"; then
       doctor_status present sysctl "$key"
     else
       doctor_missing sysctl "$key"
     fi
-  done < <(sed -n 's|.*<string>\([a-z.]*=[0-9]*\)</string>.*|\1|p' \
-    "$DOTFILES_ROOT/$relative_source")
+  done < <(dotfiles_launch_daemon_sysctls "$relative_source")
 }
 
 # gitconfig-work holds a work address and gitconfig-local the signing keys. An

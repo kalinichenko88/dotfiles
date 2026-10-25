@@ -38,7 +38,9 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   table), `dotfiles_brewfile_records` (the one Brewfile parser),
   `dotfiles_merge_json` (tracked JSON into a file other tools also write),
   `dotfiles_make_tmp`, `dotfiles_run_with_timeout` (macOS ships no `timeout(1)`;
-  without it a hanging auth probe hangs doctor), and `DOTFILES_LAUNCH_DAEMONS_DIR`
+  without it a hanging auth probe hangs doctor), `dotfiles_launch_daemon_sysctls`
+  and `dotfiles_sysctl_reaches` (one test of a daemon's values for bootstrap and
+  doctor), and `DOTFILES_LAUNCH_DAEMONS_DIR`
   — `/Library/LaunchDaemons` only when the target home is `$HOME`, empty for any
   other, so tests and other target homes never reach the system-wide step
 - `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
@@ -249,9 +251,15 @@ other forever: the new window shows its tabs with empty panes (#44). So the
 `wezterm` unit also installs `launchd/dev.kalinichenko.unix-socket-buffers.plist`,
 a LaunchDaemon that raises `net.local.stream.sendspace` and `recvspace` to 64 KB
 at every boot. It goes into `/Library/LaunchDaemons` through `sudo` — the only
-step in bootstrap that does — and only when the target home is `$HOME`; an
-identical copy already in place skips it. Doctor requires both the installed
-copy and the values in effect: `sysctl -w` alone passes until the next boot.
+step in bootstrap that does — and only when the target home is `$HOME`.
+Doctor requires both the installed copy and the values in effect: `sysctl -w`
+alone passes until the next boot. Bootstrap skips the step on the same test:
+a copy whose load failed leaves the buffers at 8 KB, and the next run loads it
+again (#52). Neither checks that launchd has the job loaded. `launchctl print`
+finds it loaded after its one run, whatever that run did. A copy whose load
+failed while the values were raised by hand loads at the next boot. A service
+that is disabled loads neither at boot nor through bootstrap; doctor reports
+it after the boot that drops the values.
 
 ### agterm
 
