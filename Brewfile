@@ -72,7 +72,6 @@ cask "font-jetbrains-mono-nerd-font"
 
 # Browsers, communication, and productivity
 cask "discord"
-cask "google-chrome"
 cask "meetingbar"
 cask "obsidian"
 cask "raycast"
