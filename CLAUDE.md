@@ -38,7 +38,9 @@ diffs). Machine-specific software belongs in the gitignored `Brewfile.local`,
   table), `dotfiles_brewfile_records` (the one Brewfile parser),
   `dotfiles_merge_json` (tracked JSON into a file other tools also write),
   `dotfiles_make_tmp`, `dotfiles_run_with_timeout` (macOS ships no `timeout(1)`;
-  without it a hanging auth probe hangs doctor), and `DOTFILES_LAUNCH_DAEMONS_DIR`
+  without it a hanging auth probe hangs doctor), `dotfiles_launch_daemon_sysctls`
+  and `dotfiles_sysctl_reaches` (one test of a daemon's values for bootstrap and
+  doctor), and `DOTFILES_LAUNCH_DAEMONS_DIR`
   — `/Library/LaunchDaemons` only when the target home is `$HOME`, empty for any
   other, so tests and other target homes never reach the system-wide step
 - `setup/links.tsv` — `unit`, `label`, `source`, `target-under-home`. bootstrap
@@ -249,11 +251,12 @@ other forever: the new window shows its tabs with empty panes (#44). So the
 `wezterm` unit also installs `launchd/dev.kalinichenko.unix-socket-buffers.plist`,
 a LaunchDaemon that raises `net.local.stream.sendspace` and `recvspace` to 64 KB
 at every boot. It goes into `/Library/LaunchDaemons` through `sudo` — the only
-step in bootstrap that does — and only when the target home is `$HOME`. An
-identical copy skips it only while `launchctl print` finds the daemon loaded,
-which needs no `sudo`: a copy whose load failed is loaded again on the next
-run (#52). Doctor requires both the installed
-copy and the values in effect: `sysctl -w` alone passes until the next boot.
+step in bootstrap that does — and only when the target home is `$HOME`.
+Doctor requires both the installed copy and the values in effect: `sysctl -w`
+alone passes until the next boot. Bootstrap skips the step on the same test,
+so a copy whose load failed is loaded again on the next run (#52). Being
+loaded proves nothing: `launchctl print` finds the job loaded after its one
+run, whatever that run did.
 
 ### agterm
 

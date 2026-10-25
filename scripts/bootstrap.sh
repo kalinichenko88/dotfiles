@@ -307,12 +307,21 @@ config_ssh() {
   config_links ssh
 }
 
+# Every value the daemon sets is in effect, by the test doctor makes.
+launch_daemon_in_effect() {
+  local key value
+  while IFS='=' read -r key value; do
+    dotfiles_sysctl_reaches "$key" "$value" || return 1
+  done < <(dotfiles_launch_daemon_sysctls "$1")
+}
+
 # Root-owned and outside every home, so this is the one step that goes through
-# sudo. An identical copy that launchd has loaded means nothing to do: a copy
-# whose load failed must be loaded again, not reported as installed (#52).
-# Otherwise bootout first, as launchd keeps a loaded definition and would not
-# run a changed one; loading runs it at once, so the values apply without a
-# reboot.
+# sudo. Nothing to do only when the copy is identical and its values are in
+# effect: a copy whose load failed, or whose run left the values low, is loaded
+# again rather than reported as installed (#52). `launchctl print` would not
+# do: a job that ran once stays loaded whatever its run did. Otherwise bootout
+# first, as launchd keeps a loaded definition and would not run a changed one;
+# loading runs it at once, so the values apply without a reboot.
 install_launch_daemon() {
   local source label target
   source=$DOTFILES_ROOT/$1
@@ -322,8 +331,7 @@ install_launch_daemon() {
     return 0
   fi
   target=$DOTFILES_LAUNCH_DAEMONS_DIR/$label.plist
-  if cmp -s "$source" "$target" &&
-    launchctl print "system/$label" > /dev/null 2>&1; then
+  if cmp -s "$source" "$target" && launch_daemon_in_effect "$1"; then
     dotfiles_info "launch daemon already installed: $target"
     return 0
   fi

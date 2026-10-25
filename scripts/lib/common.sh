@@ -31,6 +31,22 @@ if [ -z "${DOTFILES_LAUNCH_DAEMONS_DIR+set}" ]; then
 fi
 export DOTFILES_SOCKET_BUFFERS_DAEMON DOTFILES_LAUNCH_DAEMONS_DIR
 
+# The name=value pairs a tracked launch daemon passes to `sysctl -w`.
+dotfiles_launch_daemon_sysctls() {
+  sed -n 's|.*<string>\([a-z.]*=[0-9]*\)</string>.*|\1|p' "$DOTFILES_ROOT/$1"
+}
+
+# A value only has to reach the tracked one: a larger buffer set by hand does
+# no harm. bootstrap and doctor share it, so "in effect" means one thing.
+dotfiles_sysctl_reaches() {
+  local actual
+  actual=$(sysctl -n "$1" 2>/dev/null || :)
+  case "$actual" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  [ "$actual" -ge "$2" ]
+}
+
 dotfiles_info() {
   printf 'info: %s\n' "$*"
 }
