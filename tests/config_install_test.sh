@@ -13,10 +13,9 @@ mkdir -p "$target_home/.claude" "$tmp/bin"
 
 # The real claude would clone the plugin from GitHub; the stub records instead.
 # The real sudo would prompt, or on CI change the runner; its stub records too.
-# The real launchctl and sysctl would answer from this machine.
+# The real sysctl would answer with this machine's socket buffers.
 ln -s "$TEST_ROOT/tests/fixtures/bin/claude" "$tmp/bin/claude"
 ln -s "$TEST_ROOT/tests/fixtures/bin/sudo" "$tmp/bin/sudo"
-ln -s "$TEST_ROOT/tests/fixtures/bin/launchctl" "$tmp/bin/launchctl"
 ln -s "$TEST_ROOT/tests/fixtures/bin/sysctl" "$tmp/bin/sysctl"
 export PATH="$tmp/bin:$PATH" CLAUDE_STUB_LOG=$tmp/claude.log \
   SUDO_STUB_LOG=$tmp/sudo.log
@@ -308,43 +307,37 @@ assert_file_contains "$tmp/gh-home/.config/gh/config.yml" 'git_protocol: ssh'
 
 # The socket buffers WezTerm's mux needs are system-wide (#44): a root-owned
 # LaunchDaemon re-applies them at every boot. Installed through sudo, and only
-# once: an identical copy, loaded, with its values in effect means nothing to do.
+# once: an identical copy whose values are in effect means nothing to do.
 daemon=launchd/dev.kalinichenko.unix-socket-buffers.plist
-label=$(basename "$daemon" .plist)
 buffers='net.local.stream.sendspace=65536
 net.local.stream.recvspace=65536'
 plutil -lint "$TEST_ROOT/$daemon" >/dev/null || fail "$daemon is not a valid plist"
-assert_equals "$label" "$(plutil -extract Label raw -o - "$TEST_ROOT/$daemon")"
+assert_equals "$(basename "$daemon" .plist)" \
+  "$(plutil -extract Label raw -o - "$TEST_ROOT/$daemon")"
 mkdir -p "$tmp/LaunchDaemons"
-config_wezterm() {
-  : > "$tmp/sudo.log"
-  DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
-    DOTFILES_TARGET_HOME="$target_home" \
-    "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
-}
-config_wezterm
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+  DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
 assert_file_contains "$tmp/sudo.log" \
-  "install -m 644 -o root -g wheel $TEST_ROOT/$daemon $tmp/LaunchDaemons/$label.plist"
+  "install -m 644 -o root -g wheel $TEST_ROOT/$daemon $tmp/LaunchDaemons/${daemon##*/}"
 assert_file_contains "$tmp/sudo.log" \
-  "launchctl bootstrap system $tmp/LaunchDaemons/$label.plist"
+  "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
 cp "$TEST_ROOT/$daemon" "$tmp/LaunchDaemons/"
-LAUNCHCTL_STUB_LOADED=$label SYSCTL_STUB_VALUES=$buffers config_wezterm
+: > "$tmp/sudo.log"
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" SYSCTL_STUB_VALUES=$buffers \
+  DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
 [ ! -s "$tmp/sudo.log" ] || \
   fail "an installed launch daemon was installed again: $(cat "$tmp/sudo.log")"
 
 # The copy went in and the load failed (#52): the next run must load it again,
-# whether the buffers stayed at the 8 KB default or were raised by hand. And a
-# loaded job whose run left the buffers low must run again.
-SYSCTL_STUB_VALUES=${buffers//=65536/=8192} config_wezterm
+# not stop at the identical copy while the buffers stay at the 8 KB default.
+DOTFILES_LAUNCH_DAEMONS_DIR="$tmp/LaunchDaemons" \
+  SYSCTL_STUB_VALUES=${buffers//=65536/=8192} \
+  DOTFILES_TARGET_HOME="$target_home" \
+  "$TEST_ROOT/scripts/bootstrap.sh" config wezterm > /dev/null
 assert_file_contains "$tmp/sudo.log" \
-  "launchctl bootstrap system $tmp/LaunchDaemons/$label.plist"
-SYSCTL_STUB_VALUES=$buffers config_wezterm
-assert_file_contains "$tmp/sudo.log" \
-  "launchctl bootstrap system $tmp/LaunchDaemons/$label.plist"
-LAUNCHCTL_STUB_LOADED=$label SYSCTL_STUB_VALUES=${buffers//=65536/=8192} \
-  config_wezterm
-assert_file_contains "$tmp/sudo.log" \
-  "launchctl bootstrap system $tmp/LaunchDaemons/$label.plist"
+  "launchctl bootstrap system $tmp/LaunchDaemons/${daemon##*/}"
 
 # Both scripts now read setup/links.tsv, so there is no second table to drift
 # against; what has to hold is that every row actually got installed.

@@ -253,11 +253,11 @@ a LaunchDaemon that raises `net.local.stream.sendspace` and `recvspace` to 64 KB
 at every boot. It goes into `/Library/LaunchDaemons` through `sudo` — the only
 step in bootstrap that does — and only when the target home is `$HOME`.
 Doctor requires both the installed copy and the values in effect: `sysctl -w`
-alone passes until the next boot. Bootstrap skips the step only on that test
-and `launchctl print` finding the daemon loaded, so a copy whose load failed
-is loaded again on the next run (#52). Neither half is enough alone: the job
-stays loaded after its one run whatever that run did, and values raised by
-hand pass while the load failed.
+alone passes until the next boot. Bootstrap skips the step on the same test,
+so a copy whose load failed is loaded again on the next run (#52). Neither
+checks that launchd has the job loaded: `launchctl print` finds it loaded
+after its one run whatever that run did, and launchd loads every plist in
+`/Library/LaunchDaemons` at boot anyway.
 
 ### agterm
 
