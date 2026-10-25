@@ -137,4 +137,17 @@ printf '{"type":"queue-operation","operation":"enqueue","timestamp":"2026-01-01T
 assert_equals "--resume $tab_id $cc_flags" \
   "$(claude_argv "'claude' '--session-id' '$tab_id' $cc_flags")"
 
+# agterm's Install Agent Status Hooks writes through the ~/.zshrc symlink, and
+# appends its block with an absolute path unless this begin marker is present
+# (rcMarkerBegin in agterm's AgentHooksInstall.swift).
+assert_file_contains "$TEST_ROOT/zsh/zshrc" '# >>> agterm agent-status >>>'
+mkdir -p "$tmp/home/.config/agterm/agent-status/shell"
+# shellcheck disable=SC2016
+printf ': > "$AGENT_STATUS_MARKER"\n' > \
+  "$tmp/home/.config/agterm/agent-status/shell/integration.sh"
+HOME="$tmp/home" AGENT_STATUS_MARKER="$tmp/agent-status-marker" \
+  PATH="$tmp/bin:$PATH" zsh -f -c 'source "$1" > /dev/null; :' zsh "$tracked_zsh/zshrc"
+[ -e "$tmp/agent-status-marker" ] || \
+  fail 'zshrc must source the agterm agent-status integration from the home directory'
+
 pass 'tracked Zsh configuration is portable'

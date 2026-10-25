@@ -12,5 +12,13 @@ for zsh_file in "$DOTFILES_ZSH"/*.zsh(N); do
 done
 unset zsh_file
 
+# agterm's Install Agent Status Hooks appends this block, with an absolute
+# path, to a ~/.zshrc that lacks the begin marker. It finds the marker here.
+# >>> agterm agent-status >>>
+agterm_status="$HOME/.config/agterm/agent-status/shell/integration.sh"
+[[ -r "$agterm_status" ]] && source "$agterm_status"
+unset agterm_status
+# <<< agterm agent-status <<<
+
 # Machine-local overrides are intentionally loaded once, last.
 [[ -r "$DOTFILES_ZSH/local.zsh" ]] && source "$DOTFILES_ZSH/local.zsh"

@@ -148,7 +148,8 @@ loaded back over the merge. In Live sessions mode a restart keeps every pane
 running.
 If agterm ran on this Mac before the first bootstrap, it has already written
 `~/.config/agterm/ghostty.conf` and `keymap.conf`: `FORCE=1 make config-agterm`
-backs them up and puts the links in their place.
+backs them up and puts the links in their place. Help ▸ Install Agent Status
+Hooks… finds its block already in `zsh/zshrc` and does not change the file.
 
 Then look at what this machine has that no manifest declares:
 
