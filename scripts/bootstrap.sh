@@ -321,7 +321,8 @@ launch_daemon_in_effect() {
 # again rather than reported as installed (#52). `launchctl print` would not
 # do: a job that ran once stays loaded whatever its run did. Nor is it needed
 # beside the values: launchd loads every plist here at boot, so a copy whose
-# load failed loads then, and a job it refuses at boot a reload cannot fix.
+# load failed loads then. If launchd refuses the job at boot, a reload cannot
+# load it either.
 # Otherwise bootout first, as launchd keeps a loaded definition and would not
 # run a changed one; loading runs it at once, so the values apply without a
 # reboot.
