@@ -18,6 +18,8 @@
     "command": "$HOME/.claude/statusline-command.sh"
   },
   "attribution": {
+    "commit": "",
+    "pr": "",
     "sessionUrl": false
   }
 }
