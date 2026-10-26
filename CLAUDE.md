@@ -218,7 +218,6 @@ the prompt and three skills into the plugin — does not leave the old link
 behind on every other machine; links pointing outside this repository are the
 user's own and are never touched.
 
-- Skill `create-post` — English blog posts from rough Russian drafts
 - Hook `check-docs-before-push` — PreToolUse hook that blocks `git push`
   until CLAUDE.md and README.md have been reviewed, using a temp flag keyed to
   the **session alone** so the next push passes however it is worded — a retry
