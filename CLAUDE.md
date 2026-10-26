@@ -205,7 +205,10 @@ this repository, so a hook whose timeout changed or that was renamed replaces
 its old copy — on an event the fragment still declares; a hook moved to another
 event, or an event dropped from the fragment, leaves its old entry behind. A
 file that changes is backed up first; no `FORCE=1` is needed.
-`attribution.sessionUrl` is `false` there on purpose: the trailer
+`attribution.commit` and `attribution.pr` are empty strings, so Claude Code adds
+no `Co-Authored-By` trailer to a commit and no attribution line to a pull
+request. The plugin's rules ask the same of the model, but only a setting holds
+every time. `attribution.sessionUrl` is `false` there on purpose: the trailer
 Claude Code adds to commits links a session transcript, and a public repository
 would carry that link forever while the transcript's visibility stays a toggle.
 
