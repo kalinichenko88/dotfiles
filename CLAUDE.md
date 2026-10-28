@@ -137,7 +137,7 @@ worse than an error, so "Author identity unknown" there is correct behaviour.
 removed because starship already owned the prompt and its `git` plugin silently
 overrode aliases declared in `aliases.zsh`.
 
-- `aliases.zsh` — git, nvim, and claude shortcuts
+- `aliases.zsh` — git, nvim, and claude shortcuts, each also under its Russian-layout spelling (`cc` and `сс`)
 - `claude-resume.zsh` — a `claude` wrapper copied unchanged from agterm's
   cookbook; see agterm below
 - `options.zsh` — history, `setopt` list, `bindkey -e` (without it zsh infers vi

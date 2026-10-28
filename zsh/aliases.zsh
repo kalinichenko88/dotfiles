@@ -21,3 +21,17 @@ alias cc='claude --dangerously-skip-permissions --permission-mode acceptEdits'
 
 # Shell
 alias reload='source ~/.zshrc'
+
+# The same aliases typed in the Russian layout: cc is сс, gpl is пзд.
+# A map, not string indexing: indexing is by bytes when the locale is C.
+() {
+  local -A ru=(q й w ц e у r к t е y н u г i ш o щ p з a ф s ы d в f а g п
+    h р j о k л l д z я x ч c с v м b и n т m ь)
+  local name ru_name char
+  for name in ${(k)aliases}; do
+    [[ $name == *[^a-z]* ]] && continue
+    ru_name=
+    for char in ${(s::)name}; do ru_name+=$ru[$char]; done
+    alias $ru_name=$aliases[$name]
+  done
+}
