@@ -131,6 +131,8 @@ claude_argv() {
 }
 cc_flags='--dangerously-skip-permissions --permission-mode acceptEdits'
 assert_equals "--session-id $tab_id $cc_flags" "$(claude_argv cc)"
+# cc typed in the Russian layout is сс.
+assert_equals "--session-id $tab_id $cc_flags" "$(claude_argv сс)"
 mkdir -p "$tmp/home/.claude/projects/-project"
 printf '{"type":"queue-operation","operation":"enqueue","timestamp":"2026-01-01T00:00:00.000Z","sessionId":"%s","content":"hello"}\n' \
   "$tab_id" > "$tmp/home/.claude/projects/-project/$tab_id.jsonl"
