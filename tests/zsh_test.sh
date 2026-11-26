@@ -165,4 +165,52 @@ first_path=$(HOME="$tmp/home" AGENT_STATUS_MARKER="$tmp/agent-status-marker" \
   'source "$1" > /dev/null; print -r -- $path[1]' zsh "$tracked_zsh/zshrc")
 assert_equals "$tmp/home/.nvm/versions/node/v0/bin" "$first_path"
 
+# Herdr gives a lost terminal (a reboot, a core crash) a bare shell with the
+# same HC_TERMINAL_ID and never runs claude again. The stub plays claude: it
+# runs the real SessionStart hook, then, for a reboot, kills its own shell.
+# It logs each argument in brackets, so a split or a joined argument shows.
+herdr_bin=$tmp/herdr-bin
+mkdir -p "$herdr_bin" "$tmp/home/herdr-project"
+# shellcheck disable=SC2016
+printf '%s\n' '#!/bin/bash' \
+  '{ printf %s "$PWD"; printf " [%s]" "$@"; echo; } >> "$HERDR_STUB_LOG"' \
+  'printf "{\"session_id\":\"%s\",\"source\":\"startup\"}" "$HERDR_STUB_SID" | bash "$HERDR_HOOK"' \
+  '[ -z "${HERDR_STUB_REBOOT:-}" ] || kill -KILL "$PPID"' > "$herdr_bin/claude"
+chmod +x "$herdr_bin/claude"
+herdr_sid=5f0c1d2e-3a4b-4c5d-8e6f-7a8b9c0d1e2f
+herdr_mark=$tmp/state/claude-herdr/t9z
+herdr_shell() {
+  local cmd=$1
+  shift
+  : > "$tmp/herdr.log"
+  # shellcheck disable=SC2016
+  (cd "$tmp/home" && env -u CLAUDECODE HOME="$tmp/home" \
+    XDG_STATE_HOME="$tmp/state" HC_TERMINAL_ID=t9z \
+    HERDR_STUB_LOG="$tmp/herdr.log" HERDR_STUB_SID=$herdr_sid \
+    HERDR_HOOK="$TEST_ROOT/claude/hooks/herdr-claude-session.sh" "$@" \
+    zsh -f -c 'source "$1" > /dev/null; path=("$2" $path); eval "$3"' \
+    zsh "$tracked_zsh/zshrc" "$herdr_bin" "$cmd") 2>/dev/null || true
+}
+# shellcheck disable=SC2016
+resume_prompt='for f in $precmd_functions; do "$f"; done > /dev/null'
+project=$(cd "$tmp/home/herdr-project" && pwd)
+cc_logged='[--dangerously-skip-permissions] [--permission-mode] [acceptEdits]'
+
+herdr_shell 'cd herdr-project && cc'
+assert_equals "$project $cc_logged" "$(cat "$tmp/herdr.log")"
+[ ! -e "$herdr_mark" ] || fail 'claude that exits must leave no Herdr mark'
+
+herdr_shell "cd herdr-project && cc --append-system-prompt 'a b'" HERDR_STUB_REBOOT=1
+assert_equals "$herdr_sid" "$(cat "$herdr_mark.session")"
+herdr_shell "$resume_prompt"
+assert_equals \
+  "$project [--resume] [$herdr_sid] $cc_logged [--append-system-prompt] [a b]" \
+  "$(cat "$tmp/herdr.log")"
+[ ! -e "$herdr_mark" ] || fail 'the resumed claude must clear its Herdr mark'
+
+# A shell that Claude Code itself starts in that terminal resumes nothing.
+herdr_shell 'cd herdr-project && cc' HERDR_STUB_REBOOT=1
+herdr_shell "$resume_prompt" CLAUDECODE=1
+assert_equals '' "$(cat "$tmp/herdr.log")"
+
 pass 'tracked Zsh configuration is portable'

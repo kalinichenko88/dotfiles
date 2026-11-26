@@ -151,6 +151,16 @@ If agterm ran on this Mac before the first bootstrap, it has already written
 backs them up and puts the links in their place. Help ▸ Install Agent Status
 Hooks… finds its block already in `zsh/zshrc` and does not change the file.
 
+Herdr keeps its terminals alive across a quit of the app. After a restart of
+the Mac, each terminal gets a plain shell in its last folder, and Herdr does
+not run the program again. `zsh/herdr.zsh` resumes Claude Code there: the
+first prompt of that shell runs `claude --resume` with the conversation that
+was open at the restart and the arguments it started with, `cc` included. This
+also works after `/clear` or `/resume`. A new `claude` in a pane starts a new
+conversation, as before. A conversation that ended before the restart does
+not come back, and Herdr does not reopen a pane that you closed. The resume
+needs the SessionStart hook from `make config-claude`.
+
 Then look at what this machine has that no manifest declares:
 
 ```bash

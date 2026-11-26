@@ -11,6 +11,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/herdr-claude-session.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

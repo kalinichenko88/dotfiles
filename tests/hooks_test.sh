@@ -64,3 +64,26 @@ assert_decision allow "git add README.md && git commit -q --amend --no-edit && g
 rm -f "/tmp/claude-docs-checked-$session"
 
 pass 'the docs hook stops a push wherever the command puts it'
+
+# The Herdr session hook writes the conversation's id where zsh/herdr.zsh asks,
+# and nothing to stdout: SessionStart puts stdout into the conversation.
+HERDR_HOOK=$TEST_ROOT/claude/hooks/herdr-claude-session.sh
+session_file=$tmp/herdr-session
+herdr_hook() {
+  printf '{"session_id":"%s","source":"%s"}' "$1" "$2" | \
+    CLAUDE_HERDR_SESSION_FILE=$session_file bash "$HERDR_HOOK"
+}
+assert_equals '' "$(herdr_hook first startup)"
+assert_equals first "$(cat "$session_file")"
+# A claude that a tool starts inside the conversation inherits the variable and
+# starts as "startup"; it must not take the terminal's place.
+herdr_hook nested startup
+assert_equals first "$(cat "$session_file")"
+herdr_hook cleared clear
+assert_equals cleared "$(cat "$session_file")"
+rm -f "$session_file"
+printf '{"session_id":"x","source":"startup"}' | \
+  env -u CLAUDE_HERDR_SESSION_FILE bash "$HERDR_HOOK"
+[ ! -e "$session_file" ] || fail 'the Herdr hook wrote outside Herdr'
+
+pass 'the Herdr hook records the conversation the terminal shows'
