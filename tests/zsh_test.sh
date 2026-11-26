@@ -152,4 +152,17 @@ HOME="$tmp/home" AGENT_STATUS_MARKER="$tmp/agent-status-marker" \
 [ -e "$tmp/agent-status-marker" ] || \
   fail 'zshrc must source the agterm agent-status integration from the home directory'
 
+# nvm use replaces its own PATH entry in place, so a directory ahead of it
+# shadows every Node it selects. Installers append such lines to ~/.zshrc, the
+# symlink to zshrc: one put ~/.local/bin, with a foreign node link, first.
+mkdir -p "$tmp/home/.nvm"
+# shellcheck disable=SC2016
+printf '%s\n' 'path=("$NVM_DIR/versions/node/v0/bin" $path)' \
+  > "$tmp/home/.nvm/nvm.sh"
+# shellcheck disable=SC2016
+first_path=$(HOME="$tmp/home" AGENT_STATUS_MARKER="$tmp/agent-status-marker" \
+  PATH="$tmp/bin:$PATH" zsh -f -c \
+  'source "$1" > /dev/null; print -r -- $path[1]' zsh "$tracked_zsh/zshrc")
+assert_equals "$tmp/home/.nvm/versions/node/v0/bin" "$first_path"
+
 pass 'tracked Zsh configuration is portable'

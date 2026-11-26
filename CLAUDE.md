@@ -76,6 +76,12 @@ Breaking any of these fails `make test`, so fix the cause rather than the test:
 - Tracked Zsh files must contain no absolute `/Users/<name>` paths, and no
   pinned `python@<version>` — the PATH entry is globbed so a Brewfile bump
   needs no edit.
+- The tracked Zsh files put nothing ahead of nvm's Node in PATH, the optional
+  app directories at the end of `path.zsh` aside. `nvm use` replaces its own
+  entry in place, so a directory ahead of it shadows every version it selects.
+  Installers append PATH lines to `~/.zshrc`, the symlink to `zsh/zshrc`: one
+  put `~/.local/bin`, with another tool's `node` link, first. Such a line goes
+  to `zsh/local.zsh`.
 - Every tap the `Brewfile` declares must be passed to `brew trust --tap` before
   `brew bundle` runs. Homebrew refuses untrusted third-party taps and bundle
   aborts on the first one, which blocks a first run entirely.
