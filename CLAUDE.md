@@ -146,6 +146,7 @@ overrode aliases declared in `aliases.zsh`.
 - `aliases.zsh` — git, nvim, and claude shortcuts, each also under its Russian-layout spelling (`cc` and `сс`)
 - `claude-resume.zsh` — a `claude` wrapper copied unchanged from agterm's
   cookbook; see agterm below
+- `herdr.zsh` — inside Herdr only, replaces that wrapper; see Herdr below
 - `options.zsh` — history, `setopt` list, `bindkey -e` (without it zsh infers vi
   mode from `$EDITOR`), `compinit`, the tab title
 - `path.zsh` — Homebrew shellenv, NVM, optional app-bundled CLIs
@@ -232,6 +233,9 @@ user's own and are never touched.
   the way. That is safe only because heredoc bodies are dropped before the
   match: a document that writes `git push` at the start of a line is never
   denied, so it cannot spend the review the next real push owes
+- Hook `herdr-claude-session` — SessionStart hook for `zsh/herdr.zsh`: it
+  writes the conversation's id to `CLAUDE_HERDR_SESSION_FILE`, and nothing to
+  stdout, which SessionStart adds to the conversation
 
 ### WezTerm
 
@@ -300,7 +304,31 @@ One conversation per tab is the
 recipe's design and was kept on purpose: `claude` in a tab always resumes it,
 and a reboot after `/clear` or `/resume` brings back the earlier conversation.
 A wrapper with a SessionStart hook that tracks the current conversation was
-considered and declined.
+considered and declined for agterm; Herdr uses one, below.
+
+### Herdr
+
+Herdr's core keeps each terminal alive and its address in `HC_TERMINAL_ID`.
+A lost terminal (a reboot, a core crash) gets a shell in its last folder with
+the same address. Herdr never runs the original command again, so nothing
+replays `claude` the way agterm does. `zsh/herdr.zsh` therefore defines its
+own `claude` when `HC_TERMINAL_ID` is set and `CLAUDECODE` is not:
+
+- Before claude starts, a mark under `$XDG_STATE_HOME/claude-herdr/<address>`
+  records the folder and the quoted arguments. The SessionStart hook
+  `herdr-claude-session` writes the conversation's id beside it.
+- An `always` block removes the mark however claude ends, Ctrl+C included.
+  Only a shell that dies with claude still in it leaves a mark behind.
+- A one-shot `precmd` in the next shell at that address finds the mark and
+  runs `claude --resume <id>` with the recorded arguments.
+
+The `CLAUDECODE` guard keeps the shells that Claude Code starts out of it: a
+`claude -p` from a tool would overwrite the terminal's mark, and then remove
+it. A claude that runs inside the conversation by another way still inherits
+`CLAUDE_HERDR_SESSION_FILE`. It starts as `startup`, and the hook keeps the
+id it already wrote; the wrapper removes that file before its own start.
+`tests/zsh_test.sh` plays the reboot: its stub claude runs the real hook, then
+kills its own shell.
 
 ### ssh-remote
 
