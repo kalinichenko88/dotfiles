@@ -249,7 +249,8 @@ dotfiles_prune_orphan_links() {
 # tool's hook (#37); an entry naming $HOME/.claude/hooks/ is this repository's
 # and goes once the tracked file drops it from an array the file still declares.
 # A missing or blank target, or one holding null, is {}; a target that is not
-# one JSON value fails the merge and stays as it was. No FORCE.
+# one JSON value fails the merge and stays as it was, as does a target that
+# exists but is not a regular file. No FORCE.
 dotfiles_merge_json() {
   local relative_source target program source_path target_dir temp_file input
   relative_source=$1
@@ -272,6 +273,14 @@ dotfiles_merge_json() {
 
   if [ ! -f "$source_path" ]; then
     dotfiles_die "merge source is not a file: $source_path"
+    return 1
+  fi
+  # A directory, a dangling symlink or anything else that exists but is not a
+  # regular file is a conflict, not a missing settings file: reading it as {}
+  # would skip the backup, and the mv below would write inside a directory or
+  # replace the link. dotfiles_link already treats these as a conflict.
+  if dotfiles_path_exists "$target" && [ ! -f "$target" ]; then
+    dotfiles_die "merge target exists and is not a regular file: $target"
     return 1
   fi
   if [ "${DRY_RUN:-0}" = 1 ]; then

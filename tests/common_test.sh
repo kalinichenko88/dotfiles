@@ -89,6 +89,24 @@ if dotfiles_link zsh/zshrc "$tmp/home/.broken"; then
 fi
 [ -L "$tmp/home/.broken" ] || fail 'broken symlink was changed without force'
 
+# A merge target that exists but is not a regular file is the same conflict,
+# not a missing settings file: the merge must not write inside a directory or
+# replace a dangling symlink, and must leave both as they were.
+mkdir -p "$tmp/home/merge-dir"
+if dotfiles_merge_json agterm/settings.json "$tmp/home/merge-dir" >/dev/null 2>&1; then
+  fail 'a merge accepted a directory as its target'
+fi
+[ -d "$tmp/home/merge-dir" ] || fail 'a merge replaced a directory target'
+[ -z "$(find "$tmp/home/merge-dir" -mindepth 1 -print -quit)" ] || \
+  fail 'a merge wrote inside a directory target'
+
+ln -s "$tmp/nowhere.json" "$tmp/home/merge-link.json"
+if dotfiles_merge_json agterm/settings.json "$tmp/home/merge-link.json" >/dev/null 2>&1; then
+  fail 'a merge accepted a dangling symlink as its target'
+fi
+[ -L "$tmp/home/merge-link.json" ] || fail 'a merge replaced a dangling symlink'
+assert_equals "$tmp/nowhere.json" "$(readlink "$tmp/home/merge-link.json")"
+
 # macOS ships no timeout(1), so this is hand-rolled; a broken version would hang
 # doctor on the first auth probe that never returns. Measured on its own rather
 # than across a whole doctor run, which made the old assertion flaky.
