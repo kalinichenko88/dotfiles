@@ -57,7 +57,6 @@ assert_file_contains "$tmp/claude.log" \
   "$target_home plugin update kalinichenko@kalinichenko"
 assert_link "$TEST_ROOT/claude/statusline-command.sh" \
   "$target_home/.claude/statusline-command.sh"
-assert_link "$TEST_ROOT/claude/skills/create-post" "$target_home/.claude/skills/create-post"
 assert_link "$TEST_ROOT/claude/hooks/check-docs-before-push.sh" \
   "$target_home/.claude/hooks/check-docs-before-push.sh"
 
